@@ -1,0 +1,57 @@
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build outputs
+bin/
+obj/
+[Bb]uild/
+[Bb]uilds/
+
+# NuGet
+packages/
+*.nupkg
+*.snupkg
+.nuget/
+.nuget/NuGet.Config
+.nuget/packages/
+
+# Logs and test artifacts
+*.log
+TestResults/
+TestResult*/
+coverage*/
+*.coverage
+*.coveragexml
+
+# Rider/ReSharper
+.idea/
+*.sln.iml
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# VS Code
+.vscode/
+
+# OS junk
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# Playnite / ApolloSync specific
+# Distribution and raw build artifacts
+.dist*/
+dist/
+# Root-level compiled outputs (should live in bin/ but ignore if present)
+ApolloSync.dll
+ApolloSync.pdb
+ApolloSync.cs.backup
+
+# Generated resources (additional safety; obj/ already ignored)
+**/*.baml
+**/*.g.cs

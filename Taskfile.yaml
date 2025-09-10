@@ -1,0 +1,51 @@
+# https://taskfile.dev
+
+version: '3'
+
+tasks:
+  all:
+  - task: clean
+  - task: restore
+  - task: format
+  - task: test
+  - task: build
+  - task: pack
+  - task: install
+
+  build:
+    cmds:
+    - dotnet build  ApolloSync.csproj --configuration Release
+
+  format:
+    cmds:
+    - dotnet format  ApolloSync.csproj
+
+  pack:
+    deps:
+    - build
+    cmds:
+    - powershell cp -Recurse -Force bin/Release/net462/ .\dist\raw\
+    - ~/AppData/Local/Playnite/Toolbox.exe pack bin/Release/net462/ dist
+
+  clean:
+    cmds:
+    - powershell -command "Remove-Item -Force -Recurse .\dist -ErrorAction Ignore" || true
+    - powershell -command "Remove-Item -Force -Recurse .\src\bin\ -ErrorAction Ignore" || true
+
+  install:
+    cmds:
+    - powershell ./dist/*.pext
+
+  logs:
+    cmds:
+    - powershell "Get-Content ~/Appdata/Roaming/Playnite/extensions.log" -Wait
+
+  restore:
+    cmds:
+    - dotnet restore ApolloSync.csproj
+
+  test:
+    deps:
+    - restore
+    cmds:
+    - dotnet test Tests/ApolloSync.Tests.csproj -v minimal

@@ -1,0 +1,1 @@
+This file exists to force VS Code to refresh folder state after file deletions by tools.

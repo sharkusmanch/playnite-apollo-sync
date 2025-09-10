@@ -1,0 +1,71 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <sys:String x:Key="LOC_ApolloSync_Settings_AutoExportInstalledGames">Auto-export installed games to apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AutoRemoveUninstalledGames">Auto-remove uninstalled games from apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Enable">Enable</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncAllOnLibraryUpdate">On library update, ensure all installed games are exported</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath">Path to Apollo/Sunshine apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Browse">Browse</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Browse_Title">Select apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath_Help">Set the path to the Apollo or Sunshine apps.json file. Only entries managed by this extension will be added/removed.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath_Invalid">Apps.json path is invalid or not accessible.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Export">Export to Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Remove">Remove from Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Pin">Pin game (prevent auto-removal)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Unpin">Unpin game (allow auto-removal)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_SyncAll">Sync all installed games to Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_ManageGames">Manage Exported Games...</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_MenuSection">ApolloSync</sys:String>
+
+    <!-- Tabs -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_General">General</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_Filters">Filters</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_ManageGames">Manage Games</sys:String>
+
+    <!-- General Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnSettingsUpdated">Sync when settings are updated</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnLibraryUpdate">Sync when library is updated</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnStartup">Sync when Playnite starts</sys:String>
+
+    <!-- Filter Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">Installation Status Filter</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">Include installed games</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">When enabled, only installed games will be considered for export.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">Platform Filters</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">Select platforms to include in export. If none are selected, all platforms will be included.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">Label Filter</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">Only export games that have this label. Leave unselected to export all games.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">No label required</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">Create Default Label</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">Completion Status Filter</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">Select completion statuses to include in export. If none are selected, all completion statuses will be included.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">Category Filter</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">Select categories to include in export. If none are selected, all categories will be included.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filter Preset</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Use Playnite Filter Preset</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">When enabled, the selected filter preset will be used instead of the individual filters below. Create filter presets in Playnite's main library view.</sys:String>
+
+    <!-- Manage Games Tab -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Manage Exported Games</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames_Help">View and manage games that have been exported to Apollo/Sunshine. Pinned games will not be automatically removed when filters change or games are uninstalled.</sys:String>
+
+    <!-- Progress and feedback messages -->
+    <sys:String x:Key="LOC_ApolloSync_Progress_SyncAll_Title">Syncing Games to Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Progress_SyncAll_Current">Processing: {0}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_NoInstalledGames">No installed games found to sync.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_SyncAll_Complete">Sync completed successfully.
+
+Success: {0}
+Failed: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Export_Complete">Export completed.
+
+Success: {0}
+Failed: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Remove_Complete">Remove completed.
+
+Success: {0}
+Failed: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Errors">Errors encountered</sys:String>
+</ResourceDictionary>
