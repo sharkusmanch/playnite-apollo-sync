@@ -15,6 +15,8 @@ A powerful Playnite extension that automatically synchronizes your game library 
 - **Batch operations** - Optimized performance with single-write batch processing
 
 ### 🎯 Advanced Filtering
+- **Leverages Playnite filters** - Uses your existing Playnite filter presets to define what gets exported
+- **Preset OR logic** - If multiple presets are selected, a game is exported when it matches any of them
 - **Platform filtering** - Choose specific platforms to include/exclude from export
 - **Label-based filtering** - Export only games with specific labels
 - **Completion status filtering** - Filter by game completion status (Not Played, Completed, etc.)
@@ -57,7 +59,7 @@ A powerful Playnite extension that automatically synchronizes your game library 
 1. Go to **Extensions** → **ApolloSync** → **Settings**
 2. Set the path to your Apollo/Sunshine `apps.json` file
 3. Configure automatic sync options as desired
-4. Set up filters if you want to limit which games are exported
+4. Choose one or more Playnite filter presets to define which games are exported (the extension leverages your existing filters)
 
 ### Settings Overview
 
@@ -68,12 +70,31 @@ A powerful Playnite extension that automatically synchronizes your game library 
 - **Apps.json path** - Path to your Apollo/Sunshine configuration file
 
 #### Filters Tab
+- **Use Playnite Filter Presets** - Select saved presets; a game is exported if it matches any selected preset (OR logic)
 - **Platform selection** - Choose which gaming platforms to include
 - **Label requirements** - Require specific labels for export
 - **Completion status** - Filter by game completion status
 - **Bulk selection tools** - Select All/Clear All buttons for easy management
 
+### 🔐 Permissions for apps.json
+If your `apps.json` lives under `C:\Program Files\...`, Windows may block write access for standard users.
+
+- What the extension does:
+    - On save, it retries briefly on transient IO errors.
+    - If access is denied, it will prompt you to elevate and will attempt to grant Modify permission to the Users group for that file, then retry the save.
+
+- Manual options if you prefer not to elevate in-app:
+    - Point the extension to a user-writable path for `apps.json`.
+    - Run Playnite as Administrator (not generally recommended).
+    - Adjust permissions yourself via File Properties → Security (grant Modify to Users) or an equivalent admin command.
+    - After changing permissions, re-run the sync.
+
 ## 🎮 Usage
+
+### How exports are selected
+- ApolloSync leverages your existing Playnite filter presets to decide which games are exported.
+- If you select multiple presets, a game is exported when it matches any of them (OR logic).
+- Pinned games won’t be auto-removed even if they stop matching your presets.
 
 ### Automatic Operations
 Once configured, ApolloSync works automatically:
