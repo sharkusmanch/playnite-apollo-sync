@@ -2,6 +2,8 @@ using Playnite.SDK;
 using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
+using System.Linq;
+using System.Threading;
 
 namespace ApolloSync.Services
 {
@@ -38,6 +40,7 @@ namespace ApolloSync.Services
 
                 var json = File.ReadAllText(resolvedPath);
                 var config = JObject.Parse(json);
+                DeduplicateApps(config, "Load");
                 var appsCount = ((JArray)config["apps"])?.Count ?? 0;
 
                 logger.Info($"ConfigService.Load - Successfully loaded apps.json from: {resolvedPath} with {appsCount} apps");
@@ -64,10 +67,36 @@ namespace ApolloSync.Services
                     logger.Debug($"ConfigService.Save - Created directory: {dir}");
                 }
 
+                // De-duplicate before writing, and normalize UUID casing
+                DeduplicateApps(config, "Save");
+
                 var jsonContent = config.ToString(Newtonsoft.Json.Formatting.Indented);
                 logger.Debug($"ConfigService.Save - Writing config with {((JArray)config["apps"])?.Count ?? 0} apps");
 
-                File.WriteAllText(resolvedPath, jsonContent);
+                // Retry/backoff for transient IO errors; let UnauthorizedAccess bubble up
+                var attempts = 0;
+                const int maxAttempts = 3;
+                while (true)
+                {
+                    try
+                    {
+                        File.WriteAllText(resolvedPath, jsonContent);
+                        break;
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        throw; // handled by caller for permission prompt
+                    }
+                    catch (IOException)
+                    {
+                        attempts++;
+                        if (attempts >= maxAttempts)
+                        {
+                            throw;
+                        }
+                        Thread.Sleep(150 * attempts);
+                    }
+                }
                 logger.Info($"ConfigService.Save - Successfully saved apps.json to: {resolvedPath}");
             }
             catch (Exception ex)
@@ -107,6 +136,74 @@ namespace ApolloSync.Services
             catch
             {
                 return null;
+            }
+        }
+
+        private void DeduplicateApps(JObject config, string stage)
+        {
+            try
+            {
+                var apps = config["apps"] as JArray;
+                if (apps == null)
+                {
+                    config["apps"] = new JArray();
+                    return;
+                }
+
+                var bestByUuid = new System.Collections.Generic.Dictionary<string, JObject>(StringComparer.OrdinalIgnoreCase);
+                var seenOrder = new System.Collections.Generic.List<string>();
+                foreach (var app in apps.OfType<JObject>())
+                {
+                    var uuidStr = ((string)app["uuid"])?.Trim();
+                    if (string.IsNullOrEmpty(uuidStr))
+                    {
+                        continue;
+                    }
+
+                    // Normalize to uppercase for writing
+                    app["uuid"] = uuidStr.ToUpperInvariant();
+                    var key = (string)app["uuid"]; // uppercase
+
+                    int idVal = -1;
+                    var idStr = (string)app["id"];
+                    int.TryParse(idStr, out idVal);
+
+                    if (!bestByUuid.TryGetValue(key, out var existing))
+                    {
+                        bestByUuid[key] = app;
+                        seenOrder.Add(key);
+                    }
+                    else
+                    {
+                        int existingId = -1;
+                        var existingIdStr = (string)existing["id"];
+                        int.TryParse(existingIdStr, out existingId);
+                        if (idVal > existingId)
+                        {
+                            bestByUuid[key] = app;
+                        }
+                    }
+                }
+
+                var before = apps.Count;
+                var deduped = new JArray();
+                foreach (var k in seenOrder)
+                {
+                    if (bestByUuid.TryGetValue(k, out var keep))
+                    {
+                        deduped.Add(keep);
+                    }
+                }
+                config["apps"] = deduped;
+                var after = deduped.Count;
+                if (after < before)
+                {
+                    logger.Info($"ConfigService.{stage} - De-duplicated apps by UUID: {before} -> {after}");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Warn(ex, "ConfigService - Deduplication failed; continuing");
             }
         }
     }

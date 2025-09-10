@@ -68,4 +68,7 @@ Failed: {1}</sys:String>
 Success: {0}
 Failed: {1}</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Message_Errors">Errors encountered</sys:String>
+    <!-- New: Permission prompt for apps.json write -->
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync needs permission to write apps.json in Program Files. Allow fixing permissions?</sys:String>
 </ResourceDictionary>

@@ -76,8 +76,8 @@ Outputs:
   - Respect Windows paths and pwsh command syntax.
   - Keep Playnite SDK at 6.12.0 unless explicitly upgraded everywhere.
   - Prefer object-oriented design: encapsulate logic in small classes/services with clear responsibilities and interfaces.
+  - Localize all new user-facing strings in `Localization/en_US.xaml` and reference via `ResourceProvider.GetString`.
 - Don’t:
-  - Introduce migration code for apps.json UUIDs (unreleased; identity mapping only).
   - Hardcode user-specific paths except for known Playnite defaults.
   - Add network calls or external side effects.
 

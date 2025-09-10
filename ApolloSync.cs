@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.IO;
 using Playnite.SDK.Data;
+using System.Windows;
 using ApolloSync.Models;
 using ApolloSync.Services;
 using Newtonsoft.Json.Linq;
@@ -1226,12 +1227,52 @@ namespace ApolloSync
             {
                 var path = settings.Settings.AppsJsonPath;
                 logger.Debug($"Saving apps config to path: {path}");
-                configService.Save(path, config);
+                try
+                {
+                    configService.Save(path, config);
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Inform user and offer to fix permissions with elevation
+                    var message = ResourceProvider.GetString("LOC_ApolloSync_Permissions_Prompt_Body");
+                    var title = ResourceProvider.GetString("LOC_ApolloSync_Permissions_Prompt_Title");
+                    var result = PlayniteApi.Dialogs.ShowMessage(message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        TryFixFilePermissionsWithElevation(path);
+                        // Retry once
+                        configService.Save(path, config);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
                 logger.Debug("Successfully saved apps config");
             }
             catch (Exception ex)
             {
                 logger.Error(ex, $"Exception occurred while saving apps config");
+            }
+        }
+
+        private void TryFixFilePermissionsWithElevation(string filePath)
+        {
+            try
+            {
+                // Use PowerShell to grant Users modify permission on the file (icacls)
+                var script = $"Start-Process powershell -Verb runAs -ArgumentList \"-NoProfile -Command \"\"icacls `\"{filePath}`\" /grant *S-1-5-32-545:(M)\"\"\"";
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = "powershell",
+                    Arguments = script,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, "Failed to trigger permission fix");
+                throw;
             }
         }
         #endregion
