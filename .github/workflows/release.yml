@@ -22,8 +22,8 @@ jobs:
           extract: true
 
       - run: |
-          dotnet build src -c Release
-          playnite/Toolbox.exe pack src/bin/Release/net462/ dist
+          dotnet build . -c Release
+          playnite/Toolbox.exe pack bin/Release/net462/ dist
 
       - uses: actions/upload-artifact@v4
         with:
