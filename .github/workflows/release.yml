@@ -22,7 +22,7 @@ jobs:
           extract: true
 
       - run: |
-          dotnet build . -c Release
+          dotnet build ApolloSync.csproj --configuration Release
           playnite/Toolbox.exe pack bin/Release/net462/ dist
 
       - uses: actions/upload-artifact@v4
