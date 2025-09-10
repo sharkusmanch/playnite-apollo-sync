@@ -45,16 +45,12 @@ namespace ApolloSync.Services
 
             logger.Debug($"Game details - Name: {game.Name}, IsInstalled: {game.IsInstalled}, InstallDirectory: {game.InstallDirectory}");
 
-            if (!store.GameToUuid.TryGetValue(game.Id, out var uuid))
-            {
-                uuid = Guid.NewGuid();
-                store.GameToUuid[game.Id] = uuid;
-                logger.Debug($"Generated new UUID for game {game.Name}: {uuid}");
-            }
-            else
-            {
-                logger.Debug($"Using existing UUID for game {game.Name}: {uuid}");
-            }
+            // Use Playnite's own game GUID as the Apollo/Sunshine UUID.
+            var uuid = game.Id;
+
+            // Keep mapping in the managed store (identity mapping) for compatibility with existing flows.
+            store.GameToUuid[game.Id] = uuid;
+            logger.Debug($"Using Playnite game ID as UUID for {game.Name}: {uuid}");
 
             var entry = BuildAppEntry(game, uuid);
             if (entry == null)
@@ -75,6 +71,7 @@ namespace ApolloSync.Services
             var uuidStr = ToApolloUuid(uuid);
             logger.Debug($"Apollo UUID string: {uuidStr}");
 
+            // Find existing by new UUID
             var existing = apps.FirstOrDefault(a => string.Equals((string)a["uuid"], uuidStr, StringComparison.OrdinalIgnoreCase)) as JObject;
             if (existing != null)
             {
@@ -108,7 +105,8 @@ namespace ApolloSync.Services
 
             if (!store.GameToUuid.TryGetValue(game.Id, out var uuid))
             {
-                return false;
+                // Fallback to using the Playnite game ID directly (new behavior).
+                uuid = game.Id;
             }
 
             var apps = (JArray)(config["apps"] ?? new JArray());

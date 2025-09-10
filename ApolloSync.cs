@@ -50,41 +50,24 @@ namespace ApolloSync
 
         private bool IsGameManuallyRemoved(Game game, JObject config)
         {
-            // Check if game exists in apps.json but not in managed store
-            // This indicates it was manually removed and should not be re-added
-
-            if (managedStore.GameToUuid.ContainsKey(game.Id))
-            {
-                return false; // Game is managed, not manually removed
-            }
-
+            // Manual removal means: it WAS managed but its entry is now missing from apps.json.
+            // With identity UUIDs, presence is determined by uuid == game.Id.
             var apps = (JArray)(config["apps"] ?? new JArray());
+            var presentInConfig = apps
+                .OfType<JObject>()
+                .Select(a => (string)a["uuid"])
+                .Where(s => !string.IsNullOrEmpty(s) && Guid.TryParse(s, out _))
+                .Any(s => Guid.Parse(s) == game.Id);
 
-            // Check if any app in apps.json has this game's name or executable
-            foreach (var app in apps.OfType<JObject>())
+            var isManaged = managedStore.GameToUuid.ContainsKey(game.Id);
+
+            if (isManaged && !presentInConfig)
             {
-                var appName = (string)app["name"];
-                var appCmd = (string)app["cmd"];
-
-                // Simple heuristic: if name matches or executable path contains game install directory
-                if (!string.IsNullOrEmpty(appName) && appName.Equals(game.Name, StringComparison.OrdinalIgnoreCase))
-                {
-                    logger.Debug($"Game {game.Name} appears to be manually removed (found in apps.json but not managed)");
-                    return true;
-                }
-
-                // Check if executable path matches (more complex heuristic)
-                if (!string.IsNullOrEmpty(appCmd) && !string.IsNullOrEmpty(game.InstallDirectory))
-                {
-                    if (appCmd.IndexOf(game.InstallDirectory, StringComparison.OrdinalIgnoreCase) >= 0)
-                    {
-                        logger.Debug($"Game {game.Name} appears to be manually removed (executable path match)");
-                        return true;
-                    }
-                }
+                logger.Debug($"Game {game.Name} appears to be manually removed (was managed but missing from apps.json)");
+                return true;
             }
 
-            return false; // Not found in apps.json, safe to add
+            return false;
         }
         #endregion
 
