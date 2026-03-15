@@ -1,0 +1,14 @@
+AddonId: ApolloSync_f987343d-4168-4f44-9fb0-e3a21da314ad
+Packages:
+  - Version: 0.1.0
+    RequiredApiVersion: 6.12.0
+    ReleaseDate: 2026-03-15
+    PackageUrl: https://github.com/sharkusmanch/playnite-apollo-sync/releases/download/v0.1.0/ApolloSync_v0.1.0.pext
+    Changelog:
+      - Initial release
+      - Automatically export installed games to Apollo/Sunshine
+      - Automatically remove uninstalled games from Apollo/Sunshine
+      - Sync all installed games on library update
+      - Advanced filtering via Playnite filter presets, platforms, labels, and completion status
+      - Manual export/remove via game context menu
+      - Managed games window to view and manage exported games
