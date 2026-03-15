@@ -41,11 +41,30 @@ namespace ApolloSync
         }
 
         #region Helper Methods
-        private void ShowNotificationIfEnabled(NotificationMessage notification)
+        private void ShowNotificationIfEnabled(NotificationMessage notification, bool isUpdateOperation = false)
         {
-            if (settings.Settings.ShowNotifications)
+            var mode = settings.Settings.NotificationMode;
+
+            // For backward compatibility, check legacy ShowNotifications setting
+            if (!settings.Settings.ShowNotifications)
             {
-                PlayniteApi.Notifications.Add(notification);
+                mode = NotificationMode.Never;
+            }
+
+            switch (mode)
+            {
+                case NotificationMode.Always:
+                    PlayniteApi.Notifications.Add(notification);
+                    break;
+                case NotificationMode.OnUpdateOnly:
+                    if (isUpdateOperation)
+                    {
+                        PlayniteApi.Notifications.Add(notification);
+                    }
+                    break;
+                case NotificationMode.Never:
+                    // Don't show notifications
+                    break;
             }
         }
 
@@ -156,7 +175,7 @@ namespace ApolloSync
                 new MainMenuItem
                 {
                     Description = ResourceProvider.GetString("LOC_ApolloSync_Menu_SyncAll"),
-                    MenuSection = ResourceProvider.GetString("LOC_ApolloSync_MenuSection"),
+                    MenuSection = "@" + ResourceProvider.GetString("LOC_ApolloSync_MenuSection"),
                     Action = _ =>
                     {
                         Task.Run(() => SyncFilteredGamesWithProgress());
@@ -590,7 +609,7 @@ namespace ApolloSync
                 ShowNotificationIfEnabled(new NotificationMessage(
                     "apollosync-no-games",
                     "No games match the selected filter presets. Please check your filter preset configuration.",
-                    NotificationType.Error));
+                    NotificationType.Error), isUpdateOperation: true);
                 return;
             }
 
@@ -739,7 +758,7 @@ namespace ApolloSync
                     notificationType);
             }
 
-            ShowNotificationIfEnabled(notification);
+            ShowNotificationIfEnabled(notification, isUpdateOperation: true);
         }
 
         private void ExportGamesWithFeedback(IEnumerable<Game> games)
@@ -849,7 +868,7 @@ namespace ApolloSync
             ShowNotificationIfEnabled(new NotificationMessage(
                 "apollosync-export-complete",
                 message,
-                notificationType));
+                notificationType), isUpdateOperation: false);
         }
 
         private void RemoveGamesWithFeedback(IEnumerable<Game> games)
@@ -944,7 +963,7 @@ namespace ApolloSync
             ShowNotificationIfEnabled(new NotificationMessage(
                 "apollosync-remove-complete",
                 message,
-                notificationType));
+                notificationType), isUpdateOperation: false);
         }
 
         private void PinGames(IEnumerable<Game> games)
@@ -974,14 +993,14 @@ namespace ApolloSync
                 ShowNotificationIfEnabled(new NotificationMessage(
                     "apollosync-pin-complete",
                     $"Pinned {pinnedCount} games. Pinned games will not be automatically removed when filters change or games are uninstalled.",
-                    NotificationType.Info));
+                    NotificationType.Info), isUpdateOperation: false);
             }
             else
             {
                 ShowNotificationIfEnabled(new NotificationMessage(
                     "apollosync-pin-info",
                     "All selected games are already pinned.",
-                    NotificationType.Info));
+                    NotificationType.Info), isUpdateOperation: false);
             }
         }
 
@@ -1012,14 +1031,14 @@ namespace ApolloSync
                 ShowNotificationIfEnabled(new NotificationMessage(
                     "apollosync-unpin-complete",
                     $"Unpinned {unpinnedCount} games. These games may now be automatically removed based on your filter settings.",
-                    NotificationType.Info));
+                    NotificationType.Info), isUpdateOperation: false);
             }
             else
             {
                 ShowNotificationIfEnabled(new NotificationMessage(
                     "apollosync-unpin-info",
                     "None of the selected games were pinned.",
-                    NotificationType.Info));
+                    NotificationType.Info), isUpdateOperation: false);
             }
         }
         #endregion

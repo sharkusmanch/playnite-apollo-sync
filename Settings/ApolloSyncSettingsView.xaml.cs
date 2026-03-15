@@ -112,10 +112,74 @@ namespace ApolloSync
             };
             stack.Children.Add(notificationsHeader);
 
-            // Show notifications
-            var chkShowNotifications = new CheckBox { Content = "Show sync notifications", Margin = new Thickness(20, 0, 0, 4) };
-            chkShowNotifications.SetBinding(CheckBox.IsCheckedProperty, new Binding("Settings.ShowNotifications") { Mode = BindingMode.TwoWay });
-            stack.Children.Add(chkShowNotifications);
+            // Notification mode selector
+            var notificationModePanel = new StackPanel { Margin = new Thickness(20, 0, 0, 8) };
+            var notificationModeLabel = new TextBlock
+            {
+                Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_NotificationMode") + ":",
+                Margin = new Thickness(0, 0, 0, 4)
+            };
+            notificationModePanel.Children.Add(notificationModeLabel);
+
+            var notificationModeCombo = new ComboBox { Width = 250, HorizontalAlignment = HorizontalAlignment.Left };
+            notificationModeCombo.Items.Add(new ComboBoxItem
+            {
+                Content = ResourceProvider.GetString("LOC_ApolloSync_Settings_NotificationMode_Always"),
+                Tag = NotificationMode.Always
+            });
+            notificationModeCombo.Items.Add(new ComboBoxItem
+            {
+                Content = ResourceProvider.GetString("LOC_ApolloSync_Settings_NotificationMode_OnUpdateOnly"),
+                Tag = NotificationMode.OnUpdateOnly
+            });
+            notificationModeCombo.Items.Add(new ComboBoxItem
+            {
+                Content = ResourceProvider.GetString("LOC_ApolloSync_Settings_NotificationMode_Never"),
+                Tag = NotificationMode.Never
+            });
+
+            // Set initial selection based on settings
+            notificationModeCombo.Loaded += (s, e) =>
+            {
+                if (DataContext is ApolloSyncSettingsViewModel vm)
+                {
+                    var mode = vm.Settings.NotificationMode;
+                    foreach (ComboBoxItem item in notificationModeCombo.Items)
+                    {
+                        if (item.Tag is NotificationMode itemMode && itemMode == mode)
+                        {
+                            notificationModeCombo.SelectedItem = item;
+                            break;
+                        }
+                    }
+                }
+            };
+
+            // Handle selection changes
+            notificationModeCombo.SelectionChanged += (s, e) =>
+            {
+                if (notificationModeCombo.SelectedItem is ComboBoxItem item &&
+                    item.Tag is NotificationMode mode &&
+                    DataContext is ApolloSyncSettingsViewModel vm)
+                {
+                    vm.Settings.NotificationMode = mode;
+                }
+            };
+
+            notificationModePanel.Children.Add(notificationModeCombo);
+
+            stack.Children.Add(notificationModePanel);
+
+            // Help text for notifications
+            var notificationHelpText = new TextBlock
+            {
+                Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_NotificationMode_Help"),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(20, 0, 0, 8),
+                FontStyle = FontStyles.Italic,
+                Foreground = System.Windows.Media.Brushes.Gray
+            };
+            stack.Children.Add(notificationHelpText);
 
             stack.Children.Add(new Separator { Margin = new Thickness(0, 16, 0, 16) });
 

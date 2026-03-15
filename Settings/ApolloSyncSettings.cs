@@ -9,6 +9,13 @@ using System.Threading.Tasks;
 
 namespace ApolloSync
 {
+    public enum NotificationMode
+    {
+        Always,
+        OnUpdateOnly,
+        Never
+    }
+
     public class LabelOption
     {
         public string Name { get; set; }
@@ -72,6 +79,13 @@ namespace ApolloSync
         {
             get => showNotifications;
             set => SetValue(ref showNotifications, value);
+        }
+
+        private NotificationMode notificationMode = NotificationMode.Always;
+        public NotificationMode NotificationMode
+        {
+            get => notificationMode;
+            set => SetValue(ref notificationMode, value);
         }
 
         private Dictionary<Guid, Guid> managedGameMappings = new Dictionary<Guid, Guid>();
