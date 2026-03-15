@@ -4,22 +4,10 @@ on:
 name: Main
 
 jobs:
-  pre-commit:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.7'
-      - run: |
-          pip install pre-commit
-          dotnet tool install -g dotnet-format
-          pre-commit run --all-files --show-diff-on-failure
-
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: robinraju/release-downloader@v1.8
         id: download_playnite
@@ -33,4 +21,12 @@ jobs:
           extract: true
 
       - run: |
-          dotnet build . -c Release
+          dotnet build ApolloSync.csproj -c Release
+
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - run: |
+          dotnet test Tests/ApolloSync.Tests.csproj

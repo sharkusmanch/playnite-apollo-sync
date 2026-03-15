@@ -8,7 +8,7 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - uses: robinraju/release-downloader@v1.8
         id: download_playnite
@@ -17,15 +17,17 @@ jobs:
           latest: true
           tarBall: false
           zipBall: false
-          fileName: "Playnite*.zip"
+          fileName: "*.7z"
           out-file-path: playnite
-          extract: true
+
+      - name: Extract Playnite
+        run: 7z x playnite/*.7z -oplaynite
 
       - run: |
-          dotnet build ApolloSync.csproj --configuration Release
+          dotnet build ApolloSync.csproj -c Release
           playnite/Toolbox.exe pack bin/Release/net462/ dist
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         with:
           name: artifacts
           path: |
@@ -37,7 +39,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Get Version
         id: version
@@ -46,12 +48,12 @@ jobs:
           cmd: yq '.Version' extension.yaml
 
       - name: Pull artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: artifacts
 
       - run: |
-          mv LudusaviRestic_*.pext LudusaviRestic_v${{ steps.version.outputs.result }}.pext
+          mv ApolloSync_*.pext ApolloSync_v${{ steps.version.outputs.result }}.pext
 
       - uses: "marvinpinto/action-automatic-releases@latest"
         with:
