@@ -18,14 +18,14 @@ jobs:
           tarBall: false
           zipBall: false
           fileName: "*.7z"
-          out-file-path: playnite
+          out-file-path: ${{ runner.temp }}/playnite
 
       - name: Extract Playnite
-        run: 7z x playnite/*.7z -oplaynite
+        run: 7z x ${{ runner.temp }}/playnite/*.7z -o${{ runner.temp }}/playnite
 
       - run: |
           dotnet build ApolloSync.csproj -c Release
-          playnite/Toolbox.exe pack bin/Release/net462/ dist
+          ${{ runner.temp }}/playnite/Toolbox.exe pack bin/Release/net462/ dist
 
       - uses: actions/upload-artifact@v6
         with:

@@ -17,7 +17,7 @@ jobs:
           tarBall: false
           zipBall: false
           fileName: "Playnite*.zip"
-          out-file-path: playnite
+          out-file-path: ${{ runner.temp }}/playnite
           extract: true
 
       - run: |
