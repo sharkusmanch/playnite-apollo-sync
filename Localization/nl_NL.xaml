@@ -1,0 +1,84 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <sys:String x:Key="LOC_ApolloSync_Settings_AutoExportInstalledGames">Geïnstalleerde games automatisch exporteren naar apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AutoRemoveUninstalledGames">Verwijderde games automatisch uit apps.json verwijderen</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Enable">Inschakelen</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncAllOnLibraryUpdate">Bij bibliotheekupdate controleren of alle geïnstalleerde games zijn geëxporteerd</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath">Pad naar Apollo/Sunshine apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Browse">Bladeren</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Browse_Title">apps.json selecteren</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath_Help">Stel het pad in naar het Apollo- of Sunshine-bestand apps.json. Alleen items die door deze extensie worden beheerd, worden toegevoegd/verwijderd.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath_Invalid">Het pad naar apps.json is ongeldig of niet toegankelijk.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Export">Exporteren naar Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Remove">Verwijderen uit Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Pin">Game vastpinnen (automatisch verwijderen voorkomen)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Unpin">Game losmaken (automatisch verwijderen toestaan)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_SyncAll">Alle geïnstalleerde games synchroniseren met Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_ManageGames">Geëxporteerde games beheren...</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_MenuSection">ApolloSync</sys:String>
+
+    <!-- Tabs -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_General">Algemeen</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_Filters">Filters</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_ManageGames">Games beheren</sys:String>
+
+    <!-- General Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnSettingsUpdated">Synchroniseren bij wijziging van instellingen</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnLibraryUpdate">Synchroniseren bij bibliotheekupdate</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnStartup">Synchroniseren bij het starten van Playnite</sys:String>
+
+    <!-- Notification Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode">Meldingsmodus</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Always">Meldingen altijd tonen</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_OnUpdateOnly">Alleen bij synchronisatie-/updatebewerkingen</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Never">Nooit (stil uitvoeren)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Help">Bepaalt wanneer ApolloSync meldingen toont:
+• Altijd: Alle meldingen tonen (exports, vastpinnen, fouten)
+• Alleen bij update: Alleen meldingen tonen tijdens synchronisatie-/updatebewerkingen
+• Nooit: Volledig stil uitvoeren</sys:String>
+
+    <!-- Filter Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">Installatiestatusfilter</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">Geïnstalleerde games opnemen</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Wanneer ingeschakeld, worden alleen geïnstalleerde games in aanmerking genomen voor export.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">Platformfilters</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">Selecteer platformen om op te nemen in de export. Als er geen zijn geselecteerd, worden alle platformen opgenomen.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">Labelfilter</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">Alleen games met dit label exporteren. Laat leeg om alle games te exporteren.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Geen label vereist</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">Standaardlabel aanmaken</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">Voltooiingsstatusfilter</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">Selecteer voltooiingsstatussen om op te nemen in de export. Als er geen zijn geselecteerd, worden alle voltooiingsstatussen opgenomen.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">Categoriefilter</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">Selecteer categorieën om op te nemen in de export. Als er geen zijn geselecteerd, worden alle categorieën opgenomen.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filtervoorinstelling</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite-filtervoorinstelling gebruiken</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Wanneer ingeschakeld, wordt de geselecteerde filtervoorinstelling gebruikt in plaats van de afzonderlijke filters hieronder. Maak filtervoorinstellingen aan in de hoofdbibliotheekweergave van Playnite.</sys:String>
+
+    <!-- Manage Games Tab -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Geëxporteerde games beheren</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames_Help">Bekijk en beheer games die naar Apollo/Sunshine zijn geëxporteerd. Vastgepinde games worden niet automatisch verwijderd wanneer filters wijzigen of games worden verwijderd.</sys:String>
+
+    <!-- Progress and feedback messages -->
+    <sys:String x:Key="LOC_ApolloSync_Progress_SyncAll_Title">Games synchroniseren met Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Progress_SyncAll_Current">Verwerken: {0}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_NoInstalledGames">Geen geïnstalleerde games gevonden om te synchroniseren.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_SyncAll_Complete">Synchronisatie succesvol voltooid.
+
+Geslaagd: {0}
+Mislukt: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Export_Complete">Export voltooid.
+
+Geslaagd: {0}
+Mislukt: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Remove_Complete">Verwijdering voltooid.
+
+Geslaagd: {0}
+Mislukt: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Errors">Fouten opgetreden</sys:String>
+    <!-- New: Permission prompt for apps.json write -->
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync heeft toestemming nodig om apps.json in Program Files te schrijven. Machtigingen corrigeren?</sys:String>
+</ResourceDictionary>

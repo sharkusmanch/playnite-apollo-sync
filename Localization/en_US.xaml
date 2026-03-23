@@ -27,6 +27,16 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnSettingsUpdated">Sync when settings are updated</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnLibraryUpdate">Sync when library is updated</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnStartup">Sync when Playnite starts</sys:String>
+    
+    <!-- Notification Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode">Notification mode</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Always">Always show notifications</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_OnUpdateOnly">Only on sync/update operations</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Never">Never (run silently)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Help">Controls when ApolloSync displays notifications:
+• Always: Show all notifications (exports, pins, errors)
+• On update only: Only show notifications during sync/update operations
+• Never: Run completely silently</sys:String>
 
     <!-- Filter Settings -->
     <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">Installation Status Filter</sys:String>

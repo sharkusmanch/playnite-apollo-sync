@@ -1,0 +1,84 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <sys:String x:Key="LOC_ApolloSync_Settings_AutoExportInstalledGames">설치된 게임을 apps.json에 자동 내보내기</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AutoRemoveUninstalledGames">제거된 게임을 apps.json에서 자동 삭제</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Enable">사용</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncAllOnLibraryUpdate">라이브러리 업데이트 시 설치된 모든 게임을 내보내기</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath">Apollo/Sunshine apps.json 경로</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Browse">찾아보기</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Browse_Title">apps.json 선택</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath_Help">Apollo 또는 Sunshine apps.json 파일의 경로를 설정합니다. 이 확장 프로그램이 관리하는 항목만 추가/제거됩니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath_Invalid">apps.json 경로가 유효하지 않거나 접근할 수 없습니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Export">Apollo/Sunshine에 내보내기</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Remove">Apollo/Sunshine에서 제거</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Pin">게임 고정 (자동 제거 방지)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Unpin">게임 고정 해제 (자동 제거 허용)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_SyncAll">설치된 모든 게임을 Apollo/Sunshine에 동기화</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_ManageGames">내보낸 게임 관리...</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_MenuSection">ApolloSync</sys:String>
+
+    <!-- Tabs -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_General">일반</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_Filters">필터</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_ManageGames">게임 관리</sys:String>
+
+    <!-- General Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnSettingsUpdated">설정 변경 시 동기화</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnLibraryUpdate">라이브러리 업데이트 시 동기화</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnStartup">Playnite 시작 시 동기화</sys:String>
+
+    <!-- Notification Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode">알림 모드</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Always">항상 알림 표시</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_OnUpdateOnly">동기화/업데이트 작업 시에만</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Never">알림 없음 (자동 실행)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Help">ApolloSync 알림 표시 시점을 제어합니다:
+• 항상: 모든 알림 표시 (내보내기, 고정, 오류)
+• 업데이트 시에만: 동기화/업데이트 작업 중에만 알림 표시
+• 알림 없음: 완전히 자동으로 실행</sys:String>
+
+    <!-- Filter Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">설치 상태 필터</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">설치된 게임 포함</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">활성화하면 설치된 게임만 내보내기 대상이 됩니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">플랫폼 필터</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">내보내기에 포함할 플랫폼을 선택합니다. 선택하지 않으면 모든 플랫폼이 포함됩니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">라벨 필터</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">이 라벨이 있는 게임만 내보냅니다. 선택하지 않으면 모든 게임이 내보내집니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">라벨 필요 없음</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">기본 라벨 만들기</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">완료 상태 필터</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">내보내기에 포함할 완료 상태를 선택합니다. 선택하지 않으면 모든 완료 상태가 포함됩니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">카테고리 필터</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">내보내기에 포함할 카테고리를 선택합니다. 선택하지 않으면 모든 카테고리가 포함됩니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">필터 프리셋</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite 필터 프리셋 사용</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">활성화하면 아래의 개별 필터 대신 선택한 필터 프리셋이 사용됩니다. 필터 프리셋은 Playnite의 메인 라이브러리 화면에서 만들 수 있습니다.</sys:String>
+
+    <!-- Manage Games Tab -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">내보낸 게임 관리</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames_Help">Apollo/Sunshine에 내보낸 게임을 보고 관리합니다. 고정된 게임은 필터가 변경되거나 게임이 제거되어도 자동으로 삭제되지 않습니다.</sys:String>
+
+    <!-- Progress and feedback messages -->
+    <sys:String x:Key="LOC_ApolloSync_Progress_SyncAll_Title">Apollo/Sunshine에 게임 동기화 중</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Progress_SyncAll_Current">처리 중: {0}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_NoInstalledGames">동기화할 설치된 게임이 없습니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_SyncAll_Complete">동기화가 완료되었습니다.
+
+성공: {0}
+실패: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Export_Complete">내보내기가 완료되었습니다.
+
+성공: {0}
+실패: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Remove_Complete">제거가 완료되었습니다.
+
+성공: {0}
+실패: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Errors">오류가 발생했습니다</sys:String>
+    <!-- New: Permission prompt for apps.json write -->
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync에서 Program Files의 apps.json에 쓰기 권한이 필요합니다. 권한을 수정하시겠습니까?</sys:String>
+</ResourceDictionary>

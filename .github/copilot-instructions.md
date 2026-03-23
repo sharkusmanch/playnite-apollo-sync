@@ -44,6 +44,7 @@ Outputs:
 
 ## Code layout
 - ApolloSync.cs: Main plugin orchestration (menus, syncing, pin/unpin, filter logic, managed store sync).
+  - ShowNotificationIfEnabled: Respects NotificationMode setting (Always, OnUpdateOnly, Never)
 - Services/SyncService.cs:
   - AddOrUpdate(JObject config, ManagedStore store, Game game): builds/updates apps.json entry.
   - Remove(JObject config, ManagedStore store, Game game): removes from apps.json and store.

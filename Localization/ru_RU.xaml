@@ -1,0 +1,84 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <sys:String x:Key="LOC_ApolloSync_Settings_AutoExportInstalledGames">Автоматически экспортировать установленные игры в apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AutoRemoveUninstalledGames">Автоматически удалять деинсталлированные игры из apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Enable">Включить</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncAllOnLibraryUpdate">При обновлении библиотеки убедиться, что все установленные игры экспортированы</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath">Путь к файлу Apollo/Sunshine apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Browse">Обзор</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Browse_Title">Выберите apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath_Help">Укажите путь к файлу apps.json приложения Apollo или Sunshine. Будут добавлены/удалены только записи, управляемые этим расширением.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath_Invalid">Путь к apps.json недействителен или недоступен.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Export">Экспортировать в Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Remove">Удалить из Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Pin">Закрепить игру (предотвратить автоматическое удаление)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Unpin">Открепить игру (разрешить автоматическое удаление)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_SyncAll">Синхронизировать все установленные игры с Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_ManageGames">Управление экспортированными играми...</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_MenuSection">ApolloSync</sys:String>
+
+    <!-- Tabs -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_General">Общие</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_Filters">Фильтры</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_ManageGames">Управление играми</sys:String>
+
+    <!-- General Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnSettingsUpdated">Синхронизировать при изменении настроек</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnLibraryUpdate">Синхронизировать при обновлении библиотеки</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnStartup">Синхронизировать при запуске Playnite</sys:String>
+
+    <!-- Notification Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode">Режим уведомлений</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Always">Всегда показывать уведомления</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_OnUpdateOnly">Только при синхронизации/обновлении</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Never">Никогда (работать без уведомлений)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Help">Управляет отображением уведомлений ApolloSync:
+• Всегда: Показывать все уведомления (экспорт, закрепление, ошибки)
+• Только при обновлении: Показывать уведомления только во время синхронизации/обновления
+• Никогда: Работать полностью без уведомлений</sys:String>
+
+    <!-- Filter Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">Фильтр по статусу установки</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">Включать установленные игры</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Если включено, только установленные игры будут рассматриваться для экспорта.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">Фильтры платформ</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">Выберите платформы для включения в экспорт. Если ни одна не выбрана, будут включены все платформы.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">Фильтр по меткам</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">Экспортировать только игры с этой меткой. Оставьте пустым, чтобы экспортировать все игры.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Метка не требуется</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">Создать метку по умолчанию</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">Фильтр по статусу прохождения</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">Выберите статусы прохождения для включения в экспорт. Если ни один не выбран, будут включены все статусы прохождения.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">Фильтр по категориям</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">Выберите категории для включения в экспорт. Если ни одна не выбрана, будут включены все категории.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Предустановка фильтра</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Использовать предустановку фильтра Playnite</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Если включено, вместо отдельных фильтров ниже будет использоваться выбранная предустановка фильтра. Создавайте предустановки фильтров в главном представлении библиотеки Playnite.</sys:String>
+
+    <!-- Manage Games Tab -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Управление экспортированными играми</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames_Help">Просмотр и управление играми, экспортированными в Apollo/Sunshine. Закреплённые игры не будут автоматически удалены при изменении фильтров или деинсталляции игр.</sys:String>
+
+    <!-- Progress and feedback messages -->
+    <sys:String x:Key="LOC_ApolloSync_Progress_SyncAll_Title">Синхронизация игр с Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Progress_SyncAll_Current">Обработка: {0}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_NoInstalledGames">Установленные игры для синхронизации не найдены.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_SyncAll_Complete">Синхронизация успешно завершена.
+
+Успешно: {0}
+Ошибок: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Export_Complete">Экспорт завершён.
+
+Успешно: {0}
+Ошибок: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Remove_Complete">Удаление завершено.
+
+Успешно: {0}
+Ошибок: {1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Errors">Обнаружены ошибки</sys:String>
+    <!-- New: Permission prompt for apps.json write -->
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync необходимо разрешение на запись apps.json в Program Files. Разрешить исправление прав доступа?</sys:String>
+</ResourceDictionary>
