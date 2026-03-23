@@ -5,8 +5,7 @@ Packages:
     ReleaseDate: 2026-03-23
     PackageUrl: https://github.com/sharkusmanch/playnite-apollo-sync/releases/download/v1.0.1/ApolloSync_v1.0.1.pext
     Changelog:
-      - add localization for 18 languages
-      - Add version validation, bump workflow, and bump task
+      - Add 18 new language translations
   - Version: 1.0.0
     RequiredApiVersion: 6.12.0
     ReleaseDate: 2026-03-15
