@@ -1,0 +1,84 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib">
+    <sys:String x:Key="LOC_ApolloSync_Settings_AutoExportInstalledGames">自動將已安裝的遊戲匯出到apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AutoRemoveUninstalledGames">自動從apps.json中移除已解除安裝的遊戲</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Enable">啟用</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncAllOnLibraryUpdate">媒體庫更新時，確保所有已安裝的遊戲已匯出</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath">Apollo/Sunshine apps.json路徑</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Browse">瀏覽</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Browse_Title">選擇apps.json</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath_Help">設定Apollo或Sunshine apps.json檔案的路徑。只有由此擴充功能管理的項目會被新增/移除。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_AppsJsonPath_Invalid">apps.json路徑無效或無法存取。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Export">匯出到Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Remove">從Apollo/Sunshine移除</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Pin">釘選遊戲（防止自動移除）</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_Unpin">取消釘選遊戲（允許自動移除）</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_SyncAll">將所有已安裝的遊戲同步到Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Menu_ManageGames">管理已匯出的遊戲...</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_MenuSection">ApolloSync</sys:String>
+
+    <!-- Tabs -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_General">一般</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_Filters">篩選</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Tab_ManageGames">管理遊戲</sys:String>
+
+    <!-- General Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnSettingsUpdated">設定更新時同步</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnLibraryUpdate">媒體庫更新時同步</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_SyncOnStartup">Playnite啟動時同步</sys:String>
+
+    <!-- Notification Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode">通知模式</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Always">一律顯示通知</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_OnUpdateOnly">僅在同步/更新操作時</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Never">從不（靜默執行）</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NotificationMode_Help">控制ApolloSync顯示通知的時機：
+• 一律：顯示所有通知（匯出、釘選、錯誤）
+• 僅更新時：僅在同步/更新操作期間顯示通知
+• 從不：完全靜默執行</sys:String>
+
+    <!-- Filter Settings -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">安裝狀態篩選</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">包含已安裝的遊戲</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">啟用後，僅已安裝的遊戲會被納入匯出範圍。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">平台篩選</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">選擇要包含在匯出中的平台。如果未選擇任何平台，則包含所有平台。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">標籤篩選</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">僅匯出具有此標籤的遊戲。不選擇則匯出所有遊戲。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">不需要標籤</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">建立預設標籤</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">完成狀態篩選</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">選擇要包含在匯出中的完成狀態。如果未選擇，則包含所有完成狀態。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">分類篩選</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">選擇要包含在匯出中的分類。如果未選擇，則包含所有分類。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">篩選預設</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">使用Playnite篩選預設</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">啟用後，將使用所選的篩選預設取代下方的各項篩選條件。可在Playnite的主媒體庫檢視中建立篩選預設。</sys:String>
+
+    <!-- Manage Games Tab -->
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">管理已匯出的遊戲</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames_Help">檢視和管理已匯出到Apollo/Sunshine的遊戲。釘選的遊戲在篩選條件變更或遊戲解除安裝時不會被自動移除。</sys:String>
+
+    <!-- Progress and feedback messages -->
+    <sys:String x:Key="LOC_ApolloSync_Progress_SyncAll_Title">正在將遊戲同步到Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Progress_SyncAll_Current">處理中：{0}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_NoInstalledGames">未找到可同步的已安裝遊戲。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_SyncAll_Complete">同步完成。
+
+成功：{0}
+失敗：{1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Export_Complete">匯出完成。
+
+成功：{0}
+失敗：{1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Remove_Complete">移除完成。
+
+成功：{0}
+失敗：{1}</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Message_Errors">發生錯誤</sys:String>
+    <!-- New: Permission prompt for apps.json write -->
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync需要權限以寫入Program Files中的apps.json。是否允許修正權限？</sys:String>
+</ResourceDictionary>
