@@ -5,8 +5,10 @@ Packages:
     ReleaseDate: 2026-03-30
     PackageUrl: https://github.com/sharkusmanch/playnite-apollo-sync/releases/download/v1.1.0/ApolloSync_v1.1.0.pext
     Changelog:
-      - '"Claude PR Assistant workflow"'
-      - '"Claude Code Review workflow"'
+      - Convert non-PNG cover images to PNG for Apollo compatibility
+      - Auto-detect cover image changes and re-sync affected games
+      - Run sync in background instead of blocking Playnite UI
+      - Thread safety improvements for concurrent operations
   - Version: 1.0.1
     RequiredApiVersion: 6.12.0
     ReleaseDate: 2026-03-23
