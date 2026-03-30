@@ -13,9 +13,20 @@ namespace ApolloSync.Tests
     [TestClass]
     public class AppsJsonManagementTests
     {
+        private static readonly string TestBaseDir = Path.Combine(Path.GetTempPath(), "ApolloSyncTests_Mgmt");
+
+        [TestCleanup]
+        public void Cleanup()
+        {
+            if (Directory.Exists(TestBaseDir))
+            {
+                Directory.Delete(TestBaseDir, true);
+            }
+        }
+
         private static string CreateTempFilePath()
         {
-            var dir = Path.Combine(Path.GetTempPath(), "ApolloSyncTests", Guid.NewGuid().ToString("N"));
+            var dir = Path.Combine(TestBaseDir, Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(dir);
             return Path.Combine(dir, "apps.json");
         }
@@ -62,10 +73,10 @@ namespace ApolloSync.Tests
                 // Check mapping exists (either game)
                 Assert.IsTrue(store.GameToUuid.Values.Contains(uuid));
             }
-    }
+        }
 
-    [TestMethod]
-    public void Remove_Selected_Single_Removes_From_Apps_And_Store()
+        [TestMethod]
+        public void Remove_Selected_Single_Removes_From_Apps_And_Store()
         {
             // Arrange
             var sync = new SyncService();
@@ -84,9 +95,9 @@ namespace ApolloSync.Tests
             Assert.IsTrue(ok);
             Assert.AreEqual(0, ((JArray)config["apps"]).Count);
             Assert.IsFalse(store.GameToUuid.ContainsKey(game.Id));
-    }
+        }
 
-    [TestMethod]
+        [TestMethod]
         public void Remove_FilteredOut_NotPinned_Removes_Entry()
         {
             // This test simulates the logic of RemoveFilteredOutGames without using ApolloSync internals.
@@ -94,8 +105,8 @@ namespace ApolloSync.Tests
             var config = new JObject { ["apps"] = new JArray() };
             var store = new ManagedStore();
 
-            var g1 = new Playnite.SDK.Models.Game("Match") { Id = Guid.NewGuid() };
-            var g2 = new Playnite.SDK.Models.Game("NoMatch") { Id = Guid.NewGuid() };
+            var g1 = new Game("Match") { Id = Guid.NewGuid() };
+            var g2 = new Game("NoMatch") { Id = Guid.NewGuid() };
 
             var uuid1 = Guid.NewGuid();
             var uuid2 = Guid.NewGuid();
@@ -108,17 +119,16 @@ namespace ApolloSync.Tests
 
             // Simulate filter: only g1 matches, g2 does not, and g2 is not pinned.
             var pinned = new HashSet<Guid>();
-            Func<Playnite.SDK.Models.Game, bool> meetsFilter = game => game.Id == g1.Id;
+            Func<Game, bool> meetsFilter = game => game.Id == g1.Id;
 
             // Act: perform simplified removal similar to RemoveFilteredOutGames
             var removedCount = 0;
-            var toRemoveApps = new System.Collections.Generic.List<JObject>();
-            var toRemoveGames = new System.Collections.Generic.List<Guid>();
+            var toRemoveApps = new List<JObject>();
+            var toRemoveGames = new List<Guid>();
             foreach (var kv in store.GameToUuid.ToList())
             {
                 var gameId = kv.Key;
                 var appUuid = kv.Value;
-                // Look up pseudo game by mapping
                 var game = gameId == g1.Id ? g1 : g2;
                 if (pinned.Contains(gameId)) continue;
                 if (!meetsFilter(game))
@@ -129,14 +139,14 @@ namespace ApolloSync.Tests
                 }
             }
             foreach (var a in toRemoveApps) { apps.Remove(a); removedCount++; }
-            foreach (var gid in toRemoveGames) { store.GameToUuid.Remove(gid); }
+            foreach (var gid in toRemoveGames) { Guid rem; store.GameToUuid.TryRemove(gid, out rem); }
 
             // Assert
             Assert.AreEqual(1, removedCount);
             Assert.AreEqual(1, apps.Count);
             Assert.IsTrue(store.GameToUuid.ContainsKey(g1.Id));
             Assert.IsFalse(store.GameToUuid.ContainsKey(g2.Id));
-    }
+        }
 
         [TestMethod]
         public void Remove_FilteredOut_Pinned_Skips_Removal()
@@ -145,13 +155,13 @@ namespace ApolloSync.Tests
             var config = new JObject { ["apps"] = new JArray() };
             var store = new ManagedStore();
 
-            var g = new Playnite.SDK.Models.Game("Pinned") { Id = Guid.NewGuid() };
+            var g = new Game("Pinned") { Id = Guid.NewGuid() };
             var uuid = Guid.NewGuid();
             store.GameToUuid[g.Id] = uuid;
             ((JArray)config["apps"]).Add(new JObject { ["name"] = g.Name, ["uuid"] = uuid.ToString().ToUpperInvariant() });
 
             var pinned = new HashSet<Guid> { g.Id };
-            Func<Playnite.SDK.Models.Game, bool> meetsFilter = _ => false; // filtered out
+            Func<Game, bool> meetsFilter = _ => false; // filtered out
 
             // Act
             var apps = (JArray)config["apps"];
@@ -170,7 +180,7 @@ namespace ApolloSync.Tests
                         apps.Remove(app);
                         removedCount++;
                     }
-                    store.GameToUuid.Remove(gameId);
+                    Guid rem; store.GameToUuid.TryRemove(gameId, out rem);
                 }
             }
 
