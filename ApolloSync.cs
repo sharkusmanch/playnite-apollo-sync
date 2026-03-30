@@ -6,6 +6,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Controls;
 using System.IO;
@@ -26,6 +27,7 @@ namespace ApolloSync
         private readonly IConfigService configService = new ConfigService();
         private readonly IManagedStoreService storeService = new ManagedStoreService();
         private readonly ISyncService syncService;
+        private readonly object _configLock = new object();
 
         public override Guid Id { get; } = Guid.Parse("f987343d-4168-4f44-9fb0-e3a21da314ad");
 
@@ -93,6 +95,9 @@ namespace ApolloSync
 
         public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
         {
+            // Subscribe to game metadata changes (e.g., cover image updates)
+            PlayniteApi.Database.Games.ItemUpdated += Games_ItemUpdated;
+
             // Sync managed store on startup to remove orphaned entries
             SyncManagedStore();
 
@@ -100,17 +105,27 @@ namespace ApolloSync
             if (settings.Settings.SyncOnStartup)
             {
                 logger.Info("Triggering sync due to application startup");
-                Task.Run(() => SyncFilteredGamesWithProgress());
+                SyncFilteredGamesWithProgress();
             }
         }
 
         public override void OnGameInstalled(OnGameInstalledEventArgs args)
         {
+            // Skip if a full sync is already running — it will process this game
+            if (_syncRunning == 1)
+            {
+                logger.Debug($"Skipping OnGameInstalled for {args.Game.Name} — sync in progress");
+                return;
+            }
+
             // Check if the newly installed game meets our filter criteria
             var filteredGames = GetFilteredGames();
             if (filteredGames.Any(g => g.Id == args.Game.Id))
             {
-                TryAddOrUpdateApp(args.Game);
+                lock (_configLock)
+                {
+                    TryAddOrUpdateApp(args.Game);
+                }
             }
         }
 
@@ -138,7 +153,32 @@ namespace ApolloSync
 
         public override void OnApplicationStopped(OnApplicationStoppedEventArgs args)
         {
-            // Add code to be executed when Playnite is shutting down.
+            PlayniteApi.Database.Games.ItemUpdated -= Games_ItemUpdated;
+            CancelSync();
+            try
+            {
+                _syncTask?.Wait(TimeSpan.FromSeconds(5));
+            }
+            catch (AggregateException) { }
+        }
+
+        private void Games_ItemUpdated(object sender, ItemUpdatedEventArgs<Game> args)
+        {
+            // Skip if a full sync is already running
+            if (_syncRunning == 1) return;
+
+            foreach (var update in args.UpdatedItems)
+            {
+                if (update.OldData.CoverImage != update.NewData.CoverImage
+                    && GameMeetsCurrentFilters(update.NewData))
+                {
+                    logger.Info($"Cover image changed for game: {update.NewData.Name}");
+                    lock (_configLock)
+                    {
+                        TryAddOrUpdateApp(update.NewData);
+                    }
+                }
+            }
         }
 
         public override void OnLibraryUpdated(OnLibraryUpdatedEventArgs args)
@@ -149,7 +189,7 @@ namespace ApolloSync
             }
 
             // Perform full sync on library update
-            Task.Run(() => SyncFilteredGamesWithProgress());
+            SyncFilteredGamesWithProgress();
         }
 
         public void TriggerSyncOnSettingsUpdate()
@@ -176,10 +216,7 @@ namespace ApolloSync
                 {
                     Description = ResourceProvider.GetString("LOC_ApolloSync_Menu_SyncAll"),
                     MenuSection = "@" + ResourceProvider.GetString("LOC_ApolloSync_MenuSection"),
-                    Action = _ =>
-                    {
-                        Task.Run(() => SyncFilteredGamesWithProgress());
-                    }
+                    Action = _ => SyncFilteredGamesWithProgress()
                 }
             };
         }
@@ -231,10 +268,7 @@ namespace ApolloSync
             {
                 Description = ResourceProvider.GetString("LOC_ApolloSync_Menu_SyncAll"),
                 MenuSection = ResourceProvider.GetString("LOC_ApolloSync_MenuSection"),
-                Action = _ =>
-                {
-                    Task.Run(() => SyncFilteredGamesWithProgress());
-                }
+                Action = _ => SyncFilteredGamesWithProgress()
             });
             return items;
         }
@@ -245,7 +279,8 @@ namespace ApolloSync
             // Load managed store from plugin settings instead of separate file
             managedStore = new ManagedStore
             {
-                GameToUuid = settings.Settings.ManagedGameMappings ?? new Dictionary<Guid, Guid>()
+                GameToUuid = new System.Collections.Concurrent.ConcurrentDictionary<Guid, Guid>(
+                    settings.Settings.ManagedGameMappings ?? new Dictionary<Guid, Guid>())
             };
             logger.Debug($"Loaded managed store from settings with {managedStore.GameToUuid.Count} entries");
         }
@@ -289,12 +324,16 @@ namespace ApolloSync
             {
                 if (managedStore?.GameToUuid == null) return;
 
-                foreach (var gameId in gameIds)
+                lock (_configLock)
                 {
-                    managedStore.GameToUuid.Remove(gameId);
-                }
+                    foreach (var gameId in gameIds)
+                    {
+                        Guid removed;
+                        managedStore.GameToUuid.TryRemove(gameId, out removed);
+                    }
 
-                SaveManagedStore();
+                    SaveManagedStore();
+                }
                 logger.Info($"Removed {gameIds.Count} games from managed store");
             }
             catch (Exception ex)
@@ -306,7 +345,7 @@ namespace ApolloSync
         private void SaveManagedStore()
         {
             // Save managed store to plugin settings instead of separate file
-            settings.Settings.ManagedGameMappings = managedStore.GameToUuid;
+            settings.Settings.ManagedGameMappings = new Dictionary<Guid, Guid>(managedStore.GameToUuid);
             SavePluginSettings(settings.Settings);
             logger.Debug($"Saved managed store to settings with {managedStore.GameToUuid.Count} entries");
         }
@@ -346,7 +385,8 @@ namespace ApolloSync
                     foreach (var kvp in toRemove)
                     {
                         logger.Debug($"Removing orphaned managed store entry: Game {kvp.Key} -> UUID {kvp.Value}");
-                        managedStore.GameToUuid.Remove(kvp.Key);
+                        Guid removedUuid;
+                        managedStore.GameToUuid.TryRemove(kvp.Key, out removedUuid);
                     }
                     SaveManagedStore();
                     logger.Info("Managed store sync completed");
@@ -362,86 +402,6 @@ namespace ApolloSync
             }
         }
 
-        private void RemoveGamesFromManagedWindow(List<Guid> gameIds)
-        {
-            try
-            {
-                logger.Info($"Removing {gameIds.Count} games from managed window - using immediate write mode");
-
-                // For individual removals from the UI, write immediately for each game
-                int removedCount = 0;
-                foreach (var gameId in gameIds)
-                {
-                    if (RemoveSingleGameImmediate(gameId))
-                    {
-                        removedCount++;
-                    }
-                }
-
-                if (removedCount > 0)
-                {
-                    SyncManagedStore();
-                    logger.Info($"Successfully removed {removedCount} games from Apollo/Sunshine with immediate writes");
-                }
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, "Error removing games from managed window");
-                throw; // Re-throw to let the UI handle it
-            }
-        }
-
-        private bool RemoveSingleGameImmediate(Guid gameId)
-        {
-            try
-            {
-                var config = LoadAppsConfig();
-                if (config == null)
-                {
-                    logger.Error("Failed to load apps configuration for single game removal");
-                    return false;
-                }
-
-                var game = PlayniteApi.Database.Games.FirstOrDefault(g => g.Id == gameId);
-                if (game != null)
-                {
-                    logger.Debug($"Removing game {game.Name} with immediate write");
-
-                    // Remove from apps.json and managed store
-                    if (TryRemoveAppBatch(game, config))
-                    {
-                        // Immediately save both apps.json and managed store
-                        SaveAppsConfig(config);
-                        SaveManagedStore();
-                        logger.Debug($"Immediately saved removal of game: {game.Name}");
-                        return true;
-                    }
-                    else
-                    {
-                        logger.Warn($"Failed to remove game from config: {game.Name}");
-                        return false;
-                    }
-                }
-                else
-                {
-                    // Game doesn't exist in Playnite anymore, remove from managed store directly
-                    if (managedStore.GameToUuid.ContainsKey(gameId))
-                    {
-                        managedStore.GameToUuid.Remove(gameId);
-                        SaveManagedStore();
-                        logger.Debug($"Removed orphaned game ID from managed store: {gameId}");
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"Error in RemoveSingleGameImmediate for game ID: {gameId}");
-                return false;
-            }
-        }
         #endregion
 
         #region Game Filtering
@@ -517,9 +477,10 @@ namespace ApolloSync
 
         }
 
-        private int RemoveFilteredOutGames(JObject config)
+        private int RemoveFilteredOutGames(JObject config, HashSet<Guid> pinnedGameIds = null)
         {
             var removedCount = 0;
+            var pinned = pinnedGameIds ?? new HashSet<Guid>(settings.Settings.PinnedGameIds);
 
             try
             {
@@ -552,7 +513,7 @@ namespace ApolloSync
                     }
 
                     // Check if game is pinned
-                    if (settings.Settings.PinnedGameIds.Contains(gameId))
+                    if (pinned.Contains(gameId))
                     {
                         logger.Debug($"Game {game.Name} is pinned, keeping in apps.json even if it doesn't meet filters");
                         continue;
@@ -584,7 +545,8 @@ namespace ApolloSync
                 // Remove from managed store
                 foreach (var gameId in managedGamesToRemove)
                 {
-                    managedStore.GameToUuid.Remove(gameId);
+                    Guid removedId;
+                    managedStore.GameToUuid.TryRemove(gameId, out removedId);
                 }
 
                 logger.Info($"RemoveFilteredOutGames completed: removed {removedCount} games from apps.json");
@@ -599,7 +561,43 @@ namespace ApolloSync
         #endregion
 
         #region User Operations with Feedback
+        private volatile int _syncRunning;
+        private CancellationTokenSource _syncCts;
+        private Task _syncTask;
+
         private void SyncFilteredGamesWithProgress()
+        {
+            // Prevent overlapping syncs
+            if (Interlocked.CompareExchange(ref _syncRunning, 1, 0) != 0)
+            {
+                logger.Info("Sync already in progress, skipping");
+                return;
+            }
+
+            var cts = new CancellationTokenSource();
+            _syncCts = cts;
+
+            _syncTask = Task.Run(() =>
+            {
+                try
+                {
+                    SyncFilteredGamesBackground(cts.Token);
+                }
+                finally
+                {
+                    _syncCts = null;
+                    cts.Dispose();
+                    Interlocked.Exchange(ref _syncRunning, 0);
+                }
+            });
+        }
+
+        private void CancelSync()
+        {
+            try { _syncCts?.Cancel(); } catch (ObjectDisposedException) { }
+        }
+
+        private void SyncFilteredGamesBackground(CancellationToken cancellationToken)
         {
             logger.Info("Starting sync filtered games operation");
 
@@ -615,103 +613,93 @@ namespace ApolloSync
 
             logger.Info($"Found {filteredGames.Count} games matching filter presets to sync");
 
-            var progressOptions = new GlobalProgressOptions(
-                ResourceProvider.GetString("LOC_ApolloSync_Progress_SyncAll_Title"))
+            var localSuccess = 0;
+            var localFailure = 0;
+            var localErrors = new List<string>();
+            var localRemoved = 0;
+
+            // Snapshot pinned game IDs for thread-safe access
+            HashSet<Guid> pinnedSnapshot;
+            lock (_configLock)
             {
-                IsIndeterminate = false,
-                Cancelable = true
-            };
+                pinnedSnapshot = new HashSet<Guid>(settings.Settings.PinnedGameIds);
+            }
 
-            var syncResults = new { successCount = 0, failureCount = 0, errors = new List<string>(), removedCount = 0 };
-
-            PlayniteApi.Dialogs.ActivateGlobalProgress((progressArgs) =>
+            // Load config once at the beginning
+            JObject config;
+            lock (_configLock)
             {
-                var localSuccess = 0;
-                var localFailure = 0;
-                var localErrors = new List<string>();
-                var localRemoved = 0;
+                config = LoadAppsConfig();
+            }
+            if (config == null)
+            {
+                localErrors.Add("Failed to load apps.json configuration");
+                ShowSyncCompletionNotification(0, filteredGames.Count, localErrors, 0);
+                return;
+            }
 
-                // Load config once at the beginning
-                var config = LoadAppsConfig();
-                if (config == null)
+            logger.Info($"Starting batch sync operation with {filteredGames.Count} games");
+
+            // Phase 1: Remove games that no longer meet filters (unless pinned)
+            var removedGames = RemoveFilteredOutGames(config, pinnedSnapshot);
+            localRemoved = removedGames;
+            logger.Info($"Removed {removedGames} games that no longer meet filters");
+
+            // Phase 2: Add/update games that meet current filters
+            for (int i = 0; i < filteredGames.Count; i++)
+            {
+                if (cancellationToken.IsCancellationRequested)
                 {
-                    localErrors.Add("Failed to load apps.json configuration");
-                    syncResults = new { successCount = 0, failureCount = filteredGames.Count, errors = localErrors, removedCount = 0 };
-                    return;
+                    logger.Info("Sync cancelled by user");
+                    break;
                 }
 
-                // Phase 0: Sync managed store first to clean up any manually removed games
-                progressArgs.Text = "Syncing managed store...";
-                SyncManagedStore();
+                var game = filteredGames[i];
+                logger.Debug($"Processing game: {game.Name} (ID: {game.Id})");
 
-                logger.Info($"Starting batch sync operation with {filteredGames.Count} games");
-
-                // Phase 1: Remove games that no longer meet filters (unless pinned)
-                progressArgs.Text = "Checking managed games for filter compliance...";
-                var removedGames = RemoveFilteredOutGames(config);
-                localRemoved = removedGames;
-                logger.Info($"Removed {removedGames} games that no longer meet filters");
-
-                // Phase 2: Add/update games that meet current filters
-                for (int i = 0; i < filteredGames.Count; i++)
+                try
                 {
-                    if (progressArgs.CancelToken.IsCancellationRequested)
+                    // Check if this game was manually removed and should not be re-added
+                    if (IsGameManuallyRemoved(game, config))
                     {
-                        logger.Info("Sync all operation cancelled by user");
-                        break;
+                        logger.Info($"Skipping game {game.Name} - appears to have been manually removed from Apollo management");
+                        continue;
                     }
 
-                    var game = filteredGames[i];
-                    progressArgs.Text = string.Format(
-                        ResourceProvider.GetString("LOC_ApolloSync_Progress_SyncAll_Current"),
-                        game.Name);
-                    progressArgs.CurrentProgressValue = i;
-                    progressArgs.ProgressMaxValue = filteredGames.Count;
-
-                    logger.Debug($"Processing game: {game.Name} (ID: {game.Id})");
-
-                    try
+                    // Use batch operation that doesn't save to disk
+                    if (TryAddOrUpdateAppBatch(game, config))
                     {
-                        // Check if this game was manually removed and should not be re-added
-                        if (IsGameManuallyRemoved(game, config))
-                        {
-                            logger.Info($"Skipping game {game.Name} - appears to have been manually removed from Apollo management");
-                            continue;
-                        }
-
-                        // Use batch operation that doesn't save to disk
-                        if (TryAddOrUpdateAppBatch(game, config))
-                        {
-                            localSuccess++;
-                            logger.Debug($"Successfully processed: {game.Name}");
-                        }
-                        else
-                        {
-                            localFailure++;
-                            var error = $"Failed to process: {game.Name}";
-                            localErrors.Add(error);
-                            logger.Warn(error);
-                        }
+                        localSuccess++;
+                        logger.Debug($"Successfully processed: {game.Name}");
                     }
-                    catch (Exception ex)
+                    else
                     {
                         localFailure++;
-                        var error = $"Error processing {game.Name}: {ex.Message}";
+                        var error = $"Failed to process: {game.Name}";
                         localErrors.Add(error);
-                        logger.Error(ex, error);
+                        logger.Warn(error);
                     }
                 }
-
-                // Save everything once at the end
-                if (localSuccess > 0 || localRemoved > 0)
+                catch (Exception ex)
                 {
-                    logger.Info($"Saving batch changes to disk. Processed {localSuccess} games successfully, removed {localRemoved} games.");
+                    localFailure++;
+                    var error = $"Error processing {game.Name}: {ex.Message}";
+                    localErrors.Add(error);
+                    logger.Error(ex, error);
+                }
+            }
+
+            // Save everything once at the end
+            if (localSuccess > 0 || localRemoved > 0)
+            {
+                logger.Info($"Saving batch changes to disk. Processed {localSuccess} games successfully, removed {localRemoved} games.");
+                lock (_configLock)
+                {
                     try
                     {
                         SaveAppsConfig(config);
                         SaveManagedStore();
-                        SyncManagedStore(); // Ensure managed store stays in sync
-                        logger.Info("Batch save completed successfully");
+                            logger.Info("Batch save completed successfully");
                     }
                     catch (Exception ex)
                     {
@@ -719,23 +707,26 @@ namespace ApolloSync
                         localErrors.Add("Failed to save changes to disk");
                     }
                 }
+            }
 
-                syncResults = new { successCount = localSuccess, failureCount = localFailure, errors = localErrors, removedCount = localRemoved };
-                logger.Info($"Sync all completed. Success: {localSuccess}, Failed: {localFailure}, Removed: {localRemoved}");
-            }, progressOptions);
+            logger.Info($"Sync all completed. Success: {localSuccess}, Failed: {localFailure}, Removed: {localRemoved}");
+            ShowSyncCompletionNotification(localSuccess, localFailure, localErrors, localRemoved);
+        }
 
+        private void ShowSyncCompletionNotification(int successCount, int failureCount, List<string> errors, int removedCount)
+        {
             // Show completion notification
             var message = string.Format(
                 ResourceProvider.GetString("LOC_ApolloSync_Message_SyncAll_Complete"),
-                syncResults.successCount, syncResults.failureCount);
+                successCount, failureCount);
 
-            if (syncResults.removedCount > 0)
+            if (removedCount > 0)
             {
-                message += $" Removed {syncResults.removedCount} filtered out games.";
+                message += $" Removed {removedCount} filtered out games.";
             }
 
             // Determine notification type based on results
-            var notificationType = syncResults.failureCount == 0 && !syncResults.errors.Any()
+            var notificationType = failureCount == 0 && !errors.Any()
                 ? NotificationType.Info
                 : NotificationType.Error;
 
@@ -746,12 +737,8 @@ namespace ApolloSync
                 notificationType);
 
             // If there are errors, allow clicking to view details
-            if (syncResults.errors.Any())
+            if (errors.Any())
             {
-                var detailMessage = message + Environment.NewLine + Environment.NewLine + "Errors:" + Environment.NewLine +
-                                   string.Join(Environment.NewLine, syncResults.errors);
-
-                // Override the message to indicate clickable
                 notification = new NotificationMessage(
                     "apollosync-sync-complete",
                     message + " (Click to view error details)",
@@ -794,57 +781,61 @@ namespace ApolloSync
             var failureCount = 0;
             var errors = new List<string>();
 
-            // Load config once at the beginning
-            var config = LoadAppsConfig();
-            if (config == null)
+            lock (_configLock)
             {
-                errors.Add("Failed to load apps.json configuration");
-                failureCount = gameList.Count;
-            }
-            else
-            {
-                foreach (var game in gameList)
+                // Load config once at the beginning
+                var config = LoadAppsConfig();
+                if (config == null)
                 {
-                    logger.Debug($"Exporting game: {game.Name} (ID: {game.Id})");
-
-                    try
+                    errors.Add("Failed to load apps.json configuration");
+                    failureCount = gameList.Count;
+                }
+                else
+                {
+                    foreach (var game in gameList)
                     {
-                        // Use batch operation that doesn't save to disk
-                        if (TryAddOrUpdateAppBatch(game, config))
+                        logger.Debug($"Exporting game: {game.Name} (ID: {game.Id})");
+
+                        try
                         {
-                            successCount++;
-                            logger.Debug($"Successfully processed: {game.Name}");
+                            // Use batch operation that doesn't save to disk
+                            if (TryAddOrUpdateAppBatch(game, config))
+                            {
+                                successCount++;
+                                logger.Debug($"Successfully processed: {game.Name}");
+                            }
+                            else
+                            {
+                                failureCount++;
+                                var error = $"Failed to export: {game.Name}";
+                                errors.Add(error);
+                                logger.Warn(error);
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
                             failureCount++;
-                            var error = $"Failed to export: {game.Name}";
+                            var error = $"Error exporting {game.Name}: {ex.Message}";
                             errors.Add(error);
-                            logger.Warn(error);
+                            logger.Error(ex, error);
                         }
                     }
-                    catch (Exception ex)
+
+                    // Save everything once at the end
+                    if (successCount > 0)
                     {
-                        failureCount++;
-                        var error = $"Error exporting {game.Name}: {ex.Message}";
-                        errors.Add(error);
-                        logger.Error(ex, error);
-                    }
-                }                // Save everything once at the end
-                if (successCount > 0)
-                {
-                    logger.Info($"Saving batch export changes to disk. Processed {successCount} games successfully.");
-                    try
-                    {
-                        SaveAppsConfig(config);
-                        SaveManagedStore();
-                        SyncManagedStore(); // Ensure managed store stays in sync
-                        logger.Info("Batch export save completed successfully");
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex, "Failed to save batch export changes");
-                        errors.Add("Failed to save changes to disk");
+                        logger.Info($"Saving batch export changes to disk. Processed {successCount} games successfully.");
+                        try
+                        {
+                            SaveAppsConfig(config);
+                            SaveManagedStore();
+                                    logger.Info("Batch export save completed successfully");
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Error(ex, "Failed to save batch export changes");
+                            errors.Add("Failed to save changes to disk");
+                        }
                     }
                 }
             }
@@ -887,59 +878,61 @@ namespace ApolloSync
             var failureCount = 0;
             var errors = new List<string>();
 
-            // Load config once at the beginning
-            var config = LoadAppsConfig();
-            if (config == null)
+            lock (_configLock)
             {
-                errors.Add("Failed to load apps.json configuration");
-                failureCount = gameList.Count;
-            }
-            else
-            {
-                foreach (var game in gameList)
+                // Load config once at the beginning
+                var config = LoadAppsConfig();
+                if (config == null)
                 {
-                    logger.Debug($"Removing game: {game.Name} (ID: {game.Id})");
-
-                    try
+                    errors.Add("Failed to load apps.json configuration");
+                    failureCount = gameList.Count;
+                }
+                else
+                {
+                    foreach (var game in gameList)
                     {
-                        // Use batch operation that doesn't save to disk
-                        if (TryRemoveAppBatch(game, config))
+                        logger.Debug($"Removing game: {game.Name} (ID: {game.Id})");
+
+                        try
                         {
-                            successCount++;
-                            logger.Debug($"Successfully processed removal: {game.Name}");
+                            // Use batch operation that doesn't save to disk
+                            if (TryRemoveAppBatch(game, config))
+                            {
+                                successCount++;
+                                logger.Debug($"Successfully processed removal: {game.Name}");
+                            }
+                            else
+                            {
+                                failureCount++;
+                                var error = $"Failed to remove: {game.Name}";
+                                errors.Add(error);
+                                logger.Warn(error);
+                            }
                         }
-                        else
+                        catch (Exception ex)
                         {
                             failureCount++;
-                            var error = $"Failed to remove: {game.Name}";
+                            var error = $"Error removing {game.Name}: {ex.Message}";
                             errors.Add(error);
-                            logger.Warn(error);
+                            logger.Error(ex, error);
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        failureCount++;
-                        var error = $"Error removing {game.Name}: {ex.Message}";
-                        errors.Add(error);
-                        logger.Error(ex, error);
-                    }
-                }
 
-                // Save everything once at the end
-                if (successCount > 0)
-                {
-                    logger.Info($"Saving batch removal changes to disk. Processed {successCount} games successfully.");
-                    try
+                    // Save everything once at the end
+                    if (successCount > 0)
                     {
-                        SaveAppsConfig(config);
-                        SaveManagedStore();
-                        SyncManagedStore(); // Ensure managed store stays in sync
-                        logger.Info("Batch removal save completed successfully");
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex, "Failed to save batch removal changes");
-                        errors.Add("Failed to save changes to disk");
+                        logger.Info($"Saving batch removal changes to disk. Processed {successCount} games successfully.");
+                        try
+                        {
+                            SaveAppsConfig(config);
+                            SaveManagedStore();
+                                    logger.Info("Batch removal save completed successfully");
+                        }
+                        catch (Exception ex)
+                        {
+                            logger.Error(ex, "Failed to save batch removal changes");
+                            errors.Add("Failed to save changes to disk");
+                        }
                     }
                 }
             }
@@ -1073,7 +1066,6 @@ namespace ApolloSync
                     logger.Debug($"Config before save has {((JArray)config["apps"])?.Count ?? 0} apps");
                     SaveAppsConfig(config);
                     SaveManagedStore();
-                    SyncManagedStore(); // Ensure managed store stays in sync
                     logger.Debug($"Saved config and managed store for game: {game.Name}");
                 }
                 else
@@ -1126,50 +1118,6 @@ namespace ApolloSync
             catch (Exception ex)
             {
                 logger.Error(ex, $"Exception in TryAddOrUpdateAppBatch for game: {game?.Name}");
-                return false;
-            }
-        }
-
-        private bool TryRemoveApp(Game game)
-        {
-            if (game == null)
-            {
-                logger.Debug("TryRemoveApp called with null game");
-                return false;
-            }
-
-            logger.Debug($"TryRemoveApp called for game: {game.Name} (ID: {game.Id})");
-
-            try
-            {
-                var config = LoadAppsConfig();
-                if (config == null)
-                {
-                    logger.Error("Failed to load apps config - config is null");
-                    return false;
-                }
-
-                logger.Debug($"Attempting to remove app for game: {game.Name}");
-                var ok = syncService.Remove(config, managedStore, game);
-
-                if (ok)
-                {
-                    logger.Debug($"Successfully removed app for game: {game.Name}");
-                    SaveAppsConfig(config);
-                    SaveManagedStore();
-                    SyncManagedStore(); // Ensure managed store stays in sync
-                    logger.Debug($"Saved config and managed store after removing game: {game.Name}");
-                }
-                else
-                {
-                    logger.Warn($"SyncService.Remove returned false for game: {game.Name}");
-                }
-
-                return ok;
-            }
-            catch (Exception ex)
-            {
-                logger.Error(ex, $"Exception occurred while trying to remove app for game: {game.Name}");
                 return false;
             }
         }
@@ -1253,13 +1201,22 @@ namespace ApolloSync
                 catch (UnauthorizedAccessException)
                 {
                     // Inform user and offer to fix permissions with elevation
-                    var message = ResourceProvider.GetString("LOC_ApolloSync_Permissions_Prompt_Body");
-                    var title = ResourceProvider.GetString("LOC_ApolloSync_Permissions_Prompt_Title");
-                    var result = PlayniteApi.Dialogs.ShowMessage(message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning);
-                    if (result == MessageBoxResult.Yes)
+                    // Must dispatch to UI thread since this may be called from a background task
+                    var handled = false;
+                    Application.Current.Dispatcher.Invoke(() =>
                     {
-                        TryFixFilePermissionsWithElevation(path);
-                        // Retry once
+                        var message = ResourceProvider.GetString("LOC_ApolloSync_Permissions_Prompt_Body");
+                        var title = ResourceProvider.GetString("LOC_ApolloSync_Permissions_Prompt_Title");
+                        var result = PlayniteApi.Dialogs.ShowMessage(message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning);
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            TryFixFilePermissionsWithElevation(path);
+                            handled = true;
+                        }
+                    });
+                    if (handled)
+                    {
+                        // Retry once after permissions fix
                         configService.Save(path, config);
                     }
                     else
@@ -1280,13 +1237,14 @@ namespace ApolloSync
             try
             {
                 // Use PowerShell to grant Users modify permission on the file (icacls)
-                var script = $"Start-Process powershell -Verb runAs -ArgumentList \"-NoProfile -Command \"\"icacls `\"{filePath}`\" /grant *S-1-5-32-545:(M)\"\"\"";
-                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                var script = $"Start-Process powershell -Verb runAs -Wait -ArgumentList \"-NoProfile -Command \"\"icacls `\"{filePath}`\" /grant *S-1-5-32-545:(M)\"\"\"";
+                var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
                 {
                     FileName = "powershell",
                     Arguments = script,
                     UseShellExecute = true
                 });
+                process?.WaitForExit(30000); // Wait up to 30 seconds for UAC + icacls
             }
             catch (Exception ex)
             {

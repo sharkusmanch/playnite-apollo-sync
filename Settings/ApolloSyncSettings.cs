@@ -184,7 +184,7 @@ namespace ApolloSync
             // Trigger sync if enabled
             if (Settings.SyncOnSettingsUpdated)
             {
-                Task.Run(() => plugin.TriggerSyncOnSettingsUpdate());
+                plugin.TriggerSyncOnSettingsUpdate();
             }
         }
 

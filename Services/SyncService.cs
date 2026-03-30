@@ -3,6 +3,9 @@ using Newtonsoft.Json.Linq;
 using Playnite.SDK;
 using Playnite.SDK.Models;
 using System;
+using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 
 namespace ApolloSync.Services
@@ -16,11 +19,15 @@ namespace ApolloSync.Services
     public class SyncService : ISyncService
     {
         private static readonly ILogger logger = LogManager.GetLogger();
+        private static readonly Random _rng = new Random();
         private readonly IPlayniteAPI _api;
+        private readonly string _imageCacheDir;
 
-        public SyncService(IPlayniteAPI api = null)
+        public SyncService(IPlayniteAPI api = null, string imageCacheDir = null)
         {
             _api = api;
+            _imageCacheDir = imageCacheDir
+                ?? Path.Combine(Path.GetTempPath(), "ApolloSync", "imagecache");
         }
 
         public bool AddOrUpdate(JObject config, ManagedStore store, Game game)
@@ -119,8 +126,27 @@ namespace ApolloSync.Services
                     apps.RemoveAt(i);
                 }
             }
-            store.GameToUuid.Remove(game.Id);
+            Guid removed;
+            store.GameToUuid.TryRemove(game.Id, out removed);
+            CleanupCachedImage(game);
             return true;
+        }
+
+        private void CleanupCachedImage(Game game)
+        {
+            try
+            {
+                var pngPath = Path.Combine(_imageCacheDir, game.Id.ToString("N") + ".png");
+                if (File.Exists(pngPath))
+                {
+                    File.Delete(pngPath);
+                    logger.Debug($"Deleted cached PNG for game {game.Name}: {pngPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Debug($"Could not clean up cached image for {game.Name}: {ex.Message}");
+            }
         }
 
         private JObject BuildAppEntry(Game game, Guid uuid)
@@ -139,7 +165,7 @@ namespace ApolloSync.Services
                 ["detached"] = new JArray(startCmd)
             };
 
-            var imgPath = TryGetCoverImagePath(game);
+            var imgPath = TryGetCoverImagePath(game, uuid);
             if (!string.IsNullOrEmpty(imgPath))
             {
                 obj["image-path"] = imgPath;
@@ -149,18 +175,9 @@ namespace ApolloSync.Services
 
         private static string GetPlayniteDesktopPath()
         {
-            // Prefer API path if available
-            try
-            {
-                // _api may be null in unit tests
-                // ApplicationPath points at Playnite root; DesktopApp exe is inside
-                // Combine safely; if API is absent, fallback to default location
-            }
-            catch { }
-
             var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var candidate = System.IO.Path.Combine(baseDir, "Playnite", "Playnite.DesktopApp.exe");
-            return System.IO.File.Exists(candidate) ? candidate : null;
+            var candidate = Path.Combine(baseDir, "Playnite", "Playnite.DesktopApp.exe");
+            return File.Exists(candidate) ? candidate : null;
         }
 
         private static string ToApolloUuid(Guid uuid)
@@ -169,7 +186,7 @@ namespace ApolloSync.Services
             return uuid.ToString().ToUpperInvariant();
         }
 
-        private string TryGetCoverImagePath(Game game)
+        private string TryGetCoverImagePath(Game game, Guid gameUuid)
         {
             try
             {
@@ -202,12 +219,75 @@ namespace ApolloSync.Services
                     return null;
                 }
 
-                logger.Debug($"Using Playnite cover image path for game {game.Name}: {sourcePath}");
-                return sourcePath;
+                // Apollo requires PNG images; convert if necessary
+                if (sourcePath.EndsWith(".png", StringComparison.OrdinalIgnoreCase))
+                {
+                    logger.Debug($"Using Playnite cover image path for game {game.Name}: {sourcePath}");
+                    return sourcePath;
+                }
+
+                var pngPath = ConvertToPng(sourcePath, game.Name, gameUuid);
+                if (pngPath != null)
+                {
+                    logger.Debug($"Using converted PNG for game {game.Name}: {pngPath}");
+                    return pngPath;
+                }
+
+                logger.Debug($"PNG conversion failed for game {game.Name}, skipping image");
+                return null;
             }
             catch (Exception ex)
             {
                 logger.Info(ex, $"ApolloSync: Error getting cover image path for '{game.Name}'.");
+                return null;
+            }
+        }
+
+        private string ConvertToPng(string sourcePath, string gameName, Guid gameUuid)
+        {
+            try
+            {
+                Directory.CreateDirectory(_imageCacheDir);
+
+                // Use game UUID as cache key to avoid collisions from duplicate filenames
+                var pngPath = Path.Combine(_imageCacheDir, gameUuid.ToString("N") + ".png");
+
+                // Skip conversion if cached PNG already exists and is newer than source
+                if (File.Exists(pngPath) && File.GetLastWriteTimeUtc(pngPath) >= File.GetLastWriteTimeUtc(sourcePath))
+                {
+                    return pngPath;
+                }
+
+                // Load via MemoryStream to avoid locking the source file in Playnite's database
+                var tmpPath = pngPath + ".tmp";
+                try
+                {
+                    using (var ms = new MemoryStream(File.ReadAllBytes(sourcePath)))
+                    using (var image = Image.FromStream(ms))
+                    {
+                        // Write to temp file, then replace — not fully atomic on Windows
+                        // (Delete+Move gap) but prevents corrupt cache from partial writes
+                        image.Save(tmpPath, ImageFormat.Png);
+                    }
+                    if (File.Exists(pngPath))
+                    {
+                        File.Delete(pngPath);
+                    }
+                    File.Move(tmpPath, pngPath);
+                }
+                catch
+                {
+                    // Clean up orphaned temp file on any failure
+                    try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
+                    throw;
+                }
+
+                logger.Debug($"Converted cover image to PNG for game {gameName}: {pngPath}");
+                return pngPath;
+            }
+            catch (Exception ex)
+            {
+                logger.Info(ex, $"ApolloSync: Failed to convert cover image to PNG for '{gameName}'.");
                 return null;
             }
         }
@@ -222,11 +302,10 @@ namespace ApolloSync.Services
                     .Where(s => !string.IsNullOrEmpty(s)),
                 StringComparer.Ordinal);
 
-            var rnd = new Random();
             string id;
             do
             {
-                id = rnd.Next().ToString();
+                lock (_rng) { id = _rng.Next().ToString(); }
             } while (existing.Contains(id));
             return id;
         }
