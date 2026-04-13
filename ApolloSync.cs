@@ -95,6 +95,14 @@ namespace ApolloSync
 
         public override void OnApplicationStarted(OnApplicationStartedEventArgs args)
         {
+            // Delete any stale lock files left by a previous crash. Without this a
+            // PowerShell wrapper that survived the crash would poll indefinitely,
+            // keeping a stream open after Playnite restarts.
+            foreach (var stale in Directory.EnumerateFiles(Path.GetTempPath(), "apollosync-*.lock"))
+            {
+                try { File.Delete(stale); } catch { }
+            }
+
             // Subscribe to game metadata changes (e.g., cover image updates)
             PlayniteApi.Database.Games.ItemUpdated += Games_ItemUpdated;
 
@@ -138,8 +146,6 @@ namespace ApolloSync
             try
             {
                 // FileMode.Create overwrites a stale lock from a crashed previous session.
-                // Using FileStream rather than File.WriteAllText avoids following a symlink
-                // that an attacker could pre-place at this predictable path.
                 using (new FileStream(lockPath, FileMode.Create, FileAccess.Write, FileShare.None)) { }
                 logger.Debug($"Created session lock for managed game '{args.Game.Name}': {lockPath}");
             }
@@ -792,6 +798,23 @@ namespace ApolloSync
             if (gameList.Count == 0)
                 return;
 
+            // Pin games on the calling (UI) thread before going async — PinnedGameIds is
+            // not thread-safe and must not be accessed from Task.Run.
+            var pinnedCount = 0;
+            foreach (var game in gameList)
+            {
+                if (!settings.Settings.PinnedGameIds.Contains(game.Id))
+                {
+                    settings.Settings.PinnedGameIds.Add(game.Id);
+                    pinnedCount++;
+                }
+            }
+            if (pinnedCount > 0)
+            {
+                SavePluginSettings(settings.Settings);
+                logger.Info($"Auto-pinned {pinnedCount} manually exported games");
+            }
+
             // Run on a background thread so the UI is never blocked by the up-to-30 s
             // CancelSync wait. The lock inside still serialises access to apps.json.
             Task.Run(() =>
@@ -803,23 +826,6 @@ namespace ApolloSync
 
                 logger.Info("Starting export games operation");
                 logger.Info($"Exporting {gameList.Count} games");
-
-                // Pin games by default when manually exporting
-                var pinnedCount = 0;
-                foreach (var game in gameList)
-                {
-                    if (!settings.Settings.PinnedGameIds.Contains(game.Id))
-                    {
-                        settings.Settings.PinnedGameIds.Add(game.Id);
-                        pinnedCount++;
-                    }
-                }
-
-                if (pinnedCount > 0)
-                {
-                    SavePluginSettings(settings.Settings);
-                    logger.Info($"Auto-pinned {pinnedCount} manually exported games");
-                }
 
                 var successCount = 0;
                 var failureCount = 0;

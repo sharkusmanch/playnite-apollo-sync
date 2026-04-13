@@ -62,10 +62,10 @@ namespace ApolloSync.Tests
                 // Check mapping exists (either game)
                 Assert.IsTrue(store.GameToUuid.Values.Contains(uuid));
             }
-    }
+        }
 
-    [TestMethod]
-    public void Remove_Selected_Single_Removes_From_Apps_And_Store()
+        [TestMethod]
+        public void Remove_Selected_Single_Removes_From_Apps_And_Store()
         {
             // Arrange
             var sync = new SyncService();
@@ -84,9 +84,9 @@ namespace ApolloSync.Tests
             Assert.IsTrue(ok);
             Assert.AreEqual(0, ((JArray)config["apps"]).Count);
             Assert.IsFalse(store.GameToUuid.ContainsKey(game.Id));
-    }
+        }
 
-    [TestMethod]
+        [TestMethod]
         public void Remove_FilteredOut_NotPinned_Removes_Entry()
         {
             // This test simulates the logic of RemoveFilteredOutGames without using ApolloSync internals.
@@ -136,7 +136,7 @@ namespace ApolloSync.Tests
             Assert.AreEqual(1, apps.Count);
             Assert.IsTrue(store.GameToUuid.ContainsKey(g1.Id));
             Assert.IsFalse(store.GameToUuid.ContainsKey(g2.Id));
-    }
+        }
 
         // ── IsLocalAbsolutePath ───────────────────────────────────────────────────
 

@@ -181,7 +181,8 @@ namespace ApolloSync.Services
                 $"{launchLine}\r\n" +
                 "$t = 0\r\n" +
                 "while (-not (Test-Path $lf) -and $t -lt 120) { Start-Sleep -Milliseconds 500; $t++ }\r\n" +
-                "while (Test-Path $lf) { Start-Sleep -Seconds 2 }";
+                "$elapsed = 0\r\n" +
+                "while ((Test-Path $lf) -and $elapsed -lt 28800) { Start-Sleep -Seconds 2; $elapsed += 2 }";
 
             var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(psScript));
             var cmd = $"powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand {encoded}";
