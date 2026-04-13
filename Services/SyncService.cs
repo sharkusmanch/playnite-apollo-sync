@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace ApolloSync.Services
 {
@@ -85,10 +86,15 @@ namespace ApolloSync.Services
                 logger.Debug($"Updating existing app entry for game: {game.Name}");
                 // Update mutable fields
                 existing["name"] = entry["name"];
-                existing["detached"] = entry["detached"];
+                existing["cmd"] = entry["cmd"];
+                existing.Remove("detached"); // Remove deprecated field left over from pre-cmd migration
                 if (entry["image-path"] != null)
                 {
                     existing["image-path"] = entry["image-path"];
+                }
+                else
+                {
+                    existing.Remove("image-path"); // Clear stale path if game no longer has a cover
                 }
             }
             else
@@ -149,20 +155,42 @@ namespace ApolloSync.Services
             }
         }
 
+        public static string GetLockFilePath(Guid gameId)
+        {
+            return Path.Combine(Path.GetTempPath(), $"apollosync-{gameId:N}.lock");
+        }
+
         private JObject BuildAppEntry(Game game, Guid uuid)
         {
-            // Build an Apollo-style entry that launches Playnite by game GUID via DesktopApp.exe
-            // Detached array example: "\"C:\\Users\\...\\Playnite.DesktopApp.exe\" --start <gameId>"
+            // Build a PowerShell wrapper cmd that Apollo can track for session lifetime.
+            // Playnite.DesktopApp.exe --start exits immediately (it signals an existing
+            // Playnite instance via IPC), so we can't track it directly. Instead:
+            //   1. Launch the game via Playnite
+            //   2. Wait for the plugin's OnGameStarted to create a lock file
+            //   3. Wait for the plugin's OnGameStopped to delete the lock file
+            //   4. Exit — Apollo sees the process exit and ends the stream
+            var lockFileName = $"apollosync-{game.Id:N}.lock";
             var playnitePath = GetPlayniteDesktopPath();
-            var startCmd = string.IsNullOrEmpty(playnitePath)
-                ? $"playnite://play/{game.Id}"
-                : $"\"{playnitePath}\" --start {game.Id}";
+
+            var launchLine = string.IsNullOrEmpty(playnitePath)
+                ? $"Start-Process 'playnite://play/{game.Id}'"
+                : $"& \"{playnitePath}\" --start {game.Id}";
+
+            var psScript =
+                $"$lf = Join-Path $env:TEMP '{lockFileName}'\r\n" +
+                $"{launchLine}\r\n" +
+                "$t = 0\r\n" +
+                "while (-not (Test-Path $lf) -and $t -lt 120) { Start-Sleep -Milliseconds 500; $t++ }\r\n" +
+                "while (Test-Path $lf) { Start-Sleep -Seconds 2 }";
+
+            var encoded = Convert.ToBase64String(Encoding.Unicode.GetBytes(psScript));
+            var cmd = $"powershell.exe -NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand {encoded}";
 
             var obj = new JObject
             {
                 ["name"] = game.Name,
                 ["uuid"] = ToApolloUuid(uuid),
-                ["detached"] = new JArray(startCmd)
+                ["cmd"] = cmd
             };
 
             var imgPath = TryGetCoverImagePath(game, uuid);

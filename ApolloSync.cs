@@ -131,7 +131,22 @@ namespace ApolloSync
 
         public override void OnGameStarted(OnGameStartedEventArgs args)
         {
-            // Add code to be executed when game is started running.
+            if (!managedStore.GameToUuid.ContainsKey(args.Game.Id))
+                return;
+
+            var lockPath = SyncService.GetLockFilePath(args.Game.Id);
+            try
+            {
+                // FileMode.Create overwrites a stale lock from a crashed previous session.
+                // Using FileStream rather than File.WriteAllText avoids following a symlink
+                // that an attacker could pre-place at this predictable path.
+                using (new FileStream(lockPath, FileMode.Create, FileAccess.Write, FileShare.None)) { }
+                logger.Debug($"Created session lock for managed game '{args.Game.Name}': {lockPath}");
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Failed to create session lock for '{args.Game.Name}'");
+            }
         }
 
         public override void OnGameStarting(OnGameStartingEventArgs args)
@@ -141,7 +156,22 @@ namespace ApolloSync
 
         public override void OnGameStopped(OnGameStoppedEventArgs args)
         {
-            // Add code to be executed when game is preparing to be started.
+            if (!managedStore.GameToUuid.ContainsKey(args.Game.Id))
+                return;
+
+            var lockPath = SyncService.GetLockFilePath(args.Game.Id);
+            try
+            {
+                if (File.Exists(lockPath))
+                {
+                    File.Delete(lockPath);
+                    logger.Debug($"Deleted session lock for managed game '{args.Game.Name}': {lockPath}");
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"Failed to delete session lock for '{args.Game.Name}'");
+            }
         }
 
         public override void OnGameUninstalled(OnGameUninstalledEventArgs args)
@@ -160,6 +190,14 @@ namespace ApolloSync
                 _syncTask?.Wait(TimeSpan.FromSeconds(5));
             }
             catch (AggregateException) { }
+
+            // Clean up any leftover lock files — guards against Playnite crashing mid-session
+            // leaving a lock that would keep a stream open indefinitely.
+            foreach (var gameId in managedStore.GameToUuid.Keys)
+            {
+                var lockPath = SyncService.GetLockFilePath(gameId);
+                try { if (File.Exists(lockPath)) File.Delete(lockPath); } catch { }
+            }
         }
 
         private void Games_ItemUpdated(object sender, ItemUpdatedEventArgs<Game> args)
@@ -699,7 +737,7 @@ namespace ApolloSync
                     {
                         SaveAppsConfig(config);
                         SaveManagedStore();
-                            logger.Info("Batch save completed successfully");
+                        logger.Info("Batch save completed successfully");
                     }
                     catch (Exception ex)
                     {
@@ -750,213 +788,224 @@ namespace ApolloSync
 
         private void ExportGamesWithFeedback(IEnumerable<Game> games)
         {
-            logger.Info("Starting export games operation");
-
             var gameList = games.ToList();
             if (gameList.Count == 0)
-            {
                 return;
-            }
 
-            logger.Info($"Exporting {gameList.Count} games");
-
-            // Pin games by default when manually exporting
-            var pinnedCount = 0;
-            foreach (var game in gameList)
+            // Run on a background thread so the UI is never blocked by the up-to-30 s
+            // CancelSync wait. The lock inside still serialises access to apps.json.
+            Task.Run(() =>
             {
-                if (!settings.Settings.PinnedGameIds.Contains(game.Id))
-                {
-                    settings.Settings.PinnedGameIds.Add(game.Id);
-                    pinnedCount++;
-                }
-            }
+                // Cancel any running background sync before touching apps.json to prevent
+                // the sync's stale snapshot from overwriting our changes on its final save.
+                CancelSync();
+                try { _syncTask?.Wait(TimeSpan.FromSeconds(30)); } catch (AggregateException) { }
 
-            if (pinnedCount > 0)
-            {
-                SavePluginSettings(settings.Settings);
-                logger.Info($"Auto-pinned {pinnedCount} manually exported games");
-            }
+                logger.Info("Starting export games operation");
+                logger.Info($"Exporting {gameList.Count} games");
 
-            var successCount = 0;
-            var failureCount = 0;
-            var errors = new List<string>();
-
-            lock (_configLock)
-            {
-                // Load config once at the beginning
-                var config = LoadAppsConfig();
-                if (config == null)
+                // Pin games by default when manually exporting
+                var pinnedCount = 0;
+                foreach (var game in gameList)
                 {
-                    errors.Add("Failed to load apps.json configuration");
-                    failureCount = gameList.Count;
-                }
-                else
-                {
-                    foreach (var game in gameList)
+                    if (!settings.Settings.PinnedGameIds.Contains(game.Id))
                     {
-                        logger.Debug($"Exporting game: {game.Name} (ID: {game.Id})");
+                        settings.Settings.PinnedGameIds.Add(game.Id);
+                        pinnedCount++;
+                    }
+                }
 
-                        try
+                if (pinnedCount > 0)
+                {
+                    SavePluginSettings(settings.Settings);
+                    logger.Info($"Auto-pinned {pinnedCount} manually exported games");
+                }
+
+                var successCount = 0;
+                var failureCount = 0;
+                var errors = new List<string>();
+
+                lock (_configLock)
+                {
+                    // Load config once at the beginning
+                    var config = LoadAppsConfig();
+                    if (config == null)
+                    {
+                        errors.Add("Failed to load apps.json configuration");
+                        failureCount = gameList.Count;
+                    }
+                    else
+                    {
+                        foreach (var game in gameList)
                         {
-                            // Use batch operation that doesn't save to disk
-                            if (TryAddOrUpdateAppBatch(game, config))
+                            logger.Debug($"Exporting game: {game.Name} (ID: {game.Id})");
+
+                            try
                             {
-                                successCount++;
-                                logger.Debug($"Successfully processed: {game.Name}");
+                                // Use batch operation that doesn't save to disk
+                                if (TryAddOrUpdateAppBatch(game, config))
+                                {
+                                    successCount++;
+                                    logger.Debug($"Successfully processed: {game.Name}");
+                                }
+                                else
+                                {
+                                    failureCount++;
+                                    var error = $"Failed to export: {game.Name}";
+                                    errors.Add(error);
+                                    logger.Warn(error);
+                                }
                             }
-                            else
+                            catch (Exception ex)
                             {
                                 failureCount++;
-                                var error = $"Failed to export: {game.Name}";
+                                var error = $"Error exporting {game.Name}: {ex.Message}";
                                 errors.Add(error);
-                                logger.Warn(error);
+                                logger.Error(ex, error);
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            failureCount++;
-                            var error = $"Error exporting {game.Name}: {ex.Message}";
-                            errors.Add(error);
-                            logger.Error(ex, error);
-                        }
-                    }
 
-                    // Save everything once at the end
-                    if (successCount > 0)
-                    {
-                        logger.Info($"Saving batch export changes to disk. Processed {successCount} games successfully.");
-                        try
+                        // Save everything once at the end
+                        if (successCount > 0)
                         {
-                            SaveAppsConfig(config);
-                            SaveManagedStore();
-                                    logger.Info("Batch export save completed successfully");
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Error(ex, "Failed to save batch export changes");
-                            errors.Add("Failed to save changes to disk");
+                            logger.Info($"Saving batch export changes to disk. Processed {successCount} games successfully.");
+                            try
+                            {
+                                SaveAppsConfig(config);
+                                SaveManagedStore();
+                                logger.Info("Batch export save completed successfully");
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.Error(ex, "Failed to save batch export changes");
+                                errors.Add("Failed to save changes to disk");
+                            }
                         }
                     }
                 }
-            }
 
-            logger.Info($"Export completed. Success: {successCount}, Failed: {failureCount}");
+                logger.Info($"Export completed. Success: {successCount}, Failed: {failureCount}");
 
-            // Show completion notification
-            var message = string.Format(
-                ResourceProvider.GetString("LOC_ApolloSync_Message_Export_Complete"),
-                successCount, failureCount);
+                // Show completion notification
+                var message = string.Format(
+                    ResourceProvider.GetString("LOC_ApolloSync_Message_Export_Complete"),
+                    successCount, failureCount);
 
-            var notificationType = failureCount == 0 && !errors.Any()
-                ? NotificationType.Info
-                : NotificationType.Error;
+                var notificationType = failureCount == 0 && !errors.Any()
+                    ? NotificationType.Info
+                    : NotificationType.Error;
 
-            if (errors.Any())
-            {
-                message += $" ({errors.Count} errors occurred)";
-            }
+                if (errors.Any())
+                {
+                    message += $" ({errors.Count} errors occurred)";
+                }
 
-            ShowNotificationIfEnabled(new NotificationMessage(
-                "apollosync-export-complete",
-                message,
-                notificationType), isUpdateOperation: false);
+                ShowNotificationIfEnabled(new NotificationMessage(
+                    "apollosync-export-complete",
+                    message,
+                    notificationType), isUpdateOperation: false);
+            }); // end Task.Run
         }
 
         private void RemoveGamesWithFeedback(IEnumerable<Game> games)
         {
-            logger.Info("Starting remove games operation");
-
             var gameList = games.ToList();
             if (gameList.Count == 0)
-            {
                 return;
-            }
 
-            logger.Info($"Removing {gameList.Count} games");
-
-            var successCount = 0;
-            var failureCount = 0;
-            var errors = new List<string>();
-
-            lock (_configLock)
+            Task.Run(() =>
             {
-                // Load config once at the beginning
-                var config = LoadAppsConfig();
-                if (config == null)
-                {
-                    errors.Add("Failed to load apps.json configuration");
-                    failureCount = gameList.Count;
-                }
-                else
-                {
-                    foreach (var game in gameList)
-                    {
-                        logger.Debug($"Removing game: {game.Name} (ID: {game.Id})");
+                // Same lost-update guard and UI-thread protection as ExportGamesWithFeedback.
+                CancelSync();
+                try { _syncTask?.Wait(TimeSpan.FromSeconds(30)); } catch (AggregateException) { }
 
-                        try
+                logger.Info("Starting remove games operation");
+                logger.Info($"Removing {gameList.Count} games");
+
+                var successCount = 0;
+                var failureCount = 0;
+                var errors = new List<string>();
+
+                lock (_configLock)
+                {
+                    // Load config once at the beginning
+                    var config = LoadAppsConfig();
+                    if (config == null)
+                    {
+                        errors.Add("Failed to load apps.json configuration");
+                        failureCount = gameList.Count;
+                    }
+                    else
+                    {
+                        foreach (var game in gameList)
                         {
-                            // Use batch operation that doesn't save to disk
-                            if (TryRemoveAppBatch(game, config))
+                            logger.Debug($"Removing game: {game.Name} (ID: {game.Id})");
+
+                            try
                             {
-                                successCount++;
-                                logger.Debug($"Successfully processed removal: {game.Name}");
+                                // Use batch operation that doesn't save to disk
+                                if (TryRemoveAppBatch(game, config))
+                                {
+                                    successCount++;
+                                    logger.Debug($"Successfully processed removal: {game.Name}");
+                                }
+                                else
+                                {
+                                    failureCount++;
+                                    var error = $"Failed to remove: {game.Name}";
+                                    errors.Add(error);
+                                    logger.Warn(error);
+                                }
                             }
-                            else
+                            catch (Exception ex)
                             {
                                 failureCount++;
-                                var error = $"Failed to remove: {game.Name}";
+                                var error = $"Error removing {game.Name}: {ex.Message}";
                                 errors.Add(error);
-                                logger.Warn(error);
+                                logger.Error(ex, error);
                             }
                         }
-                        catch (Exception ex)
-                        {
-                            failureCount++;
-                            var error = $"Error removing {game.Name}: {ex.Message}";
-                            errors.Add(error);
-                            logger.Error(ex, error);
-                        }
-                    }
 
-                    // Save everything once at the end
-                    if (successCount > 0)
-                    {
-                        logger.Info($"Saving batch removal changes to disk. Processed {successCount} games successfully.");
-                        try
+                        // Save everything once at the end
+                        if (successCount > 0)
                         {
-                            SaveAppsConfig(config);
-                            SaveManagedStore();
-                                    logger.Info("Batch removal save completed successfully");
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Error(ex, "Failed to save batch removal changes");
-                            errors.Add("Failed to save changes to disk");
+                            logger.Info($"Saving batch removal changes to disk. Processed {successCount} games successfully.");
+                            try
+                            {
+                                SaveAppsConfig(config);
+                                SaveManagedStore();
+                                logger.Info("Batch removal save completed successfully");
+                            }
+                            catch (Exception ex)
+                            {
+                                logger.Error(ex, "Failed to save batch removal changes");
+                                errors.Add("Failed to save changes to disk");
+                            }
                         }
                     }
                 }
-            }
 
-            logger.Info($"Remove completed. Success: {successCount}, Failed: {failureCount}");
+                logger.Info($"Remove completed. Success: {successCount}, Failed: {failureCount}");
 
-            // Show completion notification
-            var message = string.Format(
-                ResourceProvider.GetString("LOC_ApolloSync_Message_Remove_Complete"),
-                successCount, failureCount);
+                // Show completion notification
+                var message = string.Format(
+                    ResourceProvider.GetString("LOC_ApolloSync_Message_Remove_Complete"),
+                    successCount, failureCount);
 
-            var notificationType = failureCount == 0 && !errors.Any()
-                ? NotificationType.Info
-                : NotificationType.Error;
+                var notificationType = failureCount == 0 && !errors.Any()
+                    ? NotificationType.Info
+                    : NotificationType.Error;
 
-            if (errors.Any())
-            {
-                message += $" ({errors.Count} errors occurred)";
-            }
+                if (errors.Any())
+                {
+                    message += $" ({errors.Count} errors occurred)";
+                }
 
-            ShowNotificationIfEnabled(new NotificationMessage(
-                "apollosync-remove-complete",
-                message,
-                notificationType), isUpdateOperation: false);
+                ShowNotificationIfEnabled(new NotificationMessage(
+                    "apollosync-remove-complete",
+                    message,
+                    notificationType), isUpdateOperation: false);
+            }); // end Task.Run
         }
 
         private void PinGames(IEnumerable<Game> games)
@@ -1236,15 +1285,43 @@ namespace ApolloSync
         {
             try
             {
-                // Use PowerShell to grant Users modify permission on the file (icacls)
-                var script = $"Start-Process powershell -Verb runAs -Wait -ArgumentList \"-NoProfile -Command \"\"icacls `\"{filePath}`\" /grant *S-1-5-32-545:(M)\"\"\"";
-                var process = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                // Reject non-local paths to prevent NTLM relay attacks and injection via icacls.
+                if (!Services.ConfigService.IsLocalAbsolutePath(filePath))
                 {
-                    FileName = "powershell",
-                    Arguments = script,
-                    UseShellExecute = true
-                });
-                process?.WaitForExit(30000); // Wait up to 30 seconds for UAC + icacls
+                    logger.Error($"TryFixFilePermissionsWithElevation: rejecting non-local path '{filePath}'");
+                    throw new ArgumentException($"Permission fix is only supported for local paths; got: {filePath}");
+                }
+
+                // Write the icacls invocation to a temp script that receives the file path as
+                // $args[0]. PowerShell passes positional arguments verbatim — no shell
+                // interpretation of special characters — so filePath cannot inject commands.
+                var scriptPath = Path.Combine(
+                    Path.GetTempPath(),
+                    "apollosync_perms_" + Path.GetRandomFileName() + ".ps1");
+                try
+                {
+                    using (var fs = new FileStream(scriptPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                    using (var w = new StreamWriter(fs, new UTF8Encoding(false)))
+                    {
+                        w.Write("icacls $args[0] /grant '*S-1-5-32-545:(M)'");
+                    }
+
+                    var psi = new System.Diagnostics.ProcessStartInfo
+                    {
+                        FileName = "powershell.exe",
+                        // Both scriptPath and filePath are local absolute paths; Windows filenames
+                        // cannot contain double quotes, so quoting here is safe.
+                        Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{scriptPath}\" \"{filePath}\"",
+                        Verb = "runas",
+                        UseShellExecute = true,
+                        CreateNoWindow = true
+                    };
+                    System.Diagnostics.Process.Start(psi)?.WaitForExit(30000);
+                }
+                finally
+                {
+                    try { if (File.Exists(scriptPath)) File.Delete(scriptPath); } catch { }
+                }
             }
             catch (Exception ex)
             {

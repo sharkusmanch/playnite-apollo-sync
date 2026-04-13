@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 
 namespace ApolloSync.Services
@@ -73,29 +74,45 @@ namespace ApolloSync.Services
                 var jsonContent = config.ToString(Newtonsoft.Json.Formatting.Indented);
                 logger.Debug($"ConfigService.Save - Writing config with {((JArray)config["apps"])?.Count ?? 0} apps");
 
-                // Retry/backoff for transient IO errors; let UnauthorizedAccess bubble up
-                var attempts = 0;
-                const int maxAttempts = 3;
-                while (true)
+                // Write content to a temp file in %TEMP% (always user-writable) then copy it
+                // over the destination. This ensures the full content is written before we
+                // touch apps.json, without needing directory-level create/delete permissions
+                // on the (potentially protected) Apollo install path.
+                var tmpPath = Path.Combine(Path.GetTempPath(), "apollosync_" + Path.GetRandomFileName() + ".tmp");
+                try
                 {
-                    try
+                    var attempts = 0;
+                    const int maxAttempts = 3;
+                    while (true)
                     {
-                        File.WriteAllText(resolvedPath, jsonContent);
-                        break;
-                    }
-                    catch (UnauthorizedAccessException)
-                    {
-                        throw; // handled by caller for permission prompt
-                    }
-                    catch (IOException)
-                    {
-                        attempts++;
-                        if (attempts >= maxAttempts)
+                        try
                         {
-                            throw;
+                            // FileMode.CreateNew fails if a file (or symlink to an existing
+                            // file) already exists at tmpPath, preventing symlink substitution.
+                            using (var fs = new FileStream(tmpPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                            {
+                                var bytes = Encoding.UTF8.GetBytes(jsonContent);
+                                fs.Write(bytes, 0, bytes.Length);
+                            }
+                            File.Copy(tmpPath, resolvedPath, overwrite: true);
+                            break;
                         }
-                        Thread.Sleep(150 * attempts);
+                        catch (UnauthorizedAccessException)
+                        {
+                            throw; // handled by caller for permission prompt
+                        }
+                        catch (IOException)
+                        {
+                            attempts++;
+                            if (attempts >= maxAttempts)
+                                throw;
+                            Thread.Sleep(150 * attempts);
+                        }
                     }
+                }
+                finally
+                {
+                    try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
                 }
                 logger.Info($"ConfigService.Save - Successfully saved apps.json to: {resolvedPath}");
             }
@@ -104,6 +121,25 @@ namespace ApolloSync.Services
                 logger.Error(ex, $"ConfigService.Save - Failed to save apps.json to path: {path}");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Returns true only for local absolute paths (e.g. "C:\foo\bar.json").
+        /// Rejects UNC/network paths, device paths, relative paths, and empty strings.
+        /// Used to guard elevated operations against NTLM relay and command injection.
+        /// </summary>
+        public static bool IsLocalAbsolutePath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) return false;
+            if (path.StartsWith(@"\\", StringComparison.Ordinal)) return false; // UNC / device
+            if (path.StartsWith("//", StringComparison.Ordinal)) return false;
+            if (!Path.IsPathRooted(path)) return false;
+            // Require a drive-letter root ("C:\") not a bare root ("\")
+            var root = Path.GetPathRoot(path);
+            return root != null
+                && root.Length >= 3
+                && char.IsLetter(root[0])
+                && root[1] == ':';
         }
 
         private static string ResolveDefaultPath(bool preferExisting)

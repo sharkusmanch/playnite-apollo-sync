@@ -13,20 +13,9 @@ namespace ApolloSync.Tests
     [TestClass]
     public class AppsJsonManagementTests
     {
-        private static readonly string TestBaseDir = Path.Combine(Path.GetTempPath(), "ApolloSyncTests_Mgmt");
-
-        [TestCleanup]
-        public void Cleanup()
-        {
-            if (Directory.Exists(TestBaseDir))
-            {
-                Directory.Delete(TestBaseDir, true);
-            }
-        }
-
         private static string CreateTempFilePath()
         {
-            var dir = Path.Combine(TestBaseDir, Guid.NewGuid().ToString("N"));
+            var dir = Path.Combine(Path.GetTempPath(), "ApolloSyncTests", Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(dir);
             return Path.Combine(dir, "apps.json");
         }
@@ -73,10 +62,10 @@ namespace ApolloSync.Tests
                 // Check mapping exists (either game)
                 Assert.IsTrue(store.GameToUuid.Values.Contains(uuid));
             }
-        }
+    }
 
-        [TestMethod]
-        public void Remove_Selected_Single_Removes_From_Apps_And_Store()
+    [TestMethod]
+    public void Remove_Selected_Single_Removes_From_Apps_And_Store()
         {
             // Arrange
             var sync = new SyncService();
@@ -95,9 +84,9 @@ namespace ApolloSync.Tests
             Assert.IsTrue(ok);
             Assert.AreEqual(0, ((JArray)config["apps"]).Count);
             Assert.IsFalse(store.GameToUuid.ContainsKey(game.Id));
-        }
+    }
 
-        [TestMethod]
+    [TestMethod]
         public void Remove_FilteredOut_NotPinned_Removes_Entry()
         {
             // This test simulates the logic of RemoveFilteredOutGames without using ApolloSync internals.
@@ -105,8 +94,8 @@ namespace ApolloSync.Tests
             var config = new JObject { ["apps"] = new JArray() };
             var store = new ManagedStore();
 
-            var g1 = new Game("Match") { Id = Guid.NewGuid() };
-            var g2 = new Game("NoMatch") { Id = Guid.NewGuid() };
+            var g1 = new Playnite.SDK.Models.Game("Match") { Id = Guid.NewGuid() };
+            var g2 = new Playnite.SDK.Models.Game("NoMatch") { Id = Guid.NewGuid() };
 
             var uuid1 = Guid.NewGuid();
             var uuid2 = Guid.NewGuid();
@@ -119,16 +108,17 @@ namespace ApolloSync.Tests
 
             // Simulate filter: only g1 matches, g2 does not, and g2 is not pinned.
             var pinned = new HashSet<Guid>();
-            Func<Game, bool> meetsFilter = game => game.Id == g1.Id;
+            Func<Playnite.SDK.Models.Game, bool> meetsFilter = game => game.Id == g1.Id;
 
             // Act: perform simplified removal similar to RemoveFilteredOutGames
             var removedCount = 0;
-            var toRemoveApps = new List<JObject>();
-            var toRemoveGames = new List<Guid>();
+            var toRemoveApps = new System.Collections.Generic.List<JObject>();
+            var toRemoveGames = new System.Collections.Generic.List<Guid>();
             foreach (var kv in store.GameToUuid.ToList())
             {
                 var gameId = kv.Key;
                 var appUuid = kv.Value;
+                // Look up pseudo game by mapping
                 var game = gameId == g1.Id ? g1 : g2;
                 if (pinned.Contains(gameId)) continue;
                 if (!meetsFilter(game))
@@ -139,13 +129,165 @@ namespace ApolloSync.Tests
                 }
             }
             foreach (var a in toRemoveApps) { apps.Remove(a); removedCount++; }
-            foreach (var gid in toRemoveGames) { Guid rem; store.GameToUuid.TryRemove(gid, out rem); }
+            foreach (var gid in toRemoveGames) { Guid _removedVal; store.GameToUuid.TryRemove(gid, out _removedVal); }
 
             // Assert
             Assert.AreEqual(1, removedCount);
             Assert.AreEqual(1, apps.Count);
             Assert.IsTrue(store.GameToUuid.ContainsKey(g1.Id));
             Assert.IsFalse(store.GameToUuid.ContainsKey(g2.Id));
+    }
+
+        // ── IsLocalAbsolutePath ───────────────────────────────────────────────────
+
+        [TestMethod]
+        public void IsLocalAbsolutePath_AcceptsStandardLocalPath()
+        {
+            Assert.IsTrue(ConfigService.IsLocalAbsolutePath(@"C:\Program Files\Apollo\config\apps.json"));
+            Assert.IsTrue(ConfigService.IsLocalAbsolutePath(@"D:\data\apps.json"));
+        }
+
+        [TestMethod]
+        public void IsLocalAbsolutePath_RejectsUncPaths()
+        {
+            Assert.IsFalse(ConfigService.IsLocalAbsolutePath(@"\\server\share\apps.json"));
+            Assert.IsFalse(ConfigService.IsLocalAbsolutePath("//server/share/apps.json"));
+        }
+
+        [TestMethod]
+        public void IsLocalAbsolutePath_RejectsRelativePaths()
+        {
+            Assert.IsFalse(ConfigService.IsLocalAbsolutePath("config\\apps.json"));
+            Assert.IsFalse(ConfigService.IsLocalAbsolutePath("apps.json"));
+            Assert.IsFalse(ConfigService.IsLocalAbsolutePath(".\\apps.json"));
+        }
+
+        [TestMethod]
+        public void IsLocalAbsolutePath_RejectsBareRootAndEmpty()
+        {
+            Assert.IsFalse(ConfigService.IsLocalAbsolutePath(@"\apps.json")); // rooted but no drive
+            Assert.IsFalse(ConfigService.IsLocalAbsolutePath(string.Empty));
+            Assert.IsFalse(ConfigService.IsLocalAbsolutePath(null));
+            Assert.IsFalse(ConfigService.IsLocalAbsolutePath("   "));
+        }
+
+        // ── Atomic write ──────────────────────────────────────────────────────────
+
+        [TestMethod]
+        public void ConfigService_Save_LeavesNoTempFile()
+        {
+            // After a successful save no .tmp file should remain
+            var configService = new ConfigService();
+            var path = CreateTempFilePath();
+            var config = new JObject { ["apps"] = new JArray(), ["env"] = new JObject(), ["version"] = 2 };
+
+            configService.Save(path, config);
+
+            Assert.IsTrue(File.Exists(path), "apps.json should exist after save");
+            Assert.IsFalse(File.Exists(path + ".tmp"), "No .tmp file should remain after a successful save");
+        }
+
+        [TestMethod]
+        public void ConfigService_Save_OverwritesExistingFile()
+        {
+            // Saving twice should update the file, not append or fail
+            var configService = new ConfigService();
+            var sync = new SyncService();
+            var store = new ManagedStore();
+            var path = CreateTempFilePath();
+
+            var g1 = new Game("Alpha") { Id = Guid.NewGuid() };
+            var g2 = new Game("Beta") { Id = Guid.NewGuid() };
+
+            // First save: one game
+            var config = configService.Load(path);
+            sync.AddOrUpdate(config, store, g1);
+            configService.Save(path, config);
+
+            // Second save: two games
+            config = configService.Load(path);
+            sync.AddOrUpdate(config, store, g2);
+            configService.Save(path, config);
+
+            // Reload and verify
+            var loaded = configService.Load(path);
+            var apps = (JArray)loaded["apps"];
+            Assert.AreEqual(2, apps.Count, "Both games should be present after second save");
+        }
+
+        [TestMethod]
+        public void ConfigService_Save_UnaffectedByStaleFilesNextToTarget()
+        {
+            // Temp files are now written to %TEMP%, not the Apollo directory, so any stale
+            // files sitting alongside apps.json should have no effect on saves.
+            var configService = new ConfigService();
+            var path = CreateTempFilePath();
+
+            // Pre-create a stale file that an old version of the plugin might have left behind
+            File.WriteAllText(path + ".tmp", "{ corrupted json from old version");
+
+            var config = new JObject
+            {
+                ["apps"] = new JArray(),
+                ["env"] = new JObject(),
+                ["version"] = 2
+            };
+
+            configService.Save(path, config);
+
+            Assert.IsTrue(File.Exists(path), "apps.json should be written");
+
+            // The written file should be valid JSON
+            var loaded = configService.Load(path);
+            Assert.IsNotNull(loaded);
+            Assert.IsNotNull(loaded["apps"]);
+        }
+
+        [TestMethod]
+        public void ConfigService_RoundTrip_PreservesUnknownFields()
+        {
+            // Fields not managed by this plugin (e.g. set by Apollo itself) should survive a
+            // load → modify → save round-trip.
+            var configService = new ConfigService();
+            var sync = new SyncService();
+            var store = new ManagedStore();
+            var path = CreateTempFilePath();
+
+            // Write a file with a custom top-level field and a custom per-app field
+            var initial = new JObject
+            {
+                ["apps"] = new JArray
+                {
+                    new JObject
+                    {
+                        ["name"] = "Existing App",
+                        ["uuid"] = Guid.NewGuid().ToString().ToUpperInvariant(),
+                        ["id"] = "1",
+                        ["cmd"] = "notepad.exe",
+                        ["apollo-specific"] = "keep me"
+                    }
+                },
+                ["env"] = new JObject(),
+                ["version"] = 2,
+                ["top-level-custom"] = "also keep me"
+            };
+            File.WriteAllText(path, initial.ToString(Newtonsoft.Json.Formatting.Indented));
+
+            // Load, add a new game, save
+            var config = configService.Load(path);
+            var newGame = new Game("New Game") { Id = Guid.NewGuid() };
+            sync.AddOrUpdate(config, store, newGame);
+            configService.Save(path, config);
+
+            // Reload and verify custom fields survived
+            var reloaded = configService.Load(path);
+            Assert.AreEqual("also keep me", (string)reloaded["top-level-custom"]);
+
+            var existingApp = ((JArray)reloaded["apps"])
+                .OfType<JObject>()
+                .FirstOrDefault(a => (string)a["name"] == "Existing App");
+            Assert.IsNotNull(existingApp, "Existing app entry should survive");
+            Assert.AreEqual("keep me", (string)existingApp["apollo-specific"]);
         }
 
         [TestMethod]
@@ -155,13 +297,13 @@ namespace ApolloSync.Tests
             var config = new JObject { ["apps"] = new JArray() };
             var store = new ManagedStore();
 
-            var g = new Game("Pinned") { Id = Guid.NewGuid() };
+            var g = new Playnite.SDK.Models.Game("Pinned") { Id = Guid.NewGuid() };
             var uuid = Guid.NewGuid();
             store.GameToUuid[g.Id] = uuid;
             ((JArray)config["apps"]).Add(new JObject { ["name"] = g.Name, ["uuid"] = uuid.ToString().ToUpperInvariant() });
 
             var pinned = new HashSet<Guid> { g.Id };
-            Func<Game, bool> meetsFilter = _ => false; // filtered out
+            Func<Playnite.SDK.Models.Game, bool> meetsFilter = _ => false; // filtered out
 
             // Act
             var apps = (JArray)config["apps"];
@@ -180,7 +322,7 @@ namespace ApolloSync.Tests
                         apps.Remove(app);
                         removedCount++;
                     }
-                    Guid rem; store.GameToUuid.TryRemove(gameId, out rem);
+                    Guid _removedVal; store.GameToUuid.TryRemove(gameId, out _removedVal);
                 }
             }
 
