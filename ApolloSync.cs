@@ -21,9 +21,9 @@ namespace ApolloSync
     public class ApolloSync : GenericPlugin
     {
         private static readonly ILogger logger = LogManager.GetLogger();
-        private ApolloSyncSettingsViewModel settings { get; set; }
+        private ApolloSyncSettingsViewModel _settings;
 
-        private ManagedStore managedStore;
+        private ManagedStore _managedStore;
         private readonly IConfigService configService = new ConfigService();
         private readonly IManagedStoreService storeService = new ManagedStoreService();
         private readonly ISyncService syncService;
@@ -33,7 +33,7 @@ namespace ApolloSync
 
         public ApolloSync(IPlayniteAPI api) : base(api)
         {
-            settings = new ApolloSyncSettingsViewModel(this);
+            _settings = new ApolloSyncSettingsViewModel(this);
             syncService = new SyncService(api);
             Properties = new GenericPluginProperties
             {
@@ -45,10 +45,10 @@ namespace ApolloSync
         #region Helper Methods
         private void ShowNotificationIfEnabled(NotificationMessage notification, bool isUpdateOperation = false)
         {
-            var mode = settings.Settings.NotificationMode;
+            var mode = _settings.Settings.NotificationMode;
 
             // For backward compatibility, check legacy ShowNotifications setting
-            if (!settings.Settings.ShowNotifications)
+            if (!_settings.Settings.ShowNotifications)
             {
                 mode = NotificationMode.Never;
             }
@@ -81,7 +81,7 @@ namespace ApolloSync
                 .Where(s => !string.IsNullOrEmpty(s) && Guid.TryParse(s, out _))
                 .Any(s => Guid.Parse(s) == game.Id);
 
-            var isManaged = managedStore.GameToUuid.ContainsKey(game.Id);
+            var isManaged = _managedStore.GameToUuid.ContainsKey(game.Id);
 
             if (isManaged && !presentInConfig)
             {
@@ -100,17 +100,20 @@ namespace ApolloSync
             // keeping a stream open after Playnite restarts.
             foreach (var stale in Directory.EnumerateFiles(Path.GetTempPath(), "apollosync-*.lock"))
             {
-                try { File.Delete(stale); } catch { }
+                try { File.Delete(stale); } catch { /* Non-fatal: stale lock deletion failure on startup is ignored */ }
             }
 
             // Subscribe to game metadata changes (e.g., cover image updates)
             PlayniteApi.Database.Games.ItemUpdated += Games_ItemUpdated;
 
+            // Refresh filter presets now that the database is ready
+            _settings.RefreshFilterPresets();
+
             // Sync managed store on startup to remove orphaned entries
             SyncManagedStore();
 
             // Perform sync on startup if enabled
-            if (settings.Settings.SyncOnStartup)
+            if (_settings.Settings.SyncOnStartup)
             {
                 logger.Info("Triggering sync due to application startup");
                 SyncFilteredGamesWithProgress();
@@ -139,7 +142,7 @@ namespace ApolloSync
 
         public override void OnGameStarted(OnGameStartedEventArgs args)
         {
-            if (!managedStore.GameToUuid.ContainsKey(args.Game.Id))
+            if (!_managedStore.GameToUuid.ContainsKey(args.Game.Id))
                 return;
 
             var lockPath = SyncService.GetLockFilePath(args.Game.Id);
@@ -162,7 +165,7 @@ namespace ApolloSync
 
         public override void OnGameStopped(OnGameStoppedEventArgs args)
         {
-            if (!managedStore.GameToUuid.ContainsKey(args.Game.Id))
+            if (!_managedStore.GameToUuid.ContainsKey(args.Game.Id))
                 return;
 
             var lockPath = SyncService.GetLockFilePath(args.Game.Id);
@@ -193,13 +196,15 @@ namespace ApolloSync
             CancelSync();
             try
             {
-                _syncTask?.Wait(TimeSpan.FromSeconds(5));
+                var completed = _syncTask?.Wait(TimeSpan.FromSeconds(5)) ?? true;
+                if (!completed)
+                    logger.Warn("Sync task did not complete within 5 s during shutdown; proceeding anyway");
             }
             catch (AggregateException) { }
 
             // Clean up any leftover lock files — guards against Playnite crashing mid-session
             // leaving a lock that would keep a stream open indefinitely.
-            foreach (var gameId in managedStore.GameToUuid.Keys)
+            foreach (var gameId in _managedStore.GameToUuid.Keys)
             {
                 var lockPath = SyncService.GetLockFilePath(gameId);
                 try { if (File.Exists(lockPath)) File.Delete(lockPath); } catch { }
@@ -227,7 +232,7 @@ namespace ApolloSync
 
         public override void OnLibraryUpdated(OnLibraryUpdatedEventArgs args)
         {
-            if (!settings.Settings.SyncOnLibraryUpdate)
+            if (!_settings.Settings.SyncOnLibraryUpdate)
             {
                 return;
             }
@@ -244,7 +249,7 @@ namespace ApolloSync
 
         public override ISettings GetSettings(bool firstRunSettings)
         {
-            return settings;
+            return _settings;
         }
 
         public override UserControl GetSettingsView(bool firstRunSettings)
@@ -321,12 +326,12 @@ namespace ApolloSync
         private void LoadManagedStore()
         {
             // Load managed store from plugin settings instead of separate file
-            managedStore = new ManagedStore
+            _managedStore = new ManagedStore
             {
                 GameToUuid = new System.Collections.Concurrent.ConcurrentDictionary<Guid, Guid>(
-                    settings.Settings.ManagedGameMappings ?? new Dictionary<Guid, Guid>())
+                    _settings.Settings.ManagedGameMappings ?? new Dictionary<Guid, Guid>())
             };
-            logger.Debug($"Loaded managed store from settings with {managedStore.GameToUuid.Count} entries");
+            logger.Debug($"Loaded managed store from settings with {_managedStore.GameToUuid.Count} entries");
         }
 
         public List<Game> GetManagedGamesForSettings()
@@ -334,16 +339,16 @@ namespace ApolloSync
             try
             {
                 // Ensure managed store is loaded
-                if (managedStore == null)
+                if (_managedStore == null)
                 {
                     LoadManagedStore();
                 }
 
                 var managedGames = new List<Game>();
 
-                if (managedStore?.GameToUuid != null)
+                if (_managedStore?.GameToUuid != null)
                 {
-                    foreach (var gameId in managedStore.GameToUuid.Keys)
+                    foreach (var gameId in _managedStore.GameToUuid.Keys)
                     {
                         var game = PlayniteApi.Database.Games.Get(gameId);
                         if (game != null)
@@ -366,14 +371,14 @@ namespace ApolloSync
         {
             try
             {
-                if (managedStore?.GameToUuid == null) return;
+                if (_managedStore?.GameToUuid == null) return;
 
                 lock (_configLock)
                 {
                     foreach (var gameId in gameIds)
                     {
                         Guid removed;
-                        managedStore.GameToUuid.TryRemove(gameId, out removed);
+                        _managedStore.GameToUuid.TryRemove(gameId, out removed);
                     }
 
                     SaveManagedStore();
@@ -389,9 +394,9 @@ namespace ApolloSync
         private void SaveManagedStore()
         {
             // Save managed store to plugin settings instead of separate file
-            settings.Settings.ManagedGameMappings = new Dictionary<Guid, Guid>(managedStore.GameToUuid);
-            SavePluginSettings(settings.Settings);
-            logger.Debug($"Saved managed store to settings with {managedStore.GameToUuid.Count} entries");
+            _settings.Settings.ManagedGameMappings = new Dictionary<Guid, Guid>(_managedStore.GameToUuid);
+            SavePluginSettings(_settings.Settings);
+            logger.Debug($"Saved managed store to settings with {_managedStore.GameToUuid.Count} entries");
         }
 
         private void SyncManagedStore()
@@ -421,7 +426,7 @@ namespace ApolloSync
                 }
 
                 // Find managed store entries that don't exist in apps.json
-                var toRemove = managedStore.GameToUuid.Where(kvp => !configUuids.Contains(kvp.Value)).ToList();
+                var toRemove = _managedStore.GameToUuid.Where(kvp => !configUuids.Contains(kvp.Value)).ToList();
 
                 if (toRemove.Count > 0)
                 {
@@ -430,7 +435,7 @@ namespace ApolloSync
                     {
                         logger.Debug($"Removing orphaned managed store entry: Game {kvp.Key} -> UUID {kvp.Value}");
                         Guid removedUuid;
-                        managedStore.GameToUuid.TryRemove(kvp.Key, out removedUuid);
+                        _managedStore.GameToUuid.TryRemove(kvp.Key, out removedUuid);
                     }
                     SaveManagedStore();
                     logger.Info("Managed store sync completed");
@@ -452,11 +457,11 @@ namespace ApolloSync
         private List<Game> GetFilteredGames()
         {
             // Use filter presets with OR logic - game matches if it matches ANY selected preset
-            if (settings.Settings.IncludedFilterPresetIds?.Count > 0)
+            if (_settings.Settings.IncludedFilterPresetIds?.Count > 0)
             {
                 var matchingGames = new HashSet<Game>();
 
-                foreach (var presetId in settings.Settings.IncludedFilterPresetIds)
+                foreach (var presetId in _settings.Settings.IncludedFilterPresetIds)
                 {
                     var filterPreset = PlayniteApi.Database.FilterPresets
                         .FirstOrDefault(fp => fp.Id == presetId);
@@ -491,9 +496,9 @@ namespace ApolloSync
         private bool GameMeetsCurrentFilters(Game game)
         {
             // Use filter presets with OR logic - game matches if it matches ANY selected preset
-            if (settings.Settings.IncludedFilterPresetIds?.Count > 0)
+            if (_settings.Settings.IncludedFilterPresetIds?.Count > 0)
             {
-                foreach (var presetId in settings.Settings.IncludedFilterPresetIds)
+                foreach (var presetId in _settings.Settings.IncludedFilterPresetIds)
                 {
                     var filterPreset = PlayniteApi.Database.FilterPresets
                         .FirstOrDefault(fp => fp.Id == presetId);
@@ -524,7 +529,7 @@ namespace ApolloSync
         private int RemoveFilteredOutGames(JObject config, HashSet<Guid> pinnedGameIds = null)
         {
             var removedCount = 0;
-            var pinned = pinnedGameIds ?? new HashSet<Guid>(settings.Settings.PinnedGameIds);
+            var pinned = pinnedGameIds ?? new HashSet<Guid>(_settings.Settings.PinnedGameIds);
 
             try
             {
@@ -533,7 +538,7 @@ namespace ApolloSync
                 var managedGamesToRemove = new List<Guid>();
 
                 // Check each managed game
-                foreach (var gameEntry in managedStore.GameToUuid.ToList())
+                foreach (var gameEntry in _managedStore.GameToUuid.ToList())
                 {
                     var gameId = gameEntry.Key;
                     var appUuid = gameEntry.Value;
@@ -590,7 +595,7 @@ namespace ApolloSync
                 foreach (var gameId in managedGamesToRemove)
                 {
                     Guid removedId;
-                    managedStore.GameToUuid.TryRemove(gameId, out removedId);
+                    _managedStore.GameToUuid.TryRemove(gameId, out removedId);
                 }
 
                 logger.Info($"RemoveFilteredOutGames completed: removed {removedCount} games from apps.json");
@@ -666,7 +671,7 @@ namespace ApolloSync
             HashSet<Guid> pinnedSnapshot;
             lock (_configLock)
             {
-                pinnedSnapshot = new HashSet<Guid>(settings.Settings.PinnedGameIds);
+                pinnedSnapshot = new HashSet<Guid>(_settings.Settings.PinnedGameIds);
             }
 
             // Load config once at the beginning
@@ -803,15 +808,15 @@ namespace ApolloSync
             var pinnedCount = 0;
             foreach (var game in gameList)
             {
-                if (!settings.Settings.PinnedGameIds.Contains(game.Id))
+                if (!_settings.Settings.PinnedGameIds.Contains(game.Id))
                 {
-                    settings.Settings.PinnedGameIds.Add(game.Id);
+                    _settings.Settings.PinnedGameIds.Add(game.Id);
                     pinnedCount++;
                 }
             }
             if (pinnedCount > 0)
             {
-                SavePluginSettings(settings.Settings);
+                SavePluginSettings(_settings.Settings);
                 logger.Info($"Auto-pinned {pinnedCount} manually exported games");
             }
 
@@ -822,7 +827,13 @@ namespace ApolloSync
                 // Cancel any running background sync before touching apps.json to prevent
                 // the sync's stale snapshot from overwriting our changes on its final save.
                 CancelSync();
-                try { _syncTask?.Wait(TimeSpan.FromSeconds(30)); } catch (AggregateException) { }
+                try
+                {
+                    var syncCompleted = _syncTask?.Wait(TimeSpan.FromSeconds(30)) ?? true;
+                    if (!syncCompleted)
+                        logger.Warn("Previous sync task did not finish within 30 s; proceeding with operation anyway");
+                }
+                catch (AggregateException) { }
 
                 logger.Info("Starting export games operation");
                 logger.Info($"Exporting {gameList.Count} games");
@@ -923,7 +934,13 @@ namespace ApolloSync
             {
                 // Same lost-update guard and UI-thread protection as ExportGamesWithFeedback.
                 CancelSync();
-                try { _syncTask?.Wait(TimeSpan.FromSeconds(30)); } catch (AggregateException) { }
+                try
+                {
+                    var syncCompleted = _syncTask?.Wait(TimeSpan.FromSeconds(30)) ?? true;
+                    if (!syncCompleted)
+                        logger.Warn("Previous sync task did not finish within 30 s; proceeding with operation anyway");
+                }
+                catch (AggregateException) { }
 
                 logger.Info("Starting remove games operation");
                 logger.Info($"Removing {gameList.Count} games");
@@ -1027,9 +1044,9 @@ namespace ApolloSync
             var pinnedCount = 0;
             foreach (var game in gameList)
             {
-                if (!settings.Settings.PinnedGameIds.Contains(game.Id))
+                if (!_settings.Settings.PinnedGameIds.Contains(game.Id))
                 {
-                    settings.Settings.PinnedGameIds.Add(game.Id);
+                    _settings.Settings.PinnedGameIds.Add(game.Id);
                     pinnedCount++;
                     logger.Debug($"Pinned game: {game.Name} (ID: {game.Id})");
                 }
@@ -1037,7 +1054,7 @@ namespace ApolloSync
 
             if (pinnedCount > 0)
             {
-                SavePluginSettings(settings.Settings);
+                SavePluginSettings(_settings.Settings);
                 ShowNotificationIfEnabled(new NotificationMessage(
                     "apollosync-pin-complete",
                     $"Pinned {pinnedCount} games. Pinned games will not be automatically removed when filters change or games are uninstalled.",
@@ -1065,9 +1082,9 @@ namespace ApolloSync
             var unpinnedCount = 0;
             foreach (var game in gameList)
             {
-                if (settings.Settings.PinnedGameIds.Contains(game.Id))
+                if (_settings.Settings.PinnedGameIds.Contains(game.Id))
                 {
-                    settings.Settings.PinnedGameIds.Remove(game.Id);
+                    _settings.Settings.PinnedGameIds.Remove(game.Id);
                     unpinnedCount++;
                     logger.Debug($"Unpinned game: {game.Name} (ID: {game.Id})");
                 }
@@ -1075,7 +1092,7 @@ namespace ApolloSync
 
             if (unpinnedCount > 0)
             {
-                SavePluginSettings(settings.Settings);
+                SavePluginSettings(_settings.Settings);
                 ShowNotificationIfEnabled(new NotificationMessage(
                     "apollosync-unpin-complete",
                     $"Unpinned {unpinnedCount} games. These games may now be automatically removed based on your filter settings.",
@@ -1113,7 +1130,7 @@ namespace ApolloSync
 
                 logger.Debug($"Loaded config has {((JArray)config["apps"])?.Count ?? 0} apps at start");
                 logger.Debug($"Attempting to add/update app for game: {game.Name}");
-                var ok = syncService.AddOrUpdate(config, managedStore, game);
+                var ok = syncService.AddOrUpdate(config, _managedStore, game);
 
                 if (ok)
                 {
@@ -1158,7 +1175,7 @@ namespace ApolloSync
 
             try
             {
-                var ok = syncService.AddOrUpdate(config, managedStore, game);
+                var ok = syncService.AddOrUpdate(config, _managedStore, game);
                 if (ok)
                 {
                     logger.Debug($"Successfully processed app for game: {game.Name}");
@@ -1198,7 +1215,7 @@ namespace ApolloSync
 
             try
             {
-                var ok = syncService.Remove(config, managedStore, game);
+                var ok = syncService.Remove(config, _managedStore, game);
                 if (ok)
                 {
                     logger.Debug($"Successfully processed removal for game: {game.Name}");
@@ -1221,7 +1238,7 @@ namespace ApolloSync
         {
             try
             {
-                var path = settings.Settings.AppsJsonPath;
+                var path = _settings.Settings.AppsJsonPath;
                 logger.Debug($"Loading apps config from path: {path}");
                 var config = configService.Load(path);
 
@@ -1247,7 +1264,7 @@ namespace ApolloSync
         {
             try
             {
-                var path = settings.Settings.AppsJsonPath;
+                var path = _settings.Settings.AppsJsonPath;
                 logger.Debug($"Saving apps config to path: {path}");
                 try
                 {

@@ -181,10 +181,15 @@ namespace ApolloSync.Tests
             var path = CreateTempFilePath();
             var config = new JObject { ["apps"] = new JArray(), ["env"] = new JObject(), ["version"] = 2 };
 
+            var tmpsBefore = Directory.EnumerateFiles(Path.GetTempPath(), "apollosync_*.tmp").ToHashSet();
+
             configService.Save(path, config);
 
             Assert.IsTrue(File.Exists(path), "apps.json should exist after save");
-            Assert.IsFalse(File.Exists(path + ".tmp"), "No .tmp file should remain after a successful save");
+            var newTmps = Directory.EnumerateFiles(Path.GetTempPath(), "apollosync_*.tmp")
+                .Where(f => !tmpsBefore.Contains(f))
+                .ToList();
+            Assert.AreEqual(0, newTmps.Count, "No apollosync_*.tmp files should remain in TEMP after a successful save");
         }
 
         [TestMethod]

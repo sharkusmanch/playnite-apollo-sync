@@ -13,6 +13,8 @@ namespace ApolloSync
 {
     public partial class ApolloSyncSettingsView : UserControl
     {
+        private static readonly ILogger logger = LogManager.GetLogger();
+
         public ApolloSyncSettingsView()
         {
             BuildUI();
@@ -756,6 +758,7 @@ namespace ApolloSync
                 }
                 catch (Exception ex)
                 {
+                    logger.Error(ex, "ApolloSyncSettingsView.RefreshManagedGamesList: failed to load managed games list");
                     var errorText = new TextBlock
                     {
                         Text = $"Error loading managed games: {ex.Message}",

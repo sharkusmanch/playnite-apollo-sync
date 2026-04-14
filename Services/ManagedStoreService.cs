@@ -34,10 +34,24 @@ namespace ApolloSync.Services
 
         public void Save(string path, ManagedStore store)
         {
+            var tmpPath = Path.Combine(Path.GetTempPath(), "apollosync_store_" + Path.GetRandomFileName() + ".tmp");
             try
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(path));
-                File.WriteAllText(path, Serialization.ToJson(store, true));
+                var jsonContent = Serialization.ToJson(store, true);
+                try
+                {
+                    using (var fs = new FileStream(tmpPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                    {
+                        var bytes = System.Text.Encoding.UTF8.GetBytes(jsonContent);
+                        fs.Write(bytes, 0, bytes.Length);
+                    }
+                    File.Copy(tmpPath, path, overwrite: true);
+                }
+                finally
+                {
+                    try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
+                }
             }
             catch (Exception e)
             {

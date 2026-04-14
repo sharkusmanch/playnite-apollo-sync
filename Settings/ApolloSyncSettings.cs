@@ -31,68 +31,68 @@ namespace ApolloSync
 
     public class ApolloSyncSettings : ObservableObject
     {
-        private string appsJsonPath = string.Empty;
+        private string _appsJsonPath = string.Empty;
 
         public string AppsJsonPath
         {
-            get => appsJsonPath;
-            set => SetValue(ref appsJsonPath, value);
+            get => _appsJsonPath;
+            set => SetValue(ref _appsJsonPath, value);
         }
 
-        private bool syncOnSettingsUpdated = true;
+        private bool _syncOnSettingsUpdated = true;
         public bool SyncOnSettingsUpdated
         {
-            get => syncOnSettingsUpdated;
-            set => SetValue(ref syncOnSettingsUpdated, value);
+            get => _syncOnSettingsUpdated;
+            set => SetValue(ref _syncOnSettingsUpdated, value);
         }
 
-        private bool syncOnLibraryUpdate = true;
+        private bool _syncOnLibraryUpdate = true;
         public bool SyncOnLibraryUpdate
         {
-            get => syncOnLibraryUpdate;
-            set => SetValue(ref syncOnLibraryUpdate, value);
+            get => _syncOnLibraryUpdate;
+            set => SetValue(ref _syncOnLibraryUpdate, value);
         }
 
-        private bool syncOnStartup = false;
+        private bool _syncOnStartup = false;
         public bool SyncOnStartup
         {
-            get => syncOnStartup;
-            set => SetValue(ref syncOnStartup, value);
+            get => _syncOnStartup;
+            set => SetValue(ref _syncOnStartup, value);
         }
 
-        private List<Guid> pinnedGameIds = new List<Guid>();
+        private List<Guid> _pinnedGameIds = new List<Guid>();
         public List<Guid> PinnedGameIds
         {
-            get => pinnedGameIds;
-            set => SetValue(ref pinnedGameIds, value);
+            get => _pinnedGameIds;
+            set => SetValue(ref _pinnedGameIds, value);
         }
 
-        private List<Guid> includedFilterPresetIds = new List<Guid>();
+        private List<Guid> _includedFilterPresetIds = new List<Guid>();
         public List<Guid> IncludedFilterPresetIds
         {
-            get => includedFilterPresetIds;
-            set => SetValue(ref includedFilterPresetIds, value);
+            get => _includedFilterPresetIds;
+            set => SetValue(ref _includedFilterPresetIds, value);
         }
 
-        private bool showNotifications = true;
+        private bool _showNotifications = true;
         public bool ShowNotifications
         {
-            get => showNotifications;
-            set => SetValue(ref showNotifications, value);
+            get => _showNotifications;
+            set => SetValue(ref _showNotifications, value);
         }
 
-        private NotificationMode notificationMode = NotificationMode.Always;
+        private NotificationMode _notificationMode = NotificationMode.Always;
         public NotificationMode NotificationMode
         {
-            get => notificationMode;
-            set => SetValue(ref notificationMode, value);
+            get => _notificationMode;
+            set => SetValue(ref _notificationMode, value);
         }
 
-        private Dictionary<Guid, Guid> managedGameMappings = new Dictionary<Guid, Guid>();
+        private Dictionary<Guid, Guid> _managedGameMappings = new Dictionary<Guid, Guid>();
         public Dictionary<Guid, Guid> ManagedGameMappings
         {
-            get => managedGameMappings;
-            set => SetValue(ref managedGameMappings, value);
+            get => _managedGameMappings;
+            set => SetValue(ref _managedGameMappings, value);
         }
 
         // No non-serialized properties at this time.
@@ -100,16 +100,17 @@ namespace ApolloSync
 
     public class ApolloSyncSettingsViewModel : ObservableObject, ISettings
     {
-        private readonly ApolloSync plugin;
-        private ApolloSyncSettings editingClone { get; set; }
+        private static readonly ILogger logger = LogManager.GetLogger();
+        private readonly ApolloSync _plugin;
+        private ApolloSyncSettings _editingClone;
 
-        private ApolloSyncSettings settings;
+        private ApolloSyncSettings _settings;
         public ApolloSyncSettings Settings
         {
-            get => settings;
+            get => _settings;
             set
             {
-                settings = value;
+                _settings = value;
                 OnPropertyChanged();
             }
         }
@@ -118,21 +119,21 @@ namespace ApolloSync
 
         public List<Game> GetManagedGames()
         {
-            return plugin.GetManagedGamesForSettings();
+            return _plugin.GetManagedGamesForSettings();
         }
 
         public void RemoveGamesFromManaged(List<Guid> gameIds)
         {
-            plugin.RemoveGamesFromManaged(gameIds);
+            _plugin.RemoveGamesFromManaged(gameIds);
         }
 
         public ApolloSyncSettingsViewModel(ApolloSync plugin)
         {
             // Injecting your plugin instance is required for Save/Load method because Playnite saves data to a location based on what plugin requested the operation.
-            this.plugin = plugin;
+            _plugin = plugin;
 
             // Load saved settings.
-            var savedSettings = plugin.LoadPluginSettings<ApolloSyncSettings>();
+            var savedSettings = _plugin.LoadPluginSettings<ApolloSyncSettings>();
 
             // LoadPluginSettings returns null if no saved data is available.
             if (savedSettings != null)
@@ -144,8 +145,8 @@ namespace ApolloSync
                 Settings = new ApolloSyncSettings();
             }
 
-            // Initialize available filter presets
-            RefreshAvailableOptions();
+            // Filter presets are loaded in OnApplicationStarted via RefreshFilterPresets()
+            // to avoid accessing PlayniteApi.Database before it is ready.
         }
 
         public void RefreshFilterPresets()
@@ -155,16 +156,16 @@ namespace ApolloSync
 
         private void RefreshAvailableOptions()
         {
-            if (plugin.PlayniteApi?.Database != null)
+            if (_plugin.PlayniteApi?.Database != null)
             {
-                AvailableFilterPresets = plugin.PlayniteApi.Database.FilterPresets.OrderBy(f => f.Name).ToList();
+                AvailableFilterPresets = _plugin.PlayniteApi.Database.FilterPresets.OrderBy(f => f.Name).ToList();
             }
         }
 
         public void BeginEdit()
         {
             // Code executed when settings view is opened and user starts editing values.
-            editingClone = Serialization.GetClone(Settings);
+            _editingClone = Serialization.GetClone(Settings);
             RefreshAvailableOptions();
         }
 
@@ -172,19 +173,19 @@ namespace ApolloSync
         {
             // Code executed when user decides to cancel any changes made since BeginEdit was called.
             // This method should revert any changes made to Option1 and Option2.
-            Settings = editingClone;
+            Settings = _editingClone;
         }
 
         public void EndEdit()
         {
             // Code executed when user decides to confirm changes made since BeginEdit was called.
             // This method should save settings made to Option1 and Option2.
-            plugin.SavePluginSettings(Settings);
+            _plugin.SavePluginSettings(Settings);
 
             // Trigger sync if enabled
             if (Settings.SyncOnSettingsUpdated)
             {
-                plugin.TriggerSyncOnSettingsUpdate();
+                _plugin.TriggerSyncOnSettingsUpdate();
             }
         }
 
@@ -204,8 +205,9 @@ namespace ApolloSync
                         errors.Add(ResourceProvider.GetString("LOC_ApolloSync_Settings_AppsJsonPath_Invalid"));
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
+                    logger.Warn(ex, "VerifySettings: path validation threw on invalid input; treating as invalid path");
                     errors.Add(ResourceProvider.GetString("LOC_ApolloSync_Settings_AppsJsonPath_Invalid"));
                 }
             }

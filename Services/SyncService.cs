@@ -202,11 +202,14 @@ namespace ApolloSync.Services
             return obj;
         }
 
-        private static string GetPlayniteDesktopPath()
+        private string GetPlayniteDesktopPath()
         {
-            var baseDir = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData);
-            var candidate = Path.Combine(baseDir, "Playnite", "Playnite.DesktopApp.exe");
-            return File.Exists(candidate) ? candidate : null;
+            if (_api?.Paths?.ApplicationPath != null)
+            {
+                var candidate = Path.Combine(_api.Paths.ApplicationPath, "Playnite.DesktopApp.exe");
+                return File.Exists(candidate) ? candidate : null;
+            }
+            return null;
         }
 
         private static string ToApolloUuid(Guid uuid)
