@@ -85,6 +85,8 @@ namespace ApolloSync.Services
                     const int maxAttempts = 3;
                     while (true)
                     {
+                        // Delete any leftover tmp from a previous failed attempt so FileMode.CreateNew can succeed.
+                        try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
                         try
                         {
                             // FileMode.CreateNew fails if a file (or symlink to an existing
@@ -188,11 +190,15 @@ namespace ApolloSync.Services
 
                 var bestByUuid = new System.Collections.Generic.Dictionary<string, JObject>(StringComparer.OrdinalIgnoreCase);
                 var seenOrder = new System.Collections.Generic.List<string>();
+                var noUuidApps = new System.Collections.Generic.List<JObject>();
                 foreach (var app in apps.OfType<JObject>())
                 {
                     var uuidStr = ((string)app["uuid"])?.Trim();
                     if (string.IsNullOrEmpty(uuidStr))
                     {
+                        // Cannot deduplicate without a UUID — preserve the entry as-is.
+                        logger.Warn($"ConfigService.{stage} - App entry has no UUID; preserving as-is (cannot deduplicate): {app["name"]}");
+                        noUuidApps.Add(app);
                         continue;
                     }
 
@@ -229,6 +235,11 @@ namespace ApolloSync.Services
                     {
                         deduped.Add(keep);
                     }
+                }
+                // Append entries that had no UUID (preserved as-is, cannot participate in dedup).
+                foreach (var noUuidApp in noUuidApps)
+                {
+                    deduped.Add(noUuidApp);
                 }
                 config["apps"] = deduped;
                 var after = deduped.Count;
