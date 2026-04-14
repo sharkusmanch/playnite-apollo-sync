@@ -134,8 +134,6 @@ namespace ApolloSync.Services
             }
             Guid removed;
             store.GameToUuid.TryRemove(game.Id, out removed);
-            store.ManuallyRemoved.Add(game.Id);
-            logger.Debug($"SyncService.Remove: marked game {game.Id} as manually removed");
             CleanupCachedImage(game);
             return true;
         }

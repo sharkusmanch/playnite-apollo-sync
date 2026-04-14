@@ -489,7 +489,7 @@ namespace ApolloSync
             }
 
             // No filter presets selected - return no games
-            logger.Warn("No filter presets selected - no games will be filtered. Please select filter presets in _settings.");
+            logger.Warn("No filter presets selected - no games will be filtered. Please select filter presets in settings.");
             return new List<Game>();
         }
 
@@ -1095,7 +1095,7 @@ namespace ApolloSync
                 SavePluginSettings(_settings.Settings);
                 ShowNotificationIfEnabled(new NotificationMessage(
                     "apollosync-unpin-complete",
-                    $"Unpinned {unpinnedCount} games. These games may now be automatically removed based on your filter _settings.",
+                    $"Unpinned {unpinnedCount} games. These games may now be automatically removed based on your filter settings.",
                     NotificationType.Info), isUpdateOperation: false);
             }
             else
