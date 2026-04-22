@@ -171,6 +171,106 @@ namespace ApolloSync.Tests
             Assert.IsFalse(ConfigService.IsLocalAbsolutePath("   "));
         }
 
+        // ── ResolveConfigPath ─────────────────────────────────────────────────────
+
+        [TestMethod]
+        public void ResolveConfigPath_PassesThroughCustomPath()
+        {
+            var custom = @"D:\custom\apps.json";
+            Assert.AreEqual(custom, ConfigService.ResolveConfigPath(custom, preferExisting: true));
+            Assert.AreEqual(custom, ConfigService.ResolveConfigPath(custom, preferExisting: false));
+        }
+
+        [TestMethod]
+        public void ResolveConfigPath_EmptyInputReturnsLocalAbsolutePath()
+        {
+            // Regression guard for issue #11: an empty AppsJsonPath setting must still
+            // resolve to a concrete local absolute path so the permission-fix elevation
+            // flow (which rejects non-local paths) can run.
+            foreach (var input in new[] { null, string.Empty, "   " })
+            {
+                var resolved = ConfigService.ResolveConfigPath(input, preferExisting: false);
+                Assert.IsTrue(
+                    ConfigService.IsLocalAbsolutePath(resolved),
+                    $"Expected local absolute path for input '{input ?? "<null>"}', got '{resolved}'");
+                StringAssert.EndsWith(resolved, @"Apollo\config\apps.json");
+            }
+        }
+
+        [TestMethod]
+        [DoNotParallelize]
+        public void Save_WithEmptyPath_WritesToSunshineWhenOnlySunshineInstalled()
+        {
+            // Regression guard: previously Save defaulted to preferExisting:false and would
+            // create a new Apollo config even for Sunshine-only users, making their sync
+            // silently write to a file nothing ever reads.
+            var originalProgramW6432 = Environment.GetEnvironmentVariable("ProgramW6432");
+            var fakeProgramFiles = Path.Combine(Path.GetTempPath(), "ApolloSyncTests", Guid.NewGuid().ToString("N"));
+            var sunshineConfig = Path.Combine(fakeProgramFiles, "Sunshine", "config");
+            var sunshineApps = Path.Combine(sunshineConfig, "apps.json");
+            var apolloApps = Path.Combine(fakeProgramFiles, "Apollo", "config", "apps.json");
+
+            try
+            {
+                Directory.CreateDirectory(sunshineConfig);
+                File.WriteAllText(sunshineApps, "{\"apps\":[],\"env\":{},\"version\":2}");
+                Environment.SetEnvironmentVariable("ProgramW6432", fakeProgramFiles);
+
+                var config = new JObject
+                {
+                    ["apps"] = new JArray(new JObject { ["name"] = "Probe", ["uuid"] = Guid.NewGuid().ToString().ToUpperInvariant() }),
+                    ["env"] = new JObject(),
+                    ["version"] = 2
+                };
+
+                new ConfigService().Save(null, config);
+
+                Assert.IsTrue(File.Exists(sunshineApps), "Save should have written to the existing Sunshine apps.json");
+                Assert.IsFalse(File.Exists(apolloApps), "Save must not silently create an Apollo config when only Sunshine exists");
+
+                var reloaded = JObject.Parse(File.ReadAllText(sunshineApps));
+                Assert.AreEqual("Probe", (string)((JArray)reloaded["apps"])[0]["name"]);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("ProgramW6432", originalProgramW6432);
+                // Best-effort temp cleanup: a locked file here shouldn't fail the test.
+                try { Directory.Delete(fakeProgramFiles, recursive: true); } catch { }
+            }
+        }
+
+        // Mutates ProgramW6432 at process scope — must not race with any other test
+        // that reads it (i.e. anything calling ConfigService.ResolveConfigPath with an empty path).
+        [TestMethod]
+        [DoNotParallelize]
+        public void ResolveConfigPath_PreferExisting_PicksSunshineWhenOnlySunshineInstalled()
+        {
+            var originalProgramW6432 = Environment.GetEnvironmentVariable("ProgramW6432");
+            var fakeProgramFiles = Path.Combine(Path.GetTempPath(), "ApolloSyncTests", Guid.NewGuid().ToString("N"));
+            var sunshineConfig = Path.Combine(fakeProgramFiles, "Sunshine", "config");
+            var sunshineApps = Path.Combine(sunshineConfig, "apps.json");
+
+            try
+            {
+                Directory.CreateDirectory(sunshineConfig);
+                File.WriteAllText(sunshineApps, "{}");
+                Environment.SetEnvironmentVariable("ProgramW6432", fakeProgramFiles);
+
+                var resolvedExisting = ConfigService.ResolveConfigPath(null, preferExisting: true);
+                Assert.AreEqual(sunshineApps, resolvedExisting);
+
+                // With preferExisting=false we always get the Apollo path, even if only Sunshine exists.
+                var resolvedDefault = ConfigService.ResolveConfigPath(null, preferExisting: false);
+                Assert.AreEqual(Path.Combine(fakeProgramFiles, "Apollo", "config", "apps.json"), resolvedDefault);
+            }
+            finally
+            {
+                Environment.SetEnvironmentVariable("ProgramW6432", originalProgramW6432);
+                // Best-effort temp cleanup: a locked file here shouldn't fail the test.
+                try { Directory.Delete(fakeProgramFiles, recursive: true); } catch { }
+            }
+        }
+
         // ── Atomic write ──────────────────────────────────────────────────────────
 
         [TestMethod]

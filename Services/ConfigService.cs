@@ -24,7 +24,7 @@ namespace ApolloSync.Services
         {
             try
             {
-                var resolvedPath = string.IsNullOrWhiteSpace(path) ? ResolveDefaultPath(preferExisting: true) : path;
+                var resolvedPath = ResolveConfigPath(path, preferExisting: true);
                 logger.Debug($"ConfigService.Load - Resolved path: {resolvedPath}");
 
                 if (string.IsNullOrWhiteSpace(resolvedPath) || !File.Exists(resolvedPath))
@@ -58,7 +58,9 @@ namespace ApolloSync.Services
         {
             try
             {
-                var resolvedPath = string.IsNullOrWhiteSpace(path) ? ResolveDefaultPath(preferExisting: false) : path;
+                // preferExisting: true so a Sunshine-only install writes back to its own
+                // apps.json instead of silently creating a new Apollo config that nothing reads.
+                var resolvedPath = ResolveConfigPath(path, preferExisting: true);
                 logger.Debug($"ConfigService.Save - Resolved path: {resolvedPath}");
 
                 var dir = Path.GetDirectoryName(resolvedPath);
@@ -142,6 +144,17 @@ namespace ApolloSync.Services
                 && root.Length >= 3
                 && char.IsLetter(root[0])
                 && root[1] == ':';
+        }
+
+        /// <summary>
+        /// Resolves the apps.json path used by Load/Save. If <paramref name="path"/> is non-empty
+        /// it is returned as-is; otherwise the default Apollo/Sunshine install path is used.
+        /// Exposed so callers (e.g. the permission-fix elevation flow) can act on the same
+        /// concrete path that Load/Save will ultimately hit.
+        /// </summary>
+        public static string ResolveConfigPath(string path, bool preferExisting)
+        {
+            return string.IsNullOrWhiteSpace(path) ? ResolveDefaultPath(preferExisting) : path;
         }
 
         private static string ResolveDefaultPath(bool preferExisting)

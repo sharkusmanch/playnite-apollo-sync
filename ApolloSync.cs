@@ -1265,10 +1265,15 @@ namespace ApolloSync
             try
             {
                 var path = _settings.Settings.AppsJsonPath;
-                logger.Debug($"Saving apps config to path: {path}");
+                // Resolve to the concrete path ConfigService.Save will write to, so the
+                // elevation path below receives a valid local absolute path even when
+                // the user hasn't configured a custom AppsJsonPath. Match Save's
+                // preferExisting: true so elevation and Save target the same file.
+                var resolvedPath = Services.ConfigService.ResolveConfigPath(path, preferExisting: true);
+                logger.Debug($"Saving apps config to path: {resolvedPath}");
                 try
                 {
-                    configService.Save(path, config);
+                    configService.Save(resolvedPath, config);
                 }
                 catch (UnauthorizedAccessException)
                 {
@@ -1282,14 +1287,14 @@ namespace ApolloSync
                         var result = PlayniteApi.Dialogs.ShowMessage(message, title, MessageBoxButton.YesNo, MessageBoxImage.Warning);
                         if (result == MessageBoxResult.Yes)
                         {
-                            TryFixFilePermissionsWithElevation(path);
+                            TryFixFilePermissionsWithElevation(resolvedPath);
                             handled = true;
                         }
                     });
                     if (handled)
                     {
                         // Retry once after permissions fix
-                        configService.Save(path, config);
+                        configService.Save(resolvedPath, config);
                     }
                     else
                     {
