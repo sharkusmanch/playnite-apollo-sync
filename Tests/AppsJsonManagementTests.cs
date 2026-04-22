@@ -181,7 +181,9 @@ namespace ApolloSync.Tests
             Assert.AreEqual(custom, ConfigService.ResolveConfigPath(custom, preferExisting: false));
         }
 
+        // Reads ProgramW6432; serialize with the other tests that mutate it.
         [TestMethod]
+        [DoNotParallelize]
         public void ResolveConfigPath_EmptyInputReturnsLocalAbsolutePath()
         {
             // Regression guard for issue #11: an empty AppsJsonPath setting must still
