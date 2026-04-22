@@ -1,19 +1,12 @@
 AddonId: ApolloSync_f987343d-4168-4f44-9fb0-e3a21da314ad
 Packages:
   - Version: 1.2.1
-    RequiredApiVersion: 6.12.0
+    RequiredApiVersion: 6.16.0
     ReleaseDate: 2026-04-22
     PackageUrl: https://github.com/sharkusmanch/playnite-apollo-sync/releases/download/v1.2.1/ApolloSync_v1.2.1.pext
     Changelog:
-      - Add CLAUDE.md with C# and Playnite coding guidelines
-      - 'Fix CLAUDE.md compliance: naming, exceptions, paths, ManagedStore'
-      - Address PR review feedback
-      - Add Renovate config for automated dependency updates
-      - 'ci: make Claude Code Review manually triggered via @claude comment'
-      - Update dependency Moq to 4.20.72
-      - Update dependency Microsoft.NET.Test.Sdk to 17.14.1
-      - Fix sync failure when AppsJsonPath setting is empty (#11)
-      - Mark ResolveConfigPath_EmptyInputReturnsLocalAbsolutePath [DoNotParallelize]
+      - Fix sync failure when AppsJsonPath setting is empty — permission-fix elevation now works from the default path\
+      - Sunshine-only installs now update their existing apps.json instead of silently creating a new Apollo config
   - Version: 1.2.0
     RequiredApiVersion: 6.12.0
     ReleaseDate: 2026-04-13
