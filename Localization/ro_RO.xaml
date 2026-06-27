@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Presetare filtru</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Folosește presetarea de filtru Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Când este activat, presetarea de filtru selectată va fi folosită în locul filtrelor individuale de mai jos. Creează presetări de filtru în vizualizarea principală a bibliotecii Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Selectează una sau mai multe presetări de filtru și/sau etichete. Jocurile care se potrivesc cu orice presetare sau etichetă selectată vor fi eligibile pentru export (logică SAU). Creează mai întâi presetări de filtru în vizualizarea principală a bibliotecii Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filtrează listele după nume. Elementele bifate rămân selectate când sunt ascunse.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Afișează doar bifate</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Afișează doar presetările și etichetele bifate în prezent.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">Presetări filtru</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">Presetări filtru ({0} selectate)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">Presetări etichete</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">Presetări etichete ({0} selectate)</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Gestionează jocurile exportate</sys:String>

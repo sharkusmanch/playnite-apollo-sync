@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">篩選預設</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">使用Playnite篩選預設</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">啟用後，將使用所選的篩選預設取代下方的各項篩選條件。可在Playnite的主媒體庫檢視中建立篩選預設。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">選擇一個或多個篩選預設和/或標籤。符合任一所選預設或標籤的遊戲將符合匯出資格（OR邏輯）。請先在Playnite主媒體庫檢視中建立篩選預設。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">依名稱篩選預設和標籤清單。被篩掉的已勾選項目仍保持選取狀態。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">僅顯示已勾選</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">僅顯示目前已勾選的預設和標籤。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">篩選預設</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">篩選預設（已選 {0} 項）</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">標籤預設</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">標籤預設（已選 {0} 項）</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">管理已匯出的遊戲</sys:String>

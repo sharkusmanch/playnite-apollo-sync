@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">筛选预设</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">使用Playnite筛选预设</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">启用后，将使用所选的筛选预设替代下方的各项筛选条件。可在Playnite的主库视图中创建筛选预设。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">选择一个或多个筛选预设和/或标签。匹配任一所选预设或标签的游戏将有资格导出（OR逻辑）。请先在Playnite主库视图中创建筛选预设。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">按名称筛选预设和标签列表。被筛掉的已勾选项仍保持选中状态。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">仅显示已勾选</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">仅显示当前已勾选的预设和标签。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">筛选预设</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">筛选预设（已选 {0} 项）</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">标签预设</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">标签预设（已选 {0} 项）</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">管理已导出的游戏</sys:String>

@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Szablon filtrów</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Użyj szablonu filtrów Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Po włączeniu wybrany szablon filtrów zostanie użyty zamiast poszczególnych filtrów poniżej. Twórz szablony filtrów w głównym widoku biblioteki Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Wybierz jeden lub więcej szablonów filtrów i/lub tagów. Gry pasujące do dowolnego wybranego szablonu lub tagu będą kwalifikować się do eksportu (logika LUB). Najpierw utwórz szablony filtrów w głównym widoku biblioteki Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filtruj listy według nazwy. Zaznaczone pozycje pozostają wybrane, gdy są ukryte.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Pokaż tylko zaznaczone</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Pokaż tylko szablony i tagi, które są obecnie zaznaczone.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">Szablony filtrów</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">Szablony filtrów ({0} zaznaczonych)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">Szablony tagów</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">Szablony tagów ({0} zaznaczonych)</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Zarządzaj wyeksportowanymi grami</sys:String>

@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">필터 프리셋</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite 필터 프리셋 사용</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">활성화하면 아래의 개별 필터 대신 선택한 필터 프리셋이 사용됩니다. 필터 프리셋은 Playnite의 메인 라이브러리 화면에서 만들 수 있습니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">하나 이상의 필터 프리셋 및/또는 태그를 선택하세요. 선택한 프리셋 또는 태그 중 하나와 일치하는 게임이 내보내기 대상이 됩니다(OR 논리). 필터 프리셋은 Playnite 메인 라이브러리 화면에서 먼저 만드세요.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">이름으로 프리셋 및 태그 목록을 필터링합니다. 숨겨져도 체크된 항목은 선택 상태를 유지합니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">체크된 항목만 표시</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">현재 체크된 프리셋과 태그만 표시합니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">필터 프리셋</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">필터 프리셋 ({0}개 선택됨)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">태그 프리셋</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">태그 프리셋 ({0}개 선택됨)</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">내보낸 게임 관리</sys:String>

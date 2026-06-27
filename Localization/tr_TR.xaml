@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filtre Ön Ayarı</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite Filtre Ön Ayarını Kullan</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Etkinleştirildiğinde, aşağıdaki ayrı filtreler yerine seçilen filtre ön ayarı kullanılır. Filtre ön ayarlarını Playnite'ın ana kütüphane görünümünde oluşturabilirsiniz.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Bir veya daha fazla filtre ön ayarı ve/veya etiket seçin. Seçili herhangi bir ön ayar veya etiketle eşleşen oyunlar dışa aktarım için uygun olur (VEYA mantığı). Önce Playnite ana kütüphane görünümünde filtre ön ayarları oluşturun.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Listeleri ada göre filtreleyin. Gizlendiğinde bile işaretli öğeler seçili kalır.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Yalnızca işaretlileri göster</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Yalnızca şu anda işaretli ön ayarları ve etiketleri göster.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">Filtre ön ayarları</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">Filtre ön ayarları ({0} seçili)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">Etiket ön ayarları</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">Etiket ön ayarları ({0} seçili)</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Aktarılan Oyunları Yönet</sys:String>

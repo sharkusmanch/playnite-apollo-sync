@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filter Preset</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Use Playnite Filter Preset</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">When enabled, the selected filter preset will be used instead of the individual filters below. Create filter presets in Playnite's main library view.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Select one or more filter presets and/or tags to filter by. Games that match ANY selected preset or tag will be eligible for export (OR logic). Create filter presets in Playnite's main library view first.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filter the preset and tag lists by name. Checked items stay selected when filtered out.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Show checked only</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Show only presets and tags that are currently checked.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">Filter Presets</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">Filter Presets ({0} selected)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">Tag Presets</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">Tag Presets ({0} selected)</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Manage Exported Games</sys:String>

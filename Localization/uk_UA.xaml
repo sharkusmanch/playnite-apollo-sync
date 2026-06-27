@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Набір фільтрів</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Використовувати набір фільтрів Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Якщо увімкнено, замість окремих фільтрів нижче буде використовуватися вибраний набір фільтрів. Створюйте набори фільтрів у головному вигляді бібліотеки Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Виберіть одну або кілька наборів фільтрів і/або тегів. Ігри, що відповідають будь-якому вибраному набору або тегу, будуть доступні для експорту (логіка АБО). Спочатку створіть набори фільтрів у головному вигляді бібліотеки Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Фільтруйте списки за назвою. Позначені елементи залишаються вибраними, навіть якщо приховані.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Показувати лише позначені</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Показувати лише набори та теги, які зараз позначені.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">Набори фільтрів</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">Набори фільтрів ({0} вибрано)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">Набори тегів</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">Набори тегів ({0} вибрано)</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Керування експортованими іграми</sys:String>

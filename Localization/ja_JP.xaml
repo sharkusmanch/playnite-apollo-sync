@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">フィルタープリセット</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playniteのフィルタープリセットを使用</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">有効にすると、以下の個別フィルターの代わりに選択したフィルタープリセットが使用されます。フィルタープリセットはPlayniteのメインライブラリ画面で作成できます。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">フィルタープリセットおよび/またはタグを1つ以上選択してください。選択したプリセットまたはタグのいずれかに一致するゲームがエクスポート対象になります（OR条件）。フィルタープリセットはPlayniteのメインライブラリ画面で先に作成してください。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">名前でプリセットとタグの一覧を絞り込みます。非表示になってもチェック状態は維持されます。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">チェック済みのみ表示</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">現在チェックされているプリセットとタグのみを表示します。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">フィルタープリセット</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">フィルタープリセット（{0} 件選択）</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">タグプリセット</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">タグプリセット（{0} 件選択）</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">エクスポート済みゲームの管理</sys:String>

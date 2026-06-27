@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Predefinição de filtro</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Usar predefinição de filtro do Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Quando ativado, a predefinição de filtro selecionada será utilizada em vez dos filtros individuais abaixo. Crie predefinições de filtro na vista principal da biblioteca do Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Selecione uma ou mais predefinições de filtro e/ou etiquetas. Os jogos que correspondam a qualquer predefinição ou etiqueta selecionada serão elegíveis para exportação (lógica OU). Crie predefinições de filtro primeiro na vista principal da biblioteca do Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filtre as listas por nome. Os itens assinalados permanecem selecionados quando ocultos.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Mostrar apenas assinalados</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Mostrar apenas predefinições e etiquetas que estão assinalados de momento.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">Predefinições de filtro</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">Predefinições de filtro ({0} selecionadas)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">Predefinições de etiquetas</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">Predefinições de etiquetas ({0} selecionadas)</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Gerir jogos exportados</sys:String>

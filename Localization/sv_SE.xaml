@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filterförinställning</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Använd Playnite-filterförinställning</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">När aktiverat används den valda filterförinställningen istället för de enskilda filtren nedan. Skapa filterförinställningar i Playnites huvudbiblioteksvy.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Välj en eller flera filterförinställningar och/eller taggar. Spel som matchar valfri vald förinställning eller tagg är berättigade till export (ELLER-logik). Skapa filterförinställningar först i Playnites huvudbiblioteksvy.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filtrera listorna efter namn. Markerade objekt förblir valda när de döljs.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Visa endast markerade</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Visa endast förinställningar och taggar som för närvarande är markerade.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">Filterförinställningar</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">Filterförinställningar ({0} valda)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">Taggförinställningar</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">Taggförinställningar ({0} valda)</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Hantera exporterade spel</sys:String>

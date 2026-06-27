@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Předvolba filtru</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Použít předvolbu filtru Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Pokud je povoleno, bude místo jednotlivých filtrů níže použita vybraná předvolba filtru. Předvolby filtrů vytvořte v hlavním zobrazení knihovny Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Vyberte jednu nebo více předvoleb filtrů a/nebo tagů. Hry odpovídající libovolné vybrané předvolbě nebo tagu budou způsobilé k exportu (logika NEBO). Nejdříve vytvořte předvolby filtrů v hlavním zobrazení knihovny Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filtrujte seznamy podle názvu. Zaškrtnuté položky zůstanou vybrané, i když jsou skryté.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Zobrazit pouze zaškrtnuté</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Zobrazit pouze předvolby a tagy, které jsou aktuálně zaškrtnuté.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">Předvolby filtrů</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">Předvolby filtrů ({0} vybráno)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">Předvolby tagů</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">Předvolby tagů ({0} vybráno)</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Spravovat exportované hry</sys:String>

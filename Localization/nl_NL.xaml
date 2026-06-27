@@ -56,6 +56,14 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filtervoorinstelling</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite-filtervoorinstelling gebruiken</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Wanneer ingeschakeld, wordt de geselecteerde filtervoorinstelling gebruikt in plaats van de afzonderlijke filters hieronder. Maak filtervoorinstellingen aan in de hoofdbibliotheekweergave van Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Selecteer een of meer filtervoorinstellingen en/of tags. Games die overeenkomen met een geselecteerde voorinstelling of tag komen in aanmerking voor export (OF-logica). Maak filtervoorinstellingen eerst aan in de hoofdbibliotheekweergave van Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filter de lijsten op naam. Aangevinkte items blijven geselecteerd wanneer ze verborgen zijn.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Alleen aangevinkte tonen</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Toon alleen voorinstellingen en tags die momenteel zijn aangevinkt.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets">Filtervoorinstellingen</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_FilterPresets_Selected">Filtervoorinstellingen ({0} geselecteerd)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets">Tagvoorinstellingen</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_TagPresets_Selected">Tagvoorinstellingen ({0} geselecteerd)</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Geëxporteerde games beheren</sys:String>
