@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 using Microsoft.Win32;
@@ -14,6 +15,8 @@ namespace ApolloSync
     public partial class ApolloSyncSettingsView : UserControl
     {
         private static readonly ILogger logger = LogManager.GetLogger();
+        private string _filterSearchText = "";
+        private bool _showCheckedOnly = false;
 
         public ApolloSyncSettingsView()
         {
@@ -218,9 +221,79 @@ namespace ApolloSync
             return stack;
         }
 
-        private StackPanel BuildFiltersTab()
+        private FrameworkElement BuildFiltersTab()
         {
-            var stack = new StackPanel { Margin = new Thickness(8) };
+            var grid = new Grid { Margin = new Thickness(8) };
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 0: help text
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 1: search box
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 2: platform (collapsed)
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 3: label (collapsed)
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 4: completion (collapsed)
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 5: filter presets
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });              // 6: tags (fill remaining)
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 7: category (collapsed)
+
+            // Top-level help text
+            var helpText = new TextBlock
+            {
+                Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_Filters_Help"),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 8),
+                Foreground = System.Windows.Media.Brushes.Gray,
+                FontStyle = FontStyles.Italic
+            };
+            Grid.SetRow(helpText, 0);
+            grid.Children.Add(helpText);
+
+            // Search row: search box (left, fills width) + show-checked toggle (right, outside border)
+            var searchRow = new DockPanel { Margin = new Thickness(0, 0, 0, 8), LastChildFill = true };
+
+            var showCheckedCheckBox = new CheckBox
+            {
+                Content = ResourceProvider.GetString("LOC_ApolloSync_Settings_ShowCheckedOnly"),
+                ToolTip = ResourceProvider.GetString("LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip"),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(12, 0, 0, 0)
+            };
+            showCheckedCheckBox.Checked += ShowCheckedOnly_Changed;
+            showCheckedCheckBox.Unchecked += ShowCheckedOnly_Changed;
+            DockPanel.SetDock(showCheckedCheckBox, Dock.Right);
+            searchRow.Children.Add(showCheckedCheckBox);
+
+            var searchBorder = new Border
+            {
+                BorderBrush = System.Windows.Media.Brushes.Gray,
+                BorderThickness = new Thickness(1),
+                CornerRadius = new CornerRadius(2),
+                Padding = new Thickness(6, 3, 6, 3),
+                ToolTip = ResourceProvider.GetString("LOC_ApolloSync_Settings_FilterSearch_Tooltip")
+            };
+            var searchDock = new DockPanel { LastChildFill = true };
+            var searchIcon = new TextBlock
+            {
+                Text = "\uE721",
+                FontFamily = new FontFamily("Segoe MDL2 Assets"),
+                FontSize = 13,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 6, 0),
+                Foreground = System.Windows.Media.Brushes.Gray
+            };
+            DockPanel.SetDock(searchIcon, Dock.Left);
+            searchDock.Children.Add(searchIcon);
+            var searchBox = new TextBox
+            {
+                BorderThickness = new Thickness(0),
+                Background = Brushes.Transparent,
+                VerticalAlignment = VerticalAlignment.Center,
+                ToolTip = ResourceProvider.GetString("LOC_ApolloSync_Settings_FilterSearch_Tooltip")
+            };
+            searchBox.TextChanged += FilterSearch_TextChanged;
+            searchDock.Children.Add(searchBox);
+            searchBorder.Child = searchDock;
+            searchRow.Children.Add(searchBorder);
+
+            Grid.SetRow(searchRow, 1);
+            grid.Children.Add(searchRow);
 
             // Platform Filters (collapsible)
             var platformExpander = new Expander
@@ -273,7 +346,8 @@ namespace ApolloSync
 
             platformExpander.Content = platformContentPanel;
             platformExpander.Visibility = Visibility.Collapsed; // TEMP: Disable custom filters
-            stack.Children.Add(platformExpander);
+            Grid.SetRow(platformExpander, 2);
+            grid.Children.Add(platformExpander);
 
             // Label Filter (collapsible)
             var labelExpander = new Expander
@@ -304,7 +378,8 @@ namespace ApolloSync
 
             labelExpander.Content = labelContentPanel;
             labelExpander.Visibility = Visibility.Collapsed; // TEMP: Disable custom filters
-            stack.Children.Add(labelExpander);
+            Grid.SetRow(labelExpander, 3);
+            grid.Children.Add(labelExpander);
 
             // Completion Status Filter (collapsible)
             var completionExpander = new Expander
@@ -357,12 +432,14 @@ namespace ApolloSync
 
             completionExpander.Content = completionContentPanel;
             completionExpander.Visibility = Visibility.Collapsed; // TEMP: Disable custom filters
-            stack.Children.Add(completionExpander);
+            Grid.SetRow(completionExpander, 4);
+            grid.Children.Add(completionExpander);
 
             // Filter Presets (collapsible)
             var filterPresetExpander = new Expander
             {
-                Header = "Filter Presets",
+                Name = "FilterPresetExpander",
+                Header = ResourceProvider.GetString("LOC_ApolloSync_Settings_FilterPresets"),
                 IsExpanded = true,
                 Margin = new Thickness(0, 0, 0, 8)
             };
@@ -378,7 +455,7 @@ namespace ApolloSync
             };
 
             var filterPresetScrollViewer = new ScrollViewer { MaxHeight = 150, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-            var filterPresetPanel = new StackPanel { Name = "FilterPresetsPanel" };
+            var filterPresetPanel = new UniformGrid { Name = "FilterPresetsPanel", Columns = 3 };
             filterPresetScrollViewer.Content = filterPresetPanel;
             filterPresetBorder.Child = filterPresetScrollViewer;
             filterPresetContentPanel.Children.Add(filterPresetBorder);
@@ -393,16 +470,6 @@ namespace ApolloSync
             filterPresetButtonPanel.Children.Add(clearAllFilterPresetBtn);
             filterPresetContentPanel.Children.Add(filterPresetButtonPanel);
 
-            // Help text
-            filterPresetContentPanel.Children.Add(new TextBlock
-            {
-                Text = "Select one or more filter presets. Games that match ANY selected preset will be eligible for export (OR logic). Create filter presets in Playnite's main library view first.",
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 4, 0, 0),
-                Foreground = System.Windows.Media.Brushes.Gray,
-                FontStyle = FontStyles.Italic
-            });
-
             // Populate filter presets when DataContext is available
             if (DataContext is ApolloSyncSettingsViewModel vm4)
             {
@@ -413,11 +480,69 @@ namespace ApolloSync
                 if (DataContext is ApolloSyncSettingsViewModel viewModel4)
                 {
                     UpdateFilterPresetCheckboxes(filterPresetPanel);
+                    UpdateCheckedCounts();
                 }
             };
 
             filterPresetExpander.Content = filterPresetContentPanel;
-            stack.Children.Add(filterPresetExpander);
+            Grid.SetRow(filterPresetExpander, 5);
+            grid.Children.Add(filterPresetExpander);
+
+            // Tag Presets (collapsible, fills remaining window height)
+            var tagExpander = new Expander
+            {
+                Name = "TagExpander",
+                Header = ResourceProvider.GetString("LOC_ApolloSync_Settings_TagPresets"),
+                IsExpanded = true,
+                Margin = new Thickness(0, 0, 0, 8),
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+
+            // Inner grid: scroll area gets * height, buttons get Auto height
+            var tagContentPanel = new Grid();
+            tagContentPanel.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });
+            tagContentPanel.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+
+            var tagBorder = new Border
+            {
+                BorderBrush = System.Windows.Media.Brushes.Gray,
+                BorderThickness = new Thickness(1),
+                Margin = new Thickness(0, 4, 0, 0)
+            };
+
+            var tagScrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+            var tagsPanel = new UniformGrid { Name = "TagsPanel", Columns = 3 };
+            tagScrollViewer.Content = tagsPanel;
+            tagBorder.Child = tagScrollViewer;
+            Grid.SetRow(tagBorder, 0);
+            tagContentPanel.Children.Add(tagBorder);
+
+            var tagButtonPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };
+            var selectAllTagsBtn = new Button { Content = "Select All", Width = 80, Margin = new Thickness(0, 0, 4, 0) };
+            var clearAllTagsBtn = new Button { Content = "Clear All", Width = 80 };
+            selectAllTagsBtn.Click += SelectAllTags_Click;
+            clearAllTagsBtn.Click += ClearAllTags_Click;
+            tagButtonPanel.Children.Add(selectAllTagsBtn);
+            tagButtonPanel.Children.Add(clearAllTagsBtn);
+            Grid.SetRow(tagButtonPanel, 1);
+            tagContentPanel.Children.Add(tagButtonPanel);
+
+            if (DataContext is ApolloSyncSettingsViewModel vm5)
+            {
+                UpdateTagCheckboxes(tagsPanel);
+            }
+            DataContextChanged += (s, e) =>
+            {
+                if (DataContext is ApolloSyncSettingsViewModel viewModel5)
+                {
+                    UpdateTagCheckboxes(tagsPanel);
+                    UpdateCheckedCounts();
+                }
+            };
+
+            tagExpander.Content = tagContentPanel;
+            Grid.SetRow(tagExpander, 6);
+            grid.Children.Add(tagExpander);
 
             // Category Filter (collapsible)
             var categoryExpander = new Expander
@@ -470,9 +595,10 @@ namespace ApolloSync
 
             categoryExpander.Content = categoryContentPanel;
             categoryExpander.Visibility = Visibility.Collapsed; // TEMP: Disable custom filters
-            stack.Children.Add(categoryExpander);
+            Grid.SetRow(categoryExpander, 7);
+            grid.Children.Add(categoryExpander);
 
-            return stack;
+            return grid;
         }
 
         private StackPanel BuildManageGamesTab()
@@ -526,7 +652,7 @@ namespace ApolloSync
 
         #region Filter Preset Methods
 
-        private void UpdateFilterPresetCheckboxes(StackPanel filterPresetPanel)
+        private void UpdateFilterPresetCheckboxes(Panel filterPresetPanel)
         {
             filterPresetPanel.Children.Clear();
 
@@ -541,11 +667,18 @@ namespace ApolloSync
                 {
                     foreach (var filterPreset in vm.AvailableFilterPresets)
                     {
+                        if (!string.IsNullOrEmpty(_filterSearchText) &&
+                            filterPreset.Name.IndexOf(_filterSearchText, StringComparison.OrdinalIgnoreCase) < 0)
+                            continue;
+
+                        if (_showCheckedOnly && !vm.Settings.IncludedFilterPresetIds.Contains(filterPreset.Id))
+                            continue;
+
                         var checkbox = new CheckBox
                         {
                             Content = filterPreset.Name,
                             Tag = filterPreset.Id,
-                            Margin = new Thickness(0, 2, 0, 2)
+                            Margin = new Thickness(0, 2, 4, 2)
                         };
 
                         checkbox.IsChecked = vm.Settings.IncludedFilterPresetIds.Contains(filterPreset.Id);
@@ -563,21 +696,32 @@ namespace ApolloSync
         {
             if (DataContext is ApolloSyncSettingsViewModel vm && vm.AvailableFilterPresets != null)
             {
-                vm.Settings.IncludedFilterPresetIds.Clear();
                 foreach (var filterPreset in vm.AvailableFilterPresets)
                 {
-                    vm.Settings.IncludedFilterPresetIds.Add(filterPreset.Id);
+                    if (!string.IsNullOrEmpty(_filterSearchText) &&
+                        filterPreset.Name.IndexOf(_filterSearchText, StringComparison.OrdinalIgnoreCase) < 0)
+                        continue;
+                    if (!vm.Settings.IncludedFilterPresetIds.Contains(filterPreset.Id))
+                        vm.Settings.IncludedFilterPresetIds.Add(filterPreset.Id);
                 }
-                UpdateFilterPresetCheckboxes(FindChild<StackPanel>(this, "FilterPresetsPanel"));
+                UpdateFilterPresetCheckboxes(FindChild<UniformGrid>(this, "FilterPresetsPanel"));
+                UpdateCheckedCounts();
             }
         }
 
         private void ClearAllFilterPresets_Click(object sender, RoutedEventArgs e)
         {
-            if (DataContext is ApolloSyncSettingsViewModel vm)
+            if (DataContext is ApolloSyncSettingsViewModel vm && vm.AvailableFilterPresets != null)
             {
-                vm.Settings.IncludedFilterPresetIds.Clear();
-                UpdateFilterPresetCheckboxes(FindChild<StackPanel>(this, "FilterPresetsPanel"));
+                foreach (var filterPreset in vm.AvailableFilterPresets)
+                {
+                    if (!string.IsNullOrEmpty(_filterSearchText) &&
+                        filterPreset.Name.IndexOf(_filterSearchText, StringComparison.OrdinalIgnoreCase) < 0)
+                        continue;
+                    vm.Settings.IncludedFilterPresetIds.Remove(filterPreset.Id);
+                }
+                UpdateFilterPresetCheckboxes(FindChild<UniformGrid>(this, "FilterPresetsPanel"));
+                UpdateCheckedCounts();
             }
         }
 
@@ -586,13 +730,154 @@ namespace ApolloSync
             if (DataContext is ApolloSyncSettingsViewModel vm)
             {
                 if (isChecked && !vm.Settings.IncludedFilterPresetIds.Contains(presetId))
-                {
                     vm.Settings.IncludedFilterPresetIds.Add(presetId);
-                }
                 else if (!isChecked && vm.Settings.IncludedFilterPresetIds.Contains(presetId))
-                {
                     vm.Settings.IncludedFilterPresetIds.Remove(presetId);
+
+                if (_showCheckedOnly)
+                    UpdateFilterPresetCheckboxes(FindChild<UniformGrid>(this, "FilterPresetsPanel"));
+                UpdateCheckedCounts();
+            }
+        }
+
+        #endregion
+
+        #region Search
+
+        private void FilterSearch_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            _filterSearchText = ((TextBox)sender).Text;
+            var presetsPanel = FindChild<UniformGrid>(this, "FilterPresetsPanel");
+            if (presetsPanel != null)
+                UpdateFilterPresetCheckboxes(presetsPanel);
+            var tagsPanel = FindChild<UniformGrid>(this, "TagsPanel");
+            if (tagsPanel != null)
+                UpdateTagCheckboxes(tagsPanel);
+        }
+
+        private void ShowCheckedOnly_Changed(object sender, RoutedEventArgs e)
+        {
+            _showCheckedOnly = ((CheckBox)sender).IsChecked == true;
+            var presetsPanel = FindChild<UniformGrid>(this, "FilterPresetsPanel");
+            if (presetsPanel != null)
+                UpdateFilterPresetCheckboxes(presetsPanel);
+            var tagsPanel = FindChild<UniformGrid>(this, "TagsPanel");
+            if (tagsPanel != null)
+                UpdateTagCheckboxes(tagsPanel);
+        }
+
+        private void UpdateCheckedCounts()
+        {
+            if (!(DataContext is ApolloSyncSettingsViewModel vm)) return;
+
+            var presetExpander = FindChild<Expander>(this, "FilterPresetExpander");
+            if (presetExpander != null)
+            {
+                var count = vm.Settings.IncludedFilterPresetIds.Count;
+                presetExpander.Header = count > 0
+                    ? string.Format(ResourceProvider.GetString("LOC_ApolloSync_Settings_FilterPresets_Selected"), count)
+                    : ResourceProvider.GetString("LOC_ApolloSync_Settings_FilterPresets");
+            }
+
+            var tagExpander = FindChild<Expander>(this, "TagExpander");
+            if (tagExpander != null)
+            {
+                var count = vm.Settings.IncludedTagIds.Count;
+                tagExpander.Header = count > 0
+                    ? string.Format(ResourceProvider.GetString("LOC_ApolloSync_Settings_TagPresets_Selected"), count)
+                    : ResourceProvider.GetString("LOC_ApolloSync_Settings_TagPresets");
+            }
+        }
+
+        #endregion
+
+        #region Tag Methods
+
+        private void UpdateTagCheckboxes(Panel tagsPanel)
+        {
+            tagsPanel.Children.Clear();
+
+            if (DataContext is ApolloSyncSettingsViewModel vm)
+            {
+                if (vm.AvailableTags == null || vm.AvailableTags.Count == 0)
+                {
+                    vm.RefreshFilterPresets();
                 }
+
+                if (vm.AvailableTags != null)
+                {
+                    foreach (var tag in vm.AvailableTags)
+                    {
+                        if (!string.IsNullOrEmpty(_filterSearchText) &&
+                            tag.Name.IndexOf(_filterSearchText, StringComparison.OrdinalIgnoreCase) < 0)
+                            continue;
+
+                        if (_showCheckedOnly && !vm.Settings.IncludedTagIds.Contains(tag.Id))
+                            continue;
+
+                        var checkbox = new CheckBox
+                        {
+                            Content = tag.Name,
+                            Tag = tag.Id,
+                            Margin = new Thickness(0, 2, 4, 2)
+                        };
+
+                        checkbox.IsChecked = vm.Settings.IncludedTagIds.Contains(tag.Id);
+
+                        checkbox.Checked += (s, e) => OnTagCheckboxChanged(tag.Id, true);
+                        checkbox.Unchecked += (s, e) => OnTagCheckboxChanged(tag.Id, false);
+
+                        tagsPanel.Children.Add(checkbox);
+                    }
+                }
+            }
+        }
+
+        private void SelectAllTags_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ApolloSyncSettingsViewModel vm && vm.AvailableTags != null)
+            {
+                foreach (var tag in vm.AvailableTags)
+                {
+                    if (!string.IsNullOrEmpty(_filterSearchText) &&
+                        tag.Name.IndexOf(_filterSearchText, StringComparison.OrdinalIgnoreCase) < 0)
+                        continue;
+                    if (!vm.Settings.IncludedTagIds.Contains(tag.Id))
+                        vm.Settings.IncludedTagIds.Add(tag.Id);
+                }
+                UpdateTagCheckboxes(FindChild<UniformGrid>(this, "TagsPanel"));
+                UpdateCheckedCounts();
+            }
+        }
+
+        private void ClearAllTags_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ApolloSyncSettingsViewModel vm && vm.AvailableTags != null)
+            {
+                foreach (var tag in vm.AvailableTags)
+                {
+                    if (!string.IsNullOrEmpty(_filterSearchText) &&
+                        tag.Name.IndexOf(_filterSearchText, StringComparison.OrdinalIgnoreCase) < 0)
+                        continue;
+                    vm.Settings.IncludedTagIds.Remove(tag.Id);
+                }
+                UpdateTagCheckboxes(FindChild<UniformGrid>(this, "TagsPanel"));
+                UpdateCheckedCounts();
+            }
+        }
+
+        private void OnTagCheckboxChanged(Guid tagId, bool isChecked)
+        {
+            if (DataContext is ApolloSyncSettingsViewModel vm)
+            {
+                if (isChecked && !vm.Settings.IncludedTagIds.Contains(tagId))
+                    vm.Settings.IncludedTagIds.Add(tagId);
+                else if (!isChecked && vm.Settings.IncludedTagIds.Contains(tagId))
+                    vm.Settings.IncludedTagIds.Remove(tagId);
+
+                if (_showCheckedOnly)
+                    UpdateTagCheckboxes(FindChild<UniformGrid>(this, "TagsPanel"));
+                UpdateCheckedCounts();
             }
         }
 
