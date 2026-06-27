@@ -74,6 +74,13 @@ namespace ApolloSync
             set => SetValue(ref _includedFilterPresetIds, value);
         }
 
+        private List<Guid> _includedTagIds = new List<Guid>();
+        public List<Guid> IncludedTagIds
+        {
+            get => _includedTagIds;
+            set => SetValue(ref _includedTagIds, value);
+        }
+
         private bool _showNotifications = true;
         public bool ShowNotifications
         {
@@ -116,6 +123,7 @@ namespace ApolloSync
         }
 
         public List<FilterPreset> AvailableFilterPresets { get; private set; }
+        public List<Tag> AvailableTags { get; private set; }
 
         public List<Game> GetManagedGames()
         {
@@ -159,6 +167,7 @@ namespace ApolloSync
             if (_plugin.PlayniteApi?.Database != null)
             {
                 AvailableFilterPresets = _plugin.PlayniteApi.Database.FilterPresets.OrderBy(f => f.Name).ToList();
+                AvailableTags = _plugin.PlayniteApi.Database.Tags.OrderBy(t => t.Name).ToList();
             }
         }
 

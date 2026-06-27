@@ -456,11 +456,19 @@ namespace ApolloSync
         #region Game Filtering
         private List<Game> GetFilteredGames()
         {
-            // Use filter presets with OR logic - game matches if it matches ANY selected preset
-            if (_settings.Settings.IncludedFilterPresetIds?.Count > 0)
-            {
-                var matchingGames = new HashSet<Game>();
+            var hasFilterPresets = _settings.Settings.IncludedFilterPresetIds?.Count > 0;
+            var hasTags = _settings.Settings.IncludedTagIds?.Count > 0;
 
+            if (!hasFilterPresets && !hasTags)
+            {
+                logger.Warn("No filter presets or tags selected - no games will be filtered. Please select filter presets and/or tags in settings.");
+                return new List<Game>();
+            }
+
+            var matchingGames = new HashSet<Game>();
+
+            if (hasFilterPresets)
+            {
                 foreach (var presetId in _settings.Settings.IncludedFilterPresetIds)
                 {
                     var filterPreset = PlayniteApi.Database.FilterPresets
@@ -483,20 +491,30 @@ namespace ApolloSync
                         }
                     }
                 }
-
-                logger.Info($"Combined filter presets matched {matchingGames.Count} games");
-                return matchingGames.ToList();
             }
 
-            // No filter presets selected - return no games
-            logger.Warn("No filter presets selected - no games will be filtered. Please select filter presets in settings.");
-            return new List<Game>();
+            if (hasTags)
+            {
+                var tagIds = new HashSet<Guid>(_settings.Settings.IncludedTagIds);
+                var taggedGames = PlayniteApi.Database.Games
+                    .Where(g => g.Tags != null && g.Tags.Any(t => tagIds.Contains(t.Id)));
+                foreach (var game in taggedGames)
+                {
+                    matchingGames.Add(game);
+                }
+                logger.Debug($"Tag filter matched {matchingGames.Count} games (cumulative)");
+            }
+
+            logger.Info($"Combined filters matched {matchingGames.Count} games");
+            return matchingGames.ToList();
         }
 
         private bool GameMeetsCurrentFilters(Game game)
         {
-            // Use filter presets with OR logic - game matches if it matches ANY selected preset
-            if (_settings.Settings.IncludedFilterPresetIds?.Count > 0)
+            var hasFilterPresets = _settings.Settings.IncludedFilterPresetIds?.Count > 0;
+            var hasTags = _settings.Settings.IncludedTagIds?.Count > 0;
+
+            if (hasFilterPresets)
             {
                 foreach (var presetId in _settings.Settings.IncludedFilterPresetIds)
                 {
@@ -509,7 +527,7 @@ namespace ApolloSync
                         {
                             if (PlayniteApi.Database.GetGameMatchesFilter(game, filterPreset.Settings))
                             {
-                                return true; // Match found, return true immediately
+                                return true;
                             }
                         }
                         catch (Exception ex)
@@ -520,10 +538,16 @@ namespace ApolloSync
                 }
             }
 
-            // No filter presets selected or no matches found
+            if (hasTags)
+            {
+                var tagIds = new HashSet<Guid>(_settings.Settings.IncludedTagIds);
+                if (game.Tags != null && game.Tags.Any(t => tagIds.Contains(t.Id)))
+                {
+                    return true;
+                }
+            }
+
             return false;
-
-
         }
 
         private int RemoveFilteredOutGames(JObject config, HashSet<Guid> pinnedGameIds = null)
