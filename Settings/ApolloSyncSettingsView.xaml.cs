@@ -225,7 +225,7 @@ namespace ApolloSync
         {
             var grid = new Grid { Margin = new Thickness(8) };
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 0: help text
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 1: search box
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 1: search controls
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 2: platform (collapsed)
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 3: label (collapsed)
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 4: completion (collapsed)
@@ -245,27 +245,15 @@ namespace ApolloSync
             Grid.SetRow(helpText, 0);
             grid.Children.Add(helpText);
 
-            // Search row: search box (left, fills width) + show-checked toggle (right, outside border)
-            var searchRow = new DockPanel { Margin = new Thickness(0, 0, 0, 8), LastChildFill = true };
-
-            var showCheckedCheckBox = new CheckBox
-            {
-                Content = ResourceProvider.GetString("LOC_ApolloSync_Settings_ShowCheckedOnly"),
-                ToolTip = ResourceProvider.GetString("LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip"),
-                VerticalAlignment = VerticalAlignment.Center,
-                Margin = new Thickness(12, 0, 0, 0)
-            };
-            showCheckedCheckBox.Checked += ShowCheckedOnly_Changed;
-            showCheckedCheckBox.Unchecked += ShowCheckedOnly_Changed;
-            DockPanel.SetDock(showCheckedCheckBox, Dock.Right);
-            searchRow.Children.Add(showCheckedCheckBox);
+            // Search box and show-checked toggle (separate rows)
+            var searchSection = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
 
             var searchBorder = new Border
             {
-                BorderBrush = System.Windows.Media.Brushes.Gray,
-                BorderThickness = new Thickness(1),
-                CornerRadius = new CornerRadius(2),
-                Padding = new Thickness(6, 3, 6, 3),
+                BorderBrush = Brushes.Silver,
+                BorderThickness = new Thickness(2),
+                CornerRadius = new CornerRadius(3),
+                Padding = new Thickness(6, 4, 6, 4),
                 ToolTip = ResourceProvider.GetString("LOC_ApolloSync_Settings_FilterSearch_Tooltip")
             };
             var searchDock = new DockPanel { LastChildFill = true };
@@ -276,7 +264,7 @@ namespace ApolloSync
                 FontSize = 13,
                 VerticalAlignment = VerticalAlignment.Center,
                 Margin = new Thickness(0, 0, 6, 0),
-                Foreground = System.Windows.Media.Brushes.Gray
+                Foreground = Brushes.Silver
             };
             DockPanel.SetDock(searchIcon, Dock.Left);
             searchDock.Children.Add(searchIcon);
@@ -290,10 +278,20 @@ namespace ApolloSync
             searchBox.TextChanged += FilterSearch_TextChanged;
             searchDock.Children.Add(searchBox);
             searchBorder.Child = searchDock;
-            searchRow.Children.Add(searchBorder);
+            searchSection.Children.Add(searchBorder);
 
-            Grid.SetRow(searchRow, 1);
-            grid.Children.Add(searchRow);
+            var showCheckedCheckBox = new CheckBox
+            {
+                Content = ResourceProvider.GetString("LOC_ApolloSync_Settings_ShowCheckedOnly"),
+                ToolTip = ResourceProvider.GetString("LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip"),
+                Margin = new Thickness(0, 6, 0, 0)
+            };
+            showCheckedCheckBox.Checked += ShowCheckedOnly_Changed;
+            showCheckedCheckBox.Unchecked += ShowCheckedOnly_Changed;
+            searchSection.Children.Add(showCheckedCheckBox);
+
+            Grid.SetRow(searchSection, 1);
+            grid.Children.Add(searchSection);
 
             // Platform Filters (collapsible)
             var platformExpander = new Expander
