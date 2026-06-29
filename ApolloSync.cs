@@ -675,17 +675,6 @@ namespace ApolloSync
             logger.Info("Starting sync filtered games operation");
 
             var filteredGames = GetFilteredGames();
-            if (filteredGames.Count == 0)
-            {
-                ShowNotificationIfEnabled(new NotificationMessage(
-                    "apollosync-no-games",
-                    "No games match the selected filter presets. Please check your filter preset configuration.",
-                    NotificationType.Error), isUpdateOperation: true);
-                return;
-            }
-
-            logger.Info($"Found {filteredGames.Count} games matching filter presets to sync");
-
             var localSuccess = 0;
             var localFailure = 0;
             var localErrors = new List<string>();
@@ -711,55 +700,62 @@ namespace ApolloSync
                 return;
             }
 
-            logger.Info($"Starting batch sync operation with {filteredGames.Count} games");
-
-            // Phase 1: Remove games that no longer meet filters (unless pinned)
+            // Phase 1: Always remove managed games that no longer meet filters (unless pinned)
             var removedGames = RemoveFilteredOutGames(config, pinnedSnapshot);
             localRemoved = removedGames;
             logger.Info($"Removed {removedGames} games that no longer meet filters");
 
             // Phase 2: Add/update games that meet current filters
-            for (int i = 0; i < filteredGames.Count; i++)
+            if (filteredGames.Count > 0)
             {
-                if (cancellationToken.IsCancellationRequested)
-                {
-                    logger.Info("Sync cancelled by user");
-                    break;
-                }
+                logger.Info($"Found {filteredGames.Count} games matching filters to sync");
 
-                var game = filteredGames[i];
-                logger.Debug($"Processing game: {game.Name} (ID: {game.Id})");
-
-                try
+                for (int i = 0; i < filteredGames.Count; i++)
                 {
-                    // Check if this game was manually removed and should not be re-added
-                    if (IsGameManuallyRemoved(game, config))
+                    if (cancellationToken.IsCancellationRequested)
                     {
-                        logger.Info($"Skipping game {game.Name} - appears to have been manually removed from Apollo management");
-                        continue;
+                        logger.Info("Sync cancelled by user");
+                        break;
                     }
 
-                    // Use batch operation that doesn't save to disk
-                    if (TryAddOrUpdateAppBatch(game, config))
+                    var game = filteredGames[i];
+                    logger.Debug($"Processing game: {game.Name} (ID: {game.Id})");
+
+                    try
                     {
-                        localSuccess++;
-                        logger.Debug($"Successfully processed: {game.Name}");
+                        // Check if this game was manually removed and should not be re-added
+                        if (IsGameManuallyRemoved(game, config))
+                        {
+                            logger.Info($"Skipping game {game.Name} - appears to have been manually removed from Apollo management");
+                            continue;
+                        }
+
+                        // Use batch operation that doesn't save to disk
+                        if (TryAddOrUpdateAppBatch(game, config))
+                        {
+                            localSuccess++;
+                            logger.Debug($"Successfully processed: {game.Name}");
+                        }
+                        else
+                        {
+                            localFailure++;
+                            var error = $"Failed to process: {game.Name}";
+                            localErrors.Add(error);
+                            logger.Warn(error);
+                        }
                     }
-                    else
+                    catch (Exception ex)
                     {
                         localFailure++;
-                        var error = $"Failed to process: {game.Name}";
+                        var error = $"Error processing {game.Name}: {ex.Message}";
                         localErrors.Add(error);
-                        logger.Warn(error);
+                        logger.Error(ex, error);
                     }
                 }
-                catch (Exception ex)
-                {
-                    localFailure++;
-                    var error = $"Error processing {game.Name}: {ex.Message}";
-                    localErrors.Add(error);
-                    logger.Error(ex, error);
-                }
+            }
+            else
+            {
+                logger.Info("No games match current filters; skipping add/update phase");
             }
 
             // Save everything once at the end
