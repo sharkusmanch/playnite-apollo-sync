@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite-filtervoorinstelling gebruiken</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Wanneer ingeschakeld, wordt de geselecteerde filtervoorinstelling gebruikt in plaats van de afzonderlijke filters hieronder. Maak filtervoorinstellingen aan in de hoofdbibliotheekweergave van Playnite.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Selecteer een of meer filtervoorinstellingen en/of tags. Games die overeenkomen met een geselecteerde voorinstelling of tag komen in aanmerking voor export (OF-logica). Maak filtervoorinstellingen eerst aan in de hoofdbibliotheekweergave van Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">Selecteer een of meer filtervoorinstellingen en/of tags. Games die overeenkomen met een geselecteerde voorinstelling of tag komen in aanmerking voor export (OF). Binnen elke lijst geldt elk aangevinkt item.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">Selecteer filtervoorinstellingen hierboven en tags hieronder. Games moeten overeenkomen met minstens één aangevinkte voorinstelling en minstens één aangevinkte tag (EN). Als slechts één lijst selecties heeft, bepaalt alleen die lijst de geschiktheid.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">Games moeten overeenkomen met een geselecteerde filtervoorinstelling maar mogen geen geselecteerde tag hebben — handig om voorinstellingsmatches te exporteren zonder getagde games. Minstens één filtervoorinstelling is vereist; tags zijn optionele uitsluitingen.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">Maak filtervoorinstellingen eerst aan in de hoofdbibliotheekweergave van Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">Voorinstellingen en tags combineren:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">Elke (OF)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">Beide (EN)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">Tags uitsluiten</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">Exporteer games die overeenkomen met een geselecteerde filtervoorinstelling of tag.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">Exporteer games die overeenkomen met minstens één geselecteerde voorinstelling en minstens één geselecteerde tag.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">Exporteer games die overeenkomen met een voorinstelling maar geen geselecteerde tag hebben.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filter de lijsten op naam. Aangevinkte items blijven geselecteerd wanneer ze verborgen zijn.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Alleen aangevinkte tonen</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Toon alleen voorinstellingen en tags die momenteel zijn aangevinkt.</sys:String>

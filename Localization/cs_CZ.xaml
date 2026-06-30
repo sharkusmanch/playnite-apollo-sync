@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Použít předvolbu filtru Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Pokud je povoleno, bude místo jednotlivých filtrů níže použita vybraná předvolba filtru. Předvolby filtrů vytvořte v hlavním zobrazení knihovny Playnite.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Vyberte jednu nebo více předvoleb filtrů a/nebo tagů. Hry odpovídající libovolné vybrané předvolbě nebo tagu budou způsobilé k exportu (logika NEBO). Nejdříve vytvořte předvolby filtrů v hlavním zobrazení knihovny Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">Vyberte jednu nebo více předvoleb filtrů a/nebo tagů. Hry odpovídající libovolné vybrané předvolbě nebo tagu jsou způsobilé k exportu (NEBO). V každém seznamu platí jakákoli zaškrtnutá položka.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">Vyberte předvolby filtrů nahoře a tagy dole. Hry musí odpovídat alespoň jedné zaškrtnuté předvolbě a alespoň jednomu zaškrtnutému tagu (A). Pokud má výběr pouze jeden seznam, rozhoduje jen ten.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">Hry musí odpovídat vybrané předvolbě filtru, ale nesmí mít žádný vybraný tag — užitečné pro export shod s předvolbou bez otagovaných her. Je vyžadována alespoň jedna předvolba filtru; tagy jsou volitelná vyloučení.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">Nejdříve vytvořte předvolby filtrů v hlavním zobrazení knihovny Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">Kombinovat předvolby a tagy:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">Libovolné (NEBO)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">Obojí (A)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">Vyloučit tagy</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">Exportovat hry odpovídající libovolné vybrané předvolbě filtru nebo tagu.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">Exportovat hry odpovídající alespoň jedné vybrané předvolbě a alespoň jednomu vybranému tagu.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">Exportovat hry odpovídající předvolbě, ale bez vybraných tagů.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filtrujte seznamy podle názvu. Zaškrtnuté položky zůstanou vybrané, i když jsou skryté.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Zobrazit pouze zaškrtnuté</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Zobrazit pouze předvolby a tagy, které jsou aktuálně zaškrtnuté.</sys:String>

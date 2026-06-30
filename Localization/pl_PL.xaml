@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Użyj szablonu filtrów Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Po włączeniu wybrany szablon filtrów zostanie użyty zamiast poszczególnych filtrów poniżej. Twórz szablony filtrów w głównym widoku biblioteki Playnite.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Wybierz jeden lub więcej szablonów filtrów i/lub tagów. Gry pasujące do dowolnego wybranego szablonu lub tagu będą kwalifikować się do eksportu (logika LUB). Najpierw utwórz szablony filtrów w głównym widoku biblioteki Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">Wybierz jeden lub więcej szablonów filtrów i/lub tagów. Gry pasujące do dowolnego wybranego szablonu lub tagu kwalifikują się do eksportu (LUB). W każdej liście pasuje każdy zaznaczony element.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">Wybierz szablony filtrów powyżej i tagi poniżej. Gry muszą pasować do co najmniej jednego zaznaczonego szablonu i co najmniej jednego zaznaczonego tagu (ORAZ). Jeśli tylko jedna lista ma zaznaczenia, decyduje wyłącznie ta lista.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">Gry muszą pasować do wybranego szablonu filtra, ale nie mogą mieć żadnego wybranego tagu — przydatne do eksportu dopasowań szablonu z wykluczeniem otagowanych gier. Wymagany jest co najmniej jeden szablon filtra; tagi są opcjonalnymi wykluczeniami.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">Najpierw utwórz szablony filtrów w głównym widoku biblioteki Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">Połącz szablony i tagi:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">Dowolny (LUB)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">Oba (ORAZ)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">Wyklucz tagi</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">Eksportuj gry pasujące do dowolnego wybranego szablonu filtra lub tagu.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">Eksportuj gry pasujące do co najmniej jednego wybranego szablonu i co najmniej jednego wybranego tagu.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">Eksportuj gry pasujące do szablonu, ale bez żadnego wybranego tagu.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filtruj listy według nazwy. Zaznaczone pozycje pozostają wybrane, gdy są ukryte.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Pokaż tylko zaznaczone</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Pokaż tylko szablony i tagi, które są obecnie zaznaczone.</sys:String>

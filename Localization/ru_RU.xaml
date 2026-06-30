@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Использовать предустановку фильтра Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Если включено, вместо отдельных фильтров ниже будет использоваться выбранная предустановка фильтра. Создавайте предустановки фильтров в главном представлении библиотеки Playnite.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Выберите одну или несколько предустановок фильтров и/или тегов. Игры, соответствующие любой выбранной предустановке или тегу, будут доступны для экспорта (логика ИЛИ). Сначала создайте предустановки фильтров в главном виде библиотеки Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">Выберите одну или несколько предустановок фильтров и/или тегов. Игры, соответствующие любой выбранной предустановке или тегу, доступны для экспорта (ИЛИ). В каждом списке подходит любой отмеченный элемент.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">Выберите предустановки фильтров выше и теги ниже. Игра должна соответствовать хотя бы одной отмеченной предустановке и хотя бы одному отмеченному тегу (И). Если выбран только один список, решает только он.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">Игра должна соответствовать выбранной предустановке фильтра, но не иметь ни одного выбранного тега — полезно для экспорта совпадений по предустановке без помеченных игр. Требуется хотя бы одна предустановка фильтра; теги — необязательные исключения.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">Сначала создайте предустановки фильтров в главном виде библиотеки Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">Объединить предустановки и теги:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">Любой (ИЛИ)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">Оба (И)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">Исключить теги</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">Экспортировать игры, соответствующие любой выбранной предустановке фильтра или тегу.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">Экспортировать игры, соответствующие хотя бы одной выбранной предустановке и хотя бы одному выбранному тегу.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">Экспортировать игры, соответствующие предустановке, но без выбранных тегов.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Фильтруйте списки по имени. Отмеченные элементы остаются выбранными, даже если скрыты.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Показывать только отмеченные</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Показывать только предустановки и теги, которые сейчас отмечены.</sys:String>

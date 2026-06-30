@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Usar predefinição de filtro do Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Quando ativado, a predefinição de filtro selecionada será utilizada em vez dos filtros individuais abaixo. Crie predefinições de filtro na vista principal da biblioteca do Playnite.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Selecione uma ou mais predefinições de filtro e/ou etiquetas. Os jogos que correspondam a qualquer predefinição ou etiqueta selecionada serão elegíveis para exportação (lógica OU). Crie predefinições de filtro primeiro na vista principal da biblioteca do Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">Selecione uma ou mais predefinições de filtro e/ou etiquetas. Os jogos que correspondam a qualquer predefinição ou etiqueta selecionada são elegíveis para exportação (OU). Em cada lista, qualquer item assinalado corresponde.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">Selecione predefinições de filtro acima e etiquetas abaixo. Os jogos devem corresponder a pelo menos uma predefinição assinalada e a pelo menos uma etiqueta assinalada (E). Se apenas uma lista tiver seleções, apenas essa lista determina a elegibilidade.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">Os jogos devem corresponder a uma predefinição de filtro, mas não podem ter nenhuma etiqueta selecionada — útil para exportar correspondências de predefinição excluindo jogos etiquetados. É necessária pelo menos uma predefinição de filtro; as etiquetas são exclusões opcionais.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">Crie predefinições de filtro primeiro na vista principal da biblioteca do Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">Combinar predefinições e etiquetas:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">Qualquer (OU)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">Ambos (E)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">Excluir etiquetas</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">Exportar jogos que correspondam a qualquer predefinição de filtro ou etiqueta selecionada.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">Exportar jogos que correspondam a pelo menos uma predefinição e a pelo menos uma etiqueta selecionadas.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">Exportar jogos que correspondam a uma predefinição, mas não tenham nenhuma etiqueta selecionada.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filtre as listas por nome. Os itens assinalados permanecem selecionados quando ocultos.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Mostrar apenas assinalados</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Mostrar apenas predefinições e etiquetas que estão assinalados de momento.</sys:String>

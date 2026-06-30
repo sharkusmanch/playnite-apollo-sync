@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite Filtre Ön Ayarını Kullan</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Etkinleştirildiğinde, aşağıdaki ayrı filtreler yerine seçilen filtre ön ayarı kullanılır. Filtre ön ayarlarını Playnite'ın ana kütüphane görünümünde oluşturabilirsiniz.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Bir veya daha fazla filtre ön ayarı ve/veya etiket seçin. Seçili herhangi bir ön ayar veya etiketle eşleşen oyunlar dışa aktarım için uygun olur (VEYA mantığı). Önce Playnite ana kütüphane görünümünde filtre ön ayarları oluşturun.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">Bir veya daha fazla filtre ön ayarı ve/veya etiket seçin. Seçili herhangi bir ön ayar veya etiketle eşleşen oyunlar dışa aktarım için uygundur (VEYA). Her listede işaretli herhangi bir öğe eşleşir.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">Yukarıda filtre ön ayarlarını, aşağıda etiketleri seçin. Oyunlar en az bir işaretli ön ayar ve en az bir işaretli etiketle eşleşmelidir (VE). Yalnızca bir listede seçim varsa yalnızca o liste geçerliliği belirler.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">Oyunlar seçili bir filtre ön ayarıyla eşleşmeli ancak seçili bir etikete sahip olmamalıdır — ön ayar eşleşmelerini etiketli oyunları hariç tutarak dışa aktarmak için kullanışlıdır. En az bir filtre ön ayarı gerekir; etiketler isteğe bağlı hariç tutmalardır.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">Önce Playnite ana kütüphane görünümünde filtre ön ayarları oluşturun.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">Ön ayarları ve etiketleri birleştir:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">Herhangi (VEYA)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">Her ikisi (VE)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">Etiketleri hariç tut</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">Seçili herhangi bir filtre ön ayarı veya etiketle eşleşen oyunları dışa aktar.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">En az bir seçili ön ayar ve en az bir seçili etiketle eşleşen oyunları dışa aktar.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">Bir ön ayarla eşleşen ancak seçili etiketi olmayan oyunları dışa aktar.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Listeleri ada göre filtreleyin. Gizlendiğinde bile işaretli öğeler seçili kalır.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Yalnızca işaretlileri göster</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Yalnızca şu anda işaretli ön ayarları ve etiketleri göster.</sys:String>

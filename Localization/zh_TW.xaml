@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">使用Playnite篩選預設</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">啟用後，將使用所選的篩選預設取代下方的各項篩選條件。可在Playnite的主媒體庫檢視中建立篩選預設。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">選擇一個或多個篩選預設和/或標籤。符合任一所選預設或標籤的遊戲將符合匯出資格（OR邏輯）。請先在Playnite主媒體庫檢視中建立篩選預設。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">選擇一個或多個篩選預設和/或標籤。符合任一所選預設或標籤的遊戲可匯出（OR）。每個清單內，任何勾選項目皆符合。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">在上方選擇篩選預設，在下方選擇標籤。遊戲必須同時符合至少一個已勾選的預設和至少一個已勾選的標籤（AND）。若僅一個清單有選擇，則僅由該清單決定是否符合條件。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">遊戲必須符合所選篩選預設，且不得擁有任何所選標籤——適用於匯出預設符合結果但排除已標記遊戲。至少需選擇一個篩選預設；標籤為選用排除項。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">請先在Playnite主媒體庫檢視中建立篩選預設。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">組合預設與標籤：</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">任一（OR）</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">兩者（AND）</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">排除標籤</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">匯出符合任一所選篩選預設或標籤的遊戲。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">匯出同時符合至少一個所選預設和至少一個所選標籤的遊戲。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">匯出符合預設但不擁有任何所選標籤的遊戲。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">依名稱篩選預設和標籤清單。被篩掉的已勾選項目仍保持選取狀態。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">僅顯示已勾選</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">僅顯示目前已勾選的預設和標籤。</sys:String>

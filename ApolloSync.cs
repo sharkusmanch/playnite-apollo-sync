@@ -454,6 +454,52 @@ namespace ApolloSync
         #endregion
 
         #region Game Filtering
+        private HashSet<Game> GetGamesMatchingFilterPresets()
+        {
+            var matchingGames = new HashSet<Game>();
+
+            foreach (var presetId in _settings.Settings.IncludedFilterPresetIds)
+            {
+                var filterPreset = PlayniteApi.Database.FilterPresets
+                    .FirstOrDefault(fp => fp.Id == presetId);
+
+                if (filterPreset?.Settings != null)
+                {
+                    try
+                    {
+                        var presetGames = PlayniteApi.Database.GetFilteredGames(filterPreset.Settings);
+                        foreach (var game in presetGames)
+                        {
+                            matchingGames.Add(game);
+                        }
+                        logger.Debug($"Filter preset '{filterPreset.Name}' matched {presetGames.Count()} games");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"Failed to apply filter preset: {filterPreset.Name}");
+                    }
+                }
+            }
+
+            return matchingGames;
+        }
+
+        private HashSet<Game> GetGamesMatchingTags()
+        {
+            var matchingGames = new HashSet<Game>();
+            var tagIds = new HashSet<Guid>(_settings.Settings.IncludedTagIds);
+            var taggedGames = PlayniteApi.Database.Games
+                .Where(g => g.Tags != null && g.Tags.Any(t => tagIds.Contains(t.Id)));
+
+            foreach (var game in taggedGames)
+            {
+                matchingGames.Add(game);
+            }
+
+            logger.Debug($"Tag filter matched {matchingGames.Count} games");
+            return matchingGames;
+        }
+
         private List<Game> GetFilteredGames()
         {
             var hasFilterPresets = _settings.Settings.IncludedFilterPresetIds?.Count > 0;
@@ -465,48 +511,82 @@ namespace ApolloSync
                 return new List<Game>();
             }
 
-            var matchingGames = new HashSet<Game>();
+            var presetGames = hasFilterPresets ? GetGamesMatchingFilterPresets() : new HashSet<Game>();
+            var tagGames = hasTags ? GetGamesMatchingTags() : new HashSet<Game>();
+            HashSet<Game> matchingGames;
 
-            if (hasFilterPresets)
+            switch (_settings.Settings.PresetTagCombinationMode)
             {
-                foreach (var presetId in _settings.Settings.IncludedFilterPresetIds)
-                {
-                    var filterPreset = PlayniteApi.Database.FilterPresets
-                        .FirstOrDefault(fp => fp.Id == presetId);
-
-                    if (filterPreset?.Settings != null)
+                case PresetTagCombinationMode.And:
+                    if (!hasFilterPresets)
                     {
-                        try
-                        {
-                            var presetGames = PlayniteApi.Database.GetFilteredGames(filterPreset.Settings);
-                            foreach (var game in presetGames)
-                            {
-                                matchingGames.Add(game);
-                            }
-                            logger.Debug($"Filter preset '{filterPreset.Name}' matched {presetGames.Count()} games");
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Error(ex, $"Failed to apply filter preset: {filterPreset.Name}");
-                        }
+                        matchingGames = tagGames;
                     }
-                }
-            }
+                    else if (!hasTags)
+                    {
+                        matchingGames = presetGames;
+                    }
+                    else
+                    {
+                        matchingGames = new HashSet<Game>(presetGames);
+                        matchingGames.IntersectWith(tagGames);
+                    }
+                    break;
 
-            if (hasTags)
-            {
-                var tagIds = new HashSet<Guid>(_settings.Settings.IncludedTagIds);
-                var taggedGames = PlayniteApi.Database.Games
-                    .Where(g => g.Tags != null && g.Tags.Any(t => tagIds.Contains(t.Id)));
-                foreach (var game in taggedGames)
-                {
-                    matchingGames.Add(game);
-                }
-                logger.Debug($"Tag filter matched {matchingGames.Count} games (cumulative)");
+                case PresetTagCombinationMode.Not:
+                    if (!hasFilterPresets)
+                    {
+                        logger.Warn("Exclude-tags mode requires at least one filter preset - no games will be filtered.");
+                        return new List<Game>();
+                    }
+
+                    matchingGames = new HashSet<Game>(presetGames);
+                    if (hasTags)
+                    {
+                        matchingGames.ExceptWith(tagGames);
+                    }
+                    break;
+
+                default:
+                    matchingGames = new HashSet<Game>(presetGames);
+                    matchingGames.UnionWith(tagGames);
+                    break;
             }
 
             logger.Info($"Combined filters matched {matchingGames.Count} games");
             return matchingGames.ToList();
+        }
+
+        private bool GameMatchesAnyFilterPreset(Game game)
+        {
+            foreach (var presetId in _settings.Settings.IncludedFilterPresetIds)
+            {
+                var filterPreset = PlayniteApi.Database.FilterPresets
+                    .FirstOrDefault(fp => fp.Id == presetId);
+
+                if (filterPreset?.Settings != null)
+                {
+                    try
+                    {
+                        if (PlayniteApi.Database.GetGameMatchesFilter(game, filterPreset.Settings))
+                        {
+                            return true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"Failed to check game against filter preset: {filterPreset.Name}");
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        private bool GameMatchesAnyTag(Game game)
+        {
+            var tagIds = new HashSet<Guid>(_settings.Settings.IncludedTagIds);
+            return game.Tags != null && game.Tags.Any(t => tagIds.Contains(t.Id));
         }
 
         private bool GameMeetsCurrentFilters(Game game)
@@ -514,40 +594,55 @@ namespace ApolloSync
             var hasFilterPresets = _settings.Settings.IncludedFilterPresetIds?.Count > 0;
             var hasTags = _settings.Settings.IncludedTagIds?.Count > 0;
 
-            if (hasFilterPresets)
+            if (!hasFilterPresets && !hasTags)
             {
-                foreach (var presetId in _settings.Settings.IncludedFilterPresetIds)
-                {
-                    var filterPreset = PlayniteApi.Database.FilterPresets
-                        .FirstOrDefault(fp => fp.Id == presetId);
+                return false;
+            }
 
-                    if (filterPreset?.Settings != null)
+            var matchesPreset = hasFilterPresets && GameMatchesAnyFilterPreset(game);
+            var matchesTag = hasTags && GameMatchesAnyTag(game);
+
+            switch (_settings.Settings.PresetTagCombinationMode)
+            {
+                case PresetTagCombinationMode.And:
+                    if (!hasFilterPresets)
                     {
-                        try
-                        {
-                            if (PlayniteApi.Database.GetGameMatchesFilter(game, filterPreset.Settings))
-                            {
-                                return true;
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            logger.Error(ex, $"Failed to check game against filter preset: {filterPreset.Name}");
-                        }
+                        return matchesTag;
                     }
-                }
-            }
 
-            if (hasTags)
-            {
-                var tagIds = new HashSet<Guid>(_settings.Settings.IncludedTagIds);
-                if (game.Tags != null && game.Tags.Any(t => tagIds.Contains(t.Id)))
-                {
-                    return true;
-                }
-            }
+                    if (!hasTags)
+                    {
+                        return matchesPreset;
+                    }
 
-            return false;
+                    return matchesPreset && matchesTag;
+
+                case PresetTagCombinationMode.Not:
+                    if (!hasFilterPresets)
+                    {
+                        return false;
+                    }
+
+                    if (!hasTags)
+                    {
+                        return matchesPreset;
+                    }
+
+                    return matchesPreset && !matchesTag;
+
+                default:
+                    if (hasFilterPresets && hasTags)
+                    {
+                        return matchesPreset || matchesTag;
+                    }
+
+                    if (hasFilterPresets)
+                    {
+                        return matchesPreset;
+                    }
+
+                    return matchesTag;
+            }
         }
 
         private int RemoveFilteredOutGames(JObject config, HashSet<Guid> pinnedGameIds = null)

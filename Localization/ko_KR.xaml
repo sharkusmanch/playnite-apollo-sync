@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite 필터 프리셋 사용</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">활성화하면 아래의 개별 필터 대신 선택한 필터 프리셋이 사용됩니다. 필터 프리셋은 Playnite의 메인 라이브러리 화면에서 만들 수 있습니다.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">하나 이상의 필터 프리셋 및/또는 태그를 선택하세요. 선택한 프리셋 또는 태그 중 하나와 일치하는 게임이 내보내기 대상이 됩니다(OR 논리). 필터 프리셋은 Playnite 메인 라이브러리 화면에서 먼저 만드세요.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">하나 이상의 필터 프리셋 및/또는 태그를 선택하세요. 선택한 프리셋 또는 태그 중 하나와 일치하는 게임이 내보내기 대상이 됩니다(OR). 각 목록에서는 선택한 항목 중 하나와 일치하면 됩니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">위에서 필터 프리셋, 아래에서 태그를 선택하세요. 게임은 선택한 프리셋과 태그 각각에 최소 하나씩 일치해야 합니다(AND). 한쪽 목록만 선택되어 있으면 해당 목록만으로 판단합니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">게임은 선택한 필터 프리셋과 일치해야 하며 선택한 태그를 가져서는 안 됩니다. 프리셋 일치에서 태그가 있는 게임을 제외해 내보낼 때 유용합니다. 필터 프리셋을 하나 이상 선택해야 하며, 태그는 선택적 제외 조건입니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">필터 프리셋은 Playnite 메인 라이브러리 화면에서 먼저 만드세요.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">프리셋과 태그 조합:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">하나라도(OR)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">둘 다(AND)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">태그 제외</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">선택한 필터 프리셋 또는 태그 중 하나와 일치하는 게임을 내보냅니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">선택한 프리셋과 태그 각각에 최소 하나씩 일치하는 게임을 내보냅니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">프리셋과 일치하지만 선택한 태그가 없는 게임을 내보냅니다.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">이름으로 프리셋 및 태그 목록을 필터링합니다. 숨겨져도 체크된 항목은 선택 상태를 유지합니다.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">체크된 항목만 표시</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">현재 체크된 프리셋과 태그만 표시합니다.</sys:String>

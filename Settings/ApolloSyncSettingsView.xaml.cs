@@ -17,6 +17,10 @@ namespace ApolloSync
         private static readonly ILogger logger = LogManager.GetLogger();
         private string _filterSearchText = "";
         private bool _showCheckedOnly = false;
+        private TextBlock _filtersHelpText;
+        private ToggleButton _combinationOrButton;
+        private ToggleButton _combinationAndButton;
+        private ToggleButton _combinationNotButton;
 
         public ApolloSyncSettingsView()
         {
@@ -230,20 +234,21 @@ namespace ApolloSync
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 3: label (collapsed)
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 4: completion (collapsed)
             grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 5: filter presets
-            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });              // 6: tags (fill remaining)
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 7: category (collapsed)
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 6: preset/tag combination
+            grid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(1, GridUnitType.Star) });              // 7: tags (fill remaining)
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });                                   // 8: category (collapsed)
 
-            // Top-level help text
-            var helpText = new TextBlock
+            // Top-level help text (updated when combination mode changes)
+            _filtersHelpText = new TextBlock
             {
-                Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_Filters_Help"),
+                Name = "FiltersHelpText",
                 TextWrapping = TextWrapping.Wrap,
                 Margin = new Thickness(0, 0, 0, 8),
                 Foreground = System.Windows.Media.Brushes.Gray,
                 FontStyle = FontStyles.Italic
             };
-            Grid.SetRow(helpText, 0);
-            grid.Children.Add(helpText);
+            Grid.SetRow(_filtersHelpText, 0);
+            grid.Children.Add(_filtersHelpText);
 
             // Search box and show-checked toggle (separate rows)
             var searchSection = new StackPanel { Margin = new Thickness(0, 0, 0, 8) };
@@ -479,12 +484,49 @@ namespace ApolloSync
                 {
                     UpdateFilterPresetCheckboxes(filterPresetPanel);
                     UpdateCheckedCounts();
+                    UpdatePresetTagCombinationUi();
                 }
             };
 
             filterPresetExpander.Content = filterPresetContentPanel;
             Grid.SetRow(filterPresetExpander, 5);
             grid.Children.Add(filterPresetExpander);
+
+            // Preset/tag combination mode (between filter presets and tags)
+            var combinationPanel = new StackPanel
+            {
+                Name = "PresetTagCombinationPanel",
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+            var combinationLabel = new TextBlock
+            {
+                Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_PresetTagCombination"),
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 8, 0)
+            };
+            combinationPanel.Children.Add(combinationLabel);
+
+            _combinationOrButton = CreateCombinationModeButton(
+                ResourceProvider.GetString("LOC_ApolloSync_Settings_PresetTagCombination_Or"),
+                ResourceProvider.GetString("LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip"),
+                PresetTagCombinationMode.Or);
+            _combinationAndButton = CreateCombinationModeButton(
+                ResourceProvider.GetString("LOC_ApolloSync_Settings_PresetTagCombination_And"),
+                ResourceProvider.GetString("LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip"),
+                PresetTagCombinationMode.And);
+            _combinationNotButton = CreateCombinationModeButton(
+                ResourceProvider.GetString("LOC_ApolloSync_Settings_PresetTagCombination_Not"),
+                ResourceProvider.GetString("LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip"),
+                PresetTagCombinationMode.Not);
+
+            combinationPanel.Children.Add(_combinationOrButton);
+            combinationPanel.Children.Add(_combinationAndButton);
+            combinationPanel.Children.Add(_combinationNotButton);
+            Grid.SetRow(combinationPanel, 6);
+            grid.Children.Add(combinationPanel);
+
+            UpdatePresetTagCombinationUi();
 
             // Tag Presets (collapsible, fills remaining window height)
             var tagExpander = new Expander
@@ -539,7 +581,7 @@ namespace ApolloSync
             };
 
             tagExpander.Content = tagContentPanel;
-            Grid.SetRow(tagExpander, 6);
+            Grid.SetRow(tagExpander, 7);
             grid.Children.Add(tagExpander);
 
             // Category Filter (collapsible)
@@ -593,7 +635,7 @@ namespace ApolloSync
 
             categoryExpander.Content = categoryContentPanel;
             categoryExpander.Visibility = Visibility.Collapsed; // TEMP: Disable custom filters
-            Grid.SetRow(categoryExpander, 7);
+            Grid.SetRow(categoryExpander, 8);
             grid.Children.Add(categoryExpander);
 
             return grid;
@@ -741,6 +783,79 @@ namespace ApolloSync
         #endregion
 
         #region Search
+
+        private ToggleButton CreateCombinationModeButton(string content, string tooltip, PresetTagCombinationMode mode)
+        {
+            var button = new ToggleButton
+            {
+                Content = content,
+                Tag = mode,
+                ToolTip = tooltip,
+                Margin = new Thickness(0, 0, 4, 0),
+                Padding = new Thickness(8, 2, 8, 2),
+                MinWidth = 72
+            };
+            button.Click += CombinationModeButton_Click;
+            return button;
+        }
+
+        private void CombinationModeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!(sender is ToggleButton clickedButton) ||
+                !(clickedButton.Tag is PresetTagCombinationMode mode) ||
+                !(DataContext is ApolloSyncSettingsViewModel vm))
+            {
+                return;
+            }
+
+            vm.Settings.PresetTagCombinationMode = mode;
+            UpdatePresetTagCombinationUi();
+        }
+
+        private void UpdatePresetTagCombinationUi()
+        {
+            var mode = PresetTagCombinationMode.Or;
+            if (DataContext is ApolloSyncSettingsViewModel vm)
+            {
+                mode = vm.Settings.PresetTagCombinationMode;
+            }
+
+            if (_filtersHelpText != null)
+            {
+                string helpKey;
+                switch (mode)
+                {
+                    case PresetTagCombinationMode.And:
+                        helpKey = "LOC_ApolloSync_Settings_Filters_Help_And";
+                        break;
+                    case PresetTagCombinationMode.Not:
+                        helpKey = "LOC_ApolloSync_Settings_Filters_Help_Not";
+                        break;
+                    default:
+                        helpKey = "LOC_ApolloSync_Settings_Filters_Help_Or";
+                        break;
+                }
+
+                _filtersHelpText.Text = ResourceProvider.GetString(helpKey).TrimEnd()
+                    + " "
+                    + ResourceProvider.GetString("LOC_ApolloSync_Settings_Filters_Help_CreatePresets").TrimStart();
+            }
+
+            if (_combinationOrButton != null)
+            {
+                _combinationOrButton.IsChecked = mode == PresetTagCombinationMode.Or;
+            }
+
+            if (_combinationAndButton != null)
+            {
+                _combinationAndButton.IsChecked = mode == PresetTagCombinationMode.And;
+            }
+
+            if (_combinationNotButton != null)
+            {
+                _combinationNotButton.IsChecked = mode == PresetTagCombinationMode.Not;
+            }
+        }
 
         private void FilterSearch_TextChanged(object sender, TextChangedEventArgs e)
         {

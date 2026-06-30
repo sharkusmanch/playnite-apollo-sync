@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playniteのフィルタープリセットを使用</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">有効にすると、以下の個別フィルターの代わりに選択したフィルタープリセットが使用されます。フィルタープリセットはPlayniteのメインライブラリ画面で作成できます。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">フィルタープリセットおよび/またはタグを1つ以上選択してください。選択したプリセットまたはタグのいずれかに一致するゲームがエクスポート対象になります（OR条件）。フィルタープリセットはPlayniteのメインライブラリ画面で先に作成してください。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">フィルタープリセットおよび/またはタグを1つ以上選択してください。選択したプリセットまたはタグのいずれかに一致するゲームがエクスポート対象になります（OR）。各リスト内では、チェックした項目のいずれかに一致します。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">上でフィルタープリセット、下でタグを選択してください。ゲームはチェックしたプリセットとチェックしたタグの両方に、それぞれ少なくとも1つ一致する必要があります（AND）。片方のリストだけに選択がある場合は、そのリストのみで判定します。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">ゲームは選択したフィルタープリセットに一致し、選択したタグを持っていてはいけません。プリセット一致からタグ付きゲームを除外してエクスポートする場合に便利です。フィルタープリセットを1つ以上選択する必要があり、タグは任意の除外条件です。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">フィルタープリセットはPlayniteのメインライブラリ画面で先に作成してください。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">プリセットとタグの組み合わせ:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">いずれか（OR）</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">両方（AND）</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">タグを除外</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">選択したフィルタープリセットまたはタグのいずれかに一致するゲームをエクスポートします。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">選択したプリセットとタグの両方に、それぞれ少なくとも1つ一致するゲームをエクスポートします。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">プリセットに一致するが、選択したタグを持たないゲームをエクスポートします。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">名前でプリセットとタグの一覧を絞り込みます。非表示になってもチェック状態は維持されます。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">チェック済みのみ表示</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">現在チェックされているプリセットとタグのみを表示します。</sys:String>

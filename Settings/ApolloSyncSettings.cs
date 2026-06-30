@@ -16,6 +16,13 @@ namespace ApolloSync
         Never
     }
 
+    public enum PresetTagCombinationMode
+    {
+        Or,
+        And,
+        Not
+    }
+
     public class LabelOption
     {
         public string Name { get; set; }
@@ -79,6 +86,13 @@ namespace ApolloSync
         {
             get => _includedTagIds;
             set => SetValue(ref _includedTagIds, value);
+        }
+
+        private PresetTagCombinationMode _presetTagCombinationMode = PresetTagCombinationMode.Or;
+        public PresetTagCombinationMode PresetTagCombinationMode
+        {
+            get => _presetTagCombinationMode;
+            set => SetValue(ref _presetTagCombinationMode, value);
         }
 
         private bool _showNotifications = true;

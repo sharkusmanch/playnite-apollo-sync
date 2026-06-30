@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Usa preset filtro di Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Quando attivato, verrà utilizzato il preset filtro selezionato al posto dei filtri individuali sottostanti. Crea i preset filtro nella vista principale della libreria di Playnite.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Seleziona uno o più preset filtro e/o tag. I giochi che corrispondono a qualsiasi preset o tag selezionato saranno idonei all'esportazione (logica OR). Crea prima i preset filtro nella vista principale della libreria di Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">Seleziona uno o più preset filtro e/o tag. I giochi che corrispondono a qualsiasi preset o tag selezionato sono idonei all'esportazione (OR). In ogni elenco, corrisponde qualsiasi elemento selezionato.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">Seleziona i preset filtro sopra e i tag sotto. I giochi devono corrispondere ad almeno un preset selezionato e ad almeno un tag selezionato (AND). Se solo un elenco ha selezioni, decide solo quell'elenco.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">I giochi devono corrispondere a un preset filtro selezionato ma non devono avere alcun tag selezionato — utile per esportare le corrispondenze del preset escludendo i giochi taggati. È richiesto almeno un preset filtro; i tag sono esclusioni opzionali.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">Crea prima i preset filtro nella vista principale della libreria di Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">Combina preset e tag:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">Qualsiasi (OR)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">Entrambi (AND)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">Escludi tag</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">Esporta i giochi che corrispondono a qualsiasi preset filtro o tag selezionato.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">Esporta i giochi che corrispondono ad almeno un preset e ad almeno un tag selezionati.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">Esporta i giochi che corrispondono a un preset ma non hanno alcun tag selezionato.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filtra gli elenchi per nome. Gli elementi selezionati restano selezionati quando nascosti.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Mostra solo selezionati</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Mostra solo preset e tag attualmente selezionati.</sys:String>

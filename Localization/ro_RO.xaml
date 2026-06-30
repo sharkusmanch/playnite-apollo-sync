@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Folosește presetarea de filtru Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Când este activat, presetarea de filtru selectată va fi folosită în locul filtrelor individuale de mai jos. Creează presetări de filtru în vizualizarea principală a bibliotecii Playnite.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Selectează una sau mai multe presetări de filtru și/sau etichete. Jocurile care se potrivesc cu orice presetare sau etichetă selectată vor fi eligibile pentru export (logică SAU). Creează mai întâi presetări de filtru în vizualizarea principală a bibliotecii Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">Selectează una sau mai multe presetări de filtru și/sau etichete. Jocurile care se potrivesc cu orice presetare sau etichetă selectată sunt eligibile pentru export (SAU). În fiecare listă, orice element bifat se potrivește.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">Selectează presetări de filtru deasupra și etichete dedesubt. Jocurile trebuie să se potrivească cu cel puțin o presetare bifată și cel puțin o etichetă bifată (ȘI). Dacă doar o listă are selecții, doar acea listă determină eligibilitatea.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">Jocurile trebuie să se potrivească cu o presetare de filtru selectată, dar să nu aibă nicio etichetă selectată — util pentru exportul potrivirilor de presetare excluzând jocurile etichetate. Este necesară cel puțin o presetare de filtru; etichetele sunt excluderi opționale.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">Creează mai întâi presetări de filtru în vizualizarea principală a bibliotecii Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">Combină presetările și etichetele:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">Oricare (SAU)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">Ambele (ȘI)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">Exclude etichetele</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">Exportă jocurile care se potrivesc cu orice presetare de filtru sau etichetă selectată.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">Exportă jocurile care se potrivesc cu cel puțin o presetare și cel puțin o etichetă selectate.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">Exportă jocurile care se potrivesc cu o presetare, dar nu au nicio etichetă selectată.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filtrează listele după nume. Elementele bifate rămân selectate când sunt ascunse.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Afișează doar bifate</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Afișează doar presetările și etichetele bifate în prezent.</sys:String>

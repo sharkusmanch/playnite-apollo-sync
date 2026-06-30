@@ -57,6 +57,17 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Använd Playnite-filterförinställning</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">När aktiverat används den valda filterförinställningen istället för de enskilda filtren nedan. Skapa filterförinställningar i Playnites huvudbiblioteksvy.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help">Välj en eller flera filterförinställningar och/eller taggar. Spel som matchar valfri vald förinställning eller tagg är berättigade till export (ELLER-logik). Skapa filterförinställningar först i Playnites huvudbiblioteksvy.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Or">Välj en eller flera filterförinställningar och/eller taggar. Spel som matchar valfri vald förinställning eller tagg är berättigade till export (ELLER). Inom varje lista matchar alla ikryssade objekt.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_And">Välj filterförinställningar ovan och taggar nedan. Spel måste matcha minst en ikryssad förinställning och minst en ikryssad tagg (OCH). Om bara en lista har val görs bedömningen enbart utifrån den listan.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_Not">Spel måste matcha en vald filterförinställning men får inte ha någon vald tagg — användbart för att exportera förinställningsmatchningar utan taggade spel. Minst en filterförinställning krävs; taggar är valfria undantag.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_Filters_Help_CreatePresets">Skapa filterförinställningar först i Playnites huvudbiblioteksvy.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination">Kombinera förinställningar och taggar:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or">Valfri (ELLER)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And">Båda (OCH)</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not">Exkludera taggar</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Or_Tooltip">Exportera spel som matchar valfri vald filterförinställning eller tagg.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_And_Tooltip">Exportera spel som matchar minst en vald förinställning och minst en vald tagg.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_PresetTagCombination_Not_Tooltip">Exportera spel som matchar en förinställning men inte har någon vald tagg.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterSearch_Tooltip">Filtrera listorna efter namn. Markerade objekt förblir valda när de döljs.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly">Visa endast markerade</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_ShowCheckedOnly_Tooltip">Visa endast förinställningar och taggar som för närvarande är markerade.</sys:String>
