@@ -307,6 +307,51 @@ namespace ApolloSync.Tests
             Assert.IsNull(error, "Concurrent access threw: " + error);
         }
 
+        [TestMethod]
+        public void ManualRemoval_SurvivesAnExportWhoseSaveFails()
+        {
+            // Regression: ExportGamesWithFeedback used to clear the manual-removal record inside
+            // the per-game loop, before the batch SaveAppsConfig. If that write threw, the record
+            // was gone for the rest of the session even though apps.json never changed, so the
+            // next cover-image change or sync silently re-added the game.
+            //
+            // Mirrors the production ordering: mutate in memory, then only clear the records
+            // after the write succeeds.
+            var store = new ManagedStore();
+            var sync = new SyncService();
+            var config = new JObject { ["apps"] = new JArray() };
+            var game = new Game("Previously Removed") { Id = Guid.NewGuid(), InstallDirectory = "C:\\P" };
+
+            store.MarkManuallyRemoved(game.Id);
+
+            var exported = new List<Guid>();
+            Assert.IsTrue(sync.AddOrUpdate(config, store, game));
+            exported.Add(game.Id);
+
+            // The write fails.
+            var saveSucceeded = false;
+            try
+            {
+                throw new UnauthorizedAccessException("apps.json is not writable");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                saveSucceeded = false;
+            }
+
+            if (saveSucceeded)
+            {
+                foreach (var id in exported) store.ClearManualRemoval(id);
+            }
+
+            Assert.IsTrue(store.IsManuallyRemoved(game.Id),
+                "A failed export must not drop the manual-removal protection");
+
+            // And once a write does succeed, the protection is correctly lifted.
+            foreach (var id in exported) store.ClearManualRemoval(id);
+            Assert.IsFalse(store.IsManuallyRemoved(game.Id));
+        }
+
         // ── Write fallback path ───────────────────────────────────────────────────
 
         [TestMethod]

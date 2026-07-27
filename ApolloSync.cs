@@ -942,6 +942,8 @@ namespace ApolloSync
                 var successCount = 0;
                 var failureCount = 0;
                 var errors = new List<string>();
+                // Manual-removal records to clear, applied only once the write to disk succeeds.
+                var exportedGameIds = new List<Guid>();
 
                 lock (_configLock)
                 {
@@ -964,9 +966,7 @@ namespace ApolloSync
                                 if (TryAddOrUpdateAppBatch(game, config))
                                 {
                                     successCount++;
-                                    // An explicit export overrides an earlier explicit removal,
-                                    // otherwise the next sync would strip the game straight back out.
-                                    _managedStore.ClearManualRemoval(game.Id);
+                                    exportedGameIds.Add(game.Id);
                                     logger.Debug($"Successfully processed: {game.Name}");
                                 }
                                 else
@@ -993,6 +993,17 @@ namespace ApolloSync
                             try
                             {
                                 SaveAppsConfig(config);
+
+                                // Only now drop the manual-removal records. An explicit export
+                                // overrides an explicit removal, but if the write above failed
+                                // the export did not happen — clearing before the save would
+                                // strip the protection for the rest of the session and let the
+                                // next cover-image change or sync silently re-add the game.
+                                foreach (var exportedId in exportedGameIds)
+                                {
+                                    _managedStore.ClearManualRemoval(exportedId);
+                                }
+
                                 SaveManagedStore();
                                 logger.Info("Batch export save completed successfully");
                             }
