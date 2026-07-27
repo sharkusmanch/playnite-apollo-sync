@@ -16,19 +16,6 @@ namespace ApolloSync
         Never
     }
 
-    public class LabelOption
-    {
-        public string Name { get; set; }
-        public Guid? Id { get; set; }
-    }
-
-    public class CompletionStatusOption
-    {
-        public string Name { get; set; }
-        public CompletionStatus Status { get; set; }
-        public bool IsSelected { get; set; }
-    }
-
     public class ApolloSyncSettings : ObservableObject
     {
         private string _appsJsonPath = string.Empty;
@@ -93,6 +80,13 @@ namespace ApolloSync
         {
             get => _managedGameMappings;
             set => SetValue(ref _managedGameMappings, value);
+        }
+
+        private List<Guid> _manuallyRemovedGames = new List<Guid>();
+        public List<Guid> ManuallyRemovedGames
+        {
+            get => _manuallyRemovedGames;
+            set => SetValue(ref _manuallyRemovedGames, value);
         }
 
         // No non-serialized properties at this time.

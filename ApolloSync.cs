@@ -70,22 +70,15 @@ namespace ApolloSync
             }
         }
 
-        private bool IsGameManuallyRemoved(Game game, JObject config)
+        private bool IsGameManuallyRemoved(Game game)
         {
-            // Manual removal means: it WAS managed but its entry is now missing from apps.json.
-            // With identity UUIDs, presence is determined by uuid == game.Id.
-            var apps = (JArray)(config["apps"] ?? new JArray());
-            var presentInConfig = apps
-                .OfType<JObject>()
-                .Select(a => (string)a["uuid"])
-                .Where(s => !string.IsNullOrEmpty(s) && Guid.TryParse(s, out _))
-                .Any(s => Guid.Parse(s) == game.Id);
-
-            var isManaged = _managedStore.GameToUuid.ContainsKey(game.Id);
-
-            if (isManaged && !presentInConfig)
+            // Read the explicit record written by RemoveGamesWithFeedback / RemoveGamesFromManaged.
+            // This used to be inferred from "managed but missing from apps.json", but
+            // SyncManagedStore() prunes exactly those entries on startup, so the inference always
+            // returned false after a restart and manually removed games were silently re-added.
+            if (_managedStore.IsManuallyRemoved(game.Id))
             {
-                logger.Debug($"Game {game.Name} appears to be manually removed (was managed but missing from apps.json)");
+                logger.Debug($"Game {game.Name} was manually removed from Apollo management");
                 return true;
             }
 
@@ -329,9 +322,10 @@ namespace ApolloSync
             _managedStore = new ManagedStore
             {
                 GameToUuid = new System.Collections.Concurrent.ConcurrentDictionary<Guid, Guid>(
-                    _settings.Settings.ManagedGameMappings ?? new Dictionary<Guid, Guid>())
+                    _settings.Settings.ManagedGameMappings ?? new Dictionary<Guid, Guid>()),
             };
-            logger.Debug($"Loaded managed store from settings with {_managedStore.GameToUuid.Count} entries");
+            _managedStore.ResetManuallyRemoved(_settings.Settings.ManuallyRemovedGames);
+            logger.Debug($"Loaded managed store from settings with {_managedStore.GameToUuid.Count} entries and {_managedStore.ManuallyRemovedCount} manually removed games");
         }
 
         public List<Game> GetManagedGamesForSettings()
@@ -373,17 +367,79 @@ namespace ApolloSync
             {
                 if (_managedStore?.GameToUuid == null) return;
 
+                // Same lost-update guard as ExportGamesWithFeedback / RemoveGamesWithFeedback.
+                // A background sync loads apps.json, works outside the lock, then saves its own
+                // snapshot — without cancelling it first, that stale snapshot would write the
+                // entries we are about to delete straight back into apps.json, orphaned from
+                // the store. Must not run on the UI thread: SaveAppsConfig can dispatch a
+                // permission prompt back to it while we hold _configLock.
+                CancelSync();
+                try
+                {
+                    var syncCompleted = _syncTask?.Wait(TimeSpan.FromSeconds(30)) ?? true;
+                    if (!syncCompleted)
+                        logger.Warn("Previous sync task did not finish within 30 s; proceeding with removal anyway");
+                }
+                catch (AggregateException) { }
+
                 lock (_configLock)
                 {
-                    foreach (var gameId in gameIds)
+                    // Dropping the store entry alone would leave the app entry stranded in
+                    // apps.json with nothing tracking it, so remove from both sides.
+                    var config = LoadAppsConfig();
+                    if (config == null)
                     {
-                        Guid removed;
-                        _managedStore.GameToUuid.TryRemove(gameId, out removed);
+                        logger.Error("Cannot remove games from managed store - failed to load apps.json");
+                        return;
                     }
 
+                    var apps = (JArray)(config["apps"] ?? new JArray());
+
+                    foreach (var gameId in gameIds)
+                    {
+                        // Capture before removal: only a game we actually managed should be
+                        // blacklisted from future syncs.
+                        var wasManaged = _managedStore.GameToUuid.ContainsKey(gameId);
+
+                        var game = PlayniteApi.Database.Games.Get(gameId);
+                        if (game != null)
+                        {
+                            syncService.Remove(config, _managedStore, game);
+                        }
+                        else
+                        {
+                            // Game is gone from the library; drop its entry by the stored UUID.
+                            Guid uuid;
+                            if (_managedStore.GameToUuid.TryGetValue(gameId, out uuid))
+                            {
+                                for (int i = apps.Count - 1; i >= 0; i--)
+                                {
+                                    var obj = apps[i] as JObject;
+                                    Guid appUuid;
+                                    if (obj != null && Guid.TryParse((string)obj["uuid"], out appUuid) && appUuid == uuid)
+                                    {
+                                        apps.RemoveAt(i);
+                                    }
+                                }
+                            }
+
+                            Guid removed;
+                            _managedStore.GameToUuid.TryRemove(gameId, out removed);
+                        }
+
+                        if (wasManaged)
+                        {
+                            // Explicit user action — do not let the next sync re-add it.
+                            _managedStore.MarkManuallyRemoved(gameId);
+                        }
+                    }
+
+                    // Order matters: if the apps.json write fails it throws, SaveManagedStore is
+                    // skipped, and the on-disk store still matches the unchanged apps.json.
+                    SaveAppsConfig(config);
                     SaveManagedStore();
                 }
-                logger.Info($"Removed {gameIds.Count} games from managed store");
+                logger.Info($"Removed {gameIds.Count} games from managed store and apps.json");
             }
             catch (Exception ex)
             {
@@ -395,8 +451,9 @@ namespace ApolloSync
         {
             // Save managed store to plugin settings instead of separate file
             _settings.Settings.ManagedGameMappings = new Dictionary<Guid, Guid>(_managedStore.GameToUuid);
+            _settings.Settings.ManuallyRemovedGames = _managedStore.ManuallyRemovedSnapshot();
             SavePluginSettings(_settings.Settings);
-            logger.Debug($"Saved managed store to settings with {_managedStore.GameToUuid.Count} entries");
+            logger.Debug($"Saved managed store to settings with {_managedStore.GameToUuid.Count} entries and {_managedStore.ManuallyRemovedCount} manually removed games");
         }
 
         private void SyncManagedStore()
@@ -425,17 +482,29 @@ namespace ApolloSync
                     }
                 }
 
-                // Find managed store entries that don't exist in apps.json
+                // Find managed store entries that don't exist in apps.json. Note this deliberately
+                // does not touch ManuallyRemoved — those games are absent from apps.json by
+                // definition, and pruning them here is what previously killed the feature.
                 var toRemove = _managedStore.GameToUuid.Where(kvp => !configUuids.Contains(kvp.Value)).ToList();
 
-                if (toRemove.Count > 0)
+                // Drop manual-removal records for games that no longer exist in the library, so
+                // the set cannot grow without bound.
+                var staleManualRemovals = _managedStore.ManuallyRemovedSnapshot()
+                    .Where(id => PlayniteApi.Database.Games.Get(id) == null)
+                    .ToList();
+
+                if (toRemove.Count > 0 || staleManualRemovals.Count > 0)
                 {
-                    logger.Info($"Syncing managed store: removing {toRemove.Count} orphaned entries");
+                    logger.Info($"Syncing managed store: removing {toRemove.Count} orphaned entries and {staleManualRemovals.Count} stale manual-removal records");
                     foreach (var kvp in toRemove)
                     {
                         logger.Debug($"Removing orphaned managed store entry: Game {kvp.Key} -> UUID {kvp.Value}");
                         Guid removedUuid;
                         _managedStore.GameToUuid.TryRemove(kvp.Key, out removedUuid);
+                    }
+                    foreach (var id in staleManualRemovals)
+                    {
+                        _managedStore.ClearManualRemoval(id);
                     }
                     SaveManagedStore();
                     logger.Info("Managed store sync completed");
@@ -495,6 +564,20 @@ namespace ApolloSync
 
         private bool GameMeetsCurrentFilters(Game game)
         {
+            bool evaluationFailed;
+            return GameMeetsCurrentFilters(game, out evaluationFailed);
+        }
+
+        /// <summary>
+        /// Evaluates the game against the selected filter presets (OR logic).
+        /// <paramref name="evaluationFailed"/> is set when a preset could not be evaluated at all,
+        /// which is not the same as "did not match" — callers that delete on a false result must
+        /// check it, or one transient failure wipes every non-pinned managed entry.
+        /// </summary>
+        private bool GameMeetsCurrentFilters(Game game, out bool evaluationFailed)
+        {
+            evaluationFailed = false;
+
             // Use filter presets with OR logic - game matches if it matches ANY selected preset
             if (_settings.Settings.IncludedFilterPresetIds?.Count > 0)
             {
@@ -514,6 +597,7 @@ namespace ApolloSync
                         }
                         catch (Exception ex)
                         {
+                            evaluationFailed = true;
                             logger.Error(ex, $"Failed to check game against filter preset: {filterPreset.Name}");
                         }
                     }
@@ -524,6 +608,31 @@ namespace ApolloSync
             return false;
 
 
+        }
+
+        /// <summary>
+        /// Decides whether a managed game should be dropped from apps.json. Kept pure — no
+        /// Playnite database access — so the removal rules are directly testable.
+        /// </summary>
+        internal static bool ShouldRemoveManagedGame(bool gameExistsInLibrary, bool isPinned, bool meetsFilters, bool filterEvaluationFailed)
+        {
+            if (!gameExistsInLibrary)
+            {
+                return true;
+            }
+
+            if (isPinned)
+            {
+                return false;
+            }
+
+            // "Could not determine" must never be read as "does not match".
+            if (filterEvaluationFailed)
+            {
+                return false;
+            }
+
+            return !meetsFilters;
         }
 
         private int RemoveFilteredOutGames(JObject config, HashSet<Guid> pinnedGameIds = null)
@@ -545,42 +654,34 @@ namespace ApolloSync
 
                     // Get the game from database
                     var game = PlayniteApi.Database.Games.Get(gameId);
-                    if (game == null)
-                    {
-                        // Game no longer exists in database, remove it
-                        logger.Info($"Removing game {gameId} - no longer exists in database");
-                        managedGamesToRemove.Add(gameId);
 
-                        // Find and mark app for removal
-                        var appToRemove = apps.OfType<JObject>().FirstOrDefault(app =>
-                            Guid.TryParse((string)app["uuid"], out var uuid) && uuid == appUuid);
-                        if (appToRemove != null)
+                    var meetsFilters = false;
+                    var filterEvaluationFailed = false;
+                    if (game != null)
+                    {
+                        meetsFilters = GameMeetsCurrentFilters(game, out filterEvaluationFailed);
+                    }
+
+                    if (!ShouldRemoveManagedGame(game != null, pinned.Contains(gameId), meetsFilters, filterEvaluationFailed))
+                    {
+                        if (filterEvaluationFailed)
                         {
-                            appsToRemove.Add(appToRemove);
+                            logger.Warn($"Keeping game {game.Name} - filter presets could not be evaluated, so no removal decision can be made");
                         }
                         continue;
                     }
 
-                    // Check if game is pinned
-                    if (pinned.Contains(gameId))
-                    {
-                        logger.Debug($"Game {game.Name} is pinned, keeping in apps.json even if it doesn't meet filters");
-                        continue;
-                    }
+                    logger.Info(game == null
+                        ? $"Removing game {gameId} - no longer exists in database"
+                        : $"Removing game {game.Name} - no longer meets filters (not pinned)");
+                    managedGamesToRemove.Add(gameId);
 
-                    // Check if game still meets current filters
-                    if (!GameMeetsCurrentFilters(game))
+                    // Find and mark app for removal
+                    var appToRemove = apps.OfType<JObject>().FirstOrDefault(app =>
+                        Guid.TryParse((string)app["uuid"], out var uuid) && uuid == appUuid);
+                    if (appToRemove != null)
                     {
-                        logger.Info($"Removing game {game.Name} - no longer meets filters (not pinned)");
-                        managedGamesToRemove.Add(gameId);
-
-                        // Find and mark app for removal
-                        var appToRemove = apps.OfType<JObject>().FirstOrDefault(app =>
-                            Guid.TryParse((string)app["uuid"], out var uuid) && uuid == appUuid);
-                        if (appToRemove != null)
-                        {
-                            appsToRemove.Add(appToRemove);
-                        }
+                        appsToRemove.Add(appToRemove);
                     }
                 }
 
@@ -611,8 +712,10 @@ namespace ApolloSync
 
         #region User Operations with Feedback
         private volatile int _syncRunning;
-        private CancellationTokenSource _syncCts;
-        private Task _syncTask;
+        private volatile CancellationTokenSource _syncCts;
+        // volatile: read by callers on other threads that must observe the current sync's task,
+        // not a stale one. See SyncFilteredGamesWithProgress for why it is published early.
+        private volatile Task _syncTask;
 
         private void SyncFilteredGamesWithProgress()
         {
@@ -624,9 +727,17 @@ namespace ApolloSync
             }
 
             var cts = new CancellationTokenSource();
+
+            // Publish _syncTask and _syncCts BEFORE dispatching the work. Assigning
+            // "_syncTask = Task.Run(...)" would publish the field only after the body had already
+            // been queued, so a caller doing CancelSync() + _syncTask.Wait() could observe a null
+            // or already-completed task while this sync was mid-flight, skip the wait, and have
+            // its changes overwritten when the sync saved its own stale snapshot.
+            var completion = new TaskCompletionSource<bool>();
+            _syncTask = completion.Task;
             _syncCts = cts;
 
-            _syncTask = Task.Run(() =>
+            Task.Run(() =>
             {
                 try
                 {
@@ -637,6 +748,8 @@ namespace ApolloSync
                     _syncCts = null;
                     cts.Dispose();
                     Interlocked.Exchange(ref _syncRunning, 0);
+                    // Signalled last: waiters must not resume until the sync's final save is done.
+                    completion.SetResult(true);
                 }
             });
         }
@@ -709,7 +822,7 @@ namespace ApolloSync
                 try
                 {
                     // Check if this game was manually removed and should not be re-added
-                    if (IsGameManuallyRemoved(game, config))
+                    if (IsGameManuallyRemoved(game))
                     {
                         logger.Info($"Skipping game {game.Name} - appears to have been manually removed from Apollo management");
                         continue;
@@ -841,6 +954,8 @@ namespace ApolloSync
                 var successCount = 0;
                 var failureCount = 0;
                 var errors = new List<string>();
+                // Manual-removal records to clear, applied only once the write to disk succeeds.
+                var exportedGameIds = new List<Guid>();
 
                 lock (_configLock)
                 {
@@ -863,6 +978,7 @@ namespace ApolloSync
                                 if (TryAddOrUpdateAppBatch(game, config))
                                 {
                                     successCount++;
+                                    exportedGameIds.Add(game.Id);
                                     logger.Debug($"Successfully processed: {game.Name}");
                                 }
                                 else
@@ -889,6 +1005,17 @@ namespace ApolloSync
                             try
                             {
                                 SaveAppsConfig(config);
+
+                                // Only now drop the manual-removal records. An explicit export
+                                // overrides an explicit removal, but if the write above failed
+                                // the export did not happen — clearing before the save would
+                                // strip the protection for the rest of the session and let the
+                                // next cover-image change or sync silently re-add the game.
+                                foreach (var exportedId in exportedGameIds)
+                                {
+                                    _managedStore.ClearManualRemoval(exportedId);
+                                }
+
                                 SaveManagedStore();
                                 logger.Info("Batch export save completed successfully");
                             }
@@ -966,10 +1093,20 @@ namespace ApolloSync
 
                             try
                             {
+                                // SyncService.Remove reports success even when the game was never
+                                // in apps.json, so check ownership first. Without this, removing a
+                                // never-exported game would blacklist it from all future syncs.
+                                var wasManaged = _managedStore.GameToUuid.ContainsKey(game.Id);
+
                                 // Use batch operation that doesn't save to disk
                                 if (TryRemoveAppBatch(game, config))
                                 {
                                     successCount++;
+                                    if (wasManaged)
+                                    {
+                                        // Record the intent explicitly so the next sync does not re-add it.
+                                        _managedStore.MarkManuallyRemoved(game.Id);
+                                    }
                                     logger.Debug($"Successfully processed removal: {game.Name}");
                                 }
                                 else
@@ -1118,6 +1255,15 @@ namespace ApolloSync
             }
 
             logger.Debug($"TryAddOrUpdateApp called for game: {game.Name} (ID: {game.Id})");
+
+            // Automatic triggers (install, cover-image change) must not undo an explicit removal.
+            // Explicit re-export goes through TryAddOrUpdateAppBatch, which clears the record
+            // first, so this guard does not block the user from deliberately re-adding a game.
+            if (IsGameManuallyRemoved(game))
+            {
+                logger.Debug($"Skipping automatic add/update for {game.Name} - manually removed from Apollo management");
+                return false;
+            }
 
             try
             {
@@ -1305,7 +1451,11 @@ namespace ApolloSync
             }
             catch (Exception ex)
             {
+                // Must propagate. Callers only skip SaveManagedStore() — and so avoid recording
+                // ownership that disagrees with what actually reached apps.json — if they see
+                // the failure. Swallowing it here made every caller's catch unreachable.
                 logger.Error(ex, $"Exception occurred while saving apps config");
+                throw;
             }
         }
 
@@ -1320,9 +1470,15 @@ namespace ApolloSync
                     throw new ArgumentException($"Permission fix is only supported for local paths; got: {filePath}");
                 }
 
+                // Grant to the invoking user's SID only. Granting BUILTIN\Users (S-1-5-32-545)
+                // would let any unprivileged local account rewrite apps.json, whose "cmd" values
+                // the Apollo/Sunshine service executes — a local privilege-escalation path.
+                var userSid = System.Security.Principal.WindowsIdentity.GetCurrent().User.Value;
+
                 // Write the icacls invocation to a temp script that receives the file path as
-                // $args[0]. PowerShell passes positional arguments verbatim — no shell
-                // interpretation of special characters — so filePath cannot inject commands.
+                // $args[0] and the SID as $args[1]. PowerShell passes positional arguments
+                // verbatim — no shell interpretation of special characters — so neither
+                // filePath nor the SID can inject commands.
                 var scriptPath = Path.Combine(
                     Path.GetTempPath(),
                     "apollosync_perms_" + Path.GetRandomFileName() + ".ps1");
@@ -1331,15 +1487,16 @@ namespace ApolloSync
                     using (var fs = new FileStream(scriptPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
                     using (var w = new StreamWriter(fs, new UTF8Encoding(false)))
                     {
-                        w.Write("icacls $args[0] /grant '*S-1-5-32-545:(M)'");
+                        w.Write("icacls $args[0] /grant ('*' + $args[1] + ':(M)')");
                     }
 
                     var psi = new System.Diagnostics.ProcessStartInfo
                     {
                         FileName = "powershell.exe",
                         // Both scriptPath and filePath are local absolute paths; Windows filenames
-                        // cannot contain double quotes, so quoting here is safe.
-                        Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{scriptPath}\" \"{filePath}\"",
+                        // cannot contain double quotes, so quoting here is safe. The SID comes from
+                        // WindowsIdentity and is alphanumeric with hyphens.
+                        Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{scriptPath}\" \"{filePath}\" \"{userSid}\"",
                         Verb = "runas",
                         UseShellExecute = true,
                         CreateNoWindow = true

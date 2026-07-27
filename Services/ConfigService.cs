@@ -76,47 +76,17 @@ namespace ApolloSync.Services
                 var jsonContent = config.ToString(Newtonsoft.Json.Formatting.Indented);
                 logger.Debug($"ConfigService.Save - Writing config with {((JArray)config["apps"])?.Count ?? 0} apps");
 
-                // Write content to a temp file in %TEMP% (always user-writable) then copy it
-                // over the destination. This ensures the full content is written before we
-                // touch apps.json, without needing directory-level create/delete permissions
-                // on the (potentially protected) Apollo install path.
-                var tmpPath = Path.Combine(Path.GetTempPath(), "apollosync_" + Path.GetRandomFileName() + ".tmp");
-                try
+                var bytes = Encoding.UTF8.GetBytes(jsonContent);
+
+                // Prefer an atomic same-directory swap. File.Replace exchanges the directory
+                // entry in a single operation and keeps the previous contents as a .bak, so an
+                // interrupted write can never leave apps.json truncated. It needs create rights
+                // in the destination directory, which we do not have when apps.json lives in
+                // Program Files and only the file itself was granted modify (see
+                // TryFixFilePermissionsWithElevation) — fall back to a copy-based write there.
+                if (!TryReplaceInPlace(resolvedPath, bytes))
                 {
-                    var attempts = 0;
-                    const int maxAttempts = 3;
-                    while (true)
-                    {
-                        // Delete any leftover tmp from a previous failed attempt so FileMode.CreateNew can succeed.
-                        try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
-                        try
-                        {
-                            // FileMode.CreateNew fails if a file (or symlink to an existing
-                            // file) already exists at tmpPath, preventing symlink substitution.
-                            using (var fs = new FileStream(tmpPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
-                            {
-                                var bytes = Encoding.UTF8.GetBytes(jsonContent);
-                                fs.Write(bytes, 0, bytes.Length);
-                            }
-                            File.Copy(tmpPath, resolvedPath, overwrite: true);
-                            break;
-                        }
-                        catch (UnauthorizedAccessException)
-                        {
-                            throw; // handled by caller for permission prompt
-                        }
-                        catch (IOException)
-                        {
-                            attempts++;
-                            if (attempts >= maxAttempts)
-                                throw;
-                            Thread.Sleep(150 * attempts);
-                        }
-                    }
-                }
-                finally
-                {
-                    try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
+                    CopyThroughTempFile(resolvedPath, bytes);
                 }
                 logger.Info($"ConfigService.Save - Successfully saved apps.json to: {resolvedPath}");
             }
@@ -125,6 +95,168 @@ namespace ApolloSync.Services
                 logger.Error(ex, $"ConfigService.Save - Failed to save apps.json to path: {path}");
                 throw;
             }
+        }
+
+        /// <summary>
+        /// Writes <paramref name="bytes"/> to a temp file beside <paramref name="destination"/> and
+        /// swaps it in atomically, keeping the previous contents as "&lt;destination&gt;.bak".
+        /// Returns false if the destination directory cannot be written to, so the caller can fall
+        /// back to <see cref="CopyThroughTempFile"/>.
+        /// </summary>
+        private static bool TryReplaceInPlace(string destination, byte[] bytes)
+        {
+            var dir = Path.GetDirectoryName(destination);
+            if (string.IsNullOrEmpty(dir))
+            {
+                return false;
+            }
+
+            var tmpPath = Path.Combine(dir, "apollosync_" + Path.GetRandomFileName() + ".tmp");
+            try
+            {
+                // FileMode.CreateNew fails if a file (or symlink to an existing file) already
+                // exists at tmpPath, preventing symlink substitution.
+                using (var fs = new FileStream(tmpPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    fs.Write(bytes, 0, bytes.Length);
+                    // Force to disk before the swap, so the directory entry can never point at
+                    // content the OS has not yet committed.
+                    fs.Flush(flushToDisk: true);
+                }
+
+                if (File.Exists(destination))
+                {
+                    File.Replace(tmpPath, destination, destination + ".bak", ignoreMetadataErrors: true);
+                }
+                else
+                {
+                    File.Move(tmpPath, destination);
+                }
+
+                logger.Debug($"ConfigService - Atomically replaced {destination}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // Expected when the install directory is not writable by the current user; the
+                // caller retries via the copy path, which only needs rights on the file itself.
+                logger.Debug($"ConfigService - Atomic replace unavailable for {destination} ({ex.GetType().Name}: {ex.Message}); falling back to copy");
+                return false;
+            }
+            finally
+            {
+                // No-op when the swap succeeded — Replace/Move consumed the temp file.
+                try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
+            }
+        }
+
+        /// <summary>
+        /// Writes <paramref name="bytes"/> to %TEMP% (always user-writable) and copies the result
+        /// over <paramref name="destination"/>. Used when the destination directory is protected
+        /// and only the file itself is writable, so no atomic swap is possible.
+        /// </summary>
+        internal static void CopyThroughTempFile(string destination, byte[] bytes)
+        {
+            // Back up the previous contents ONCE, before anything can damage the destination.
+            // Taking this inside the retry loop would let attempt 2 copy a half-written
+            // destination over the only good backup.
+            BackupExistingFile(destination);
+
+            var tmpPath = Path.Combine(Path.GetTempPath(), "apollosync_" + Path.GetRandomFileName() + ".tmp");
+            try
+            {
+                var attempts = 0;
+                const int maxAttempts = 3;
+                while (true)
+                {
+                    // Delete any leftover tmp from a previous failed attempt so FileMode.CreateNew can succeed.
+                    try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
+                    try
+                    {
+                        // FileMode.CreateNew fails if a file (or symlink to an existing
+                        // file) already exists at tmpPath, preventing symlink substitution.
+                        using (var fs = new FileStream(tmpPath, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                        {
+                            fs.Write(bytes, 0, bytes.Length);
+                            fs.Flush(flushToDisk: true);
+                        }
+
+                        File.Copy(tmpPath, destination, overwrite: true);
+                        return;
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        throw; // handled by caller for permission prompt
+                    }
+                    catch (IOException)
+                    {
+                        attempts++;
+                        if (attempts >= maxAttempts)
+                            throw;
+                        Thread.Sleep(150 * attempts);
+                    }
+                }
+            }
+            finally
+            {
+                try { if (File.Exists(tmpPath)) File.Delete(tmpPath); } catch { }
+            }
+        }
+
+        /// <summary>
+        /// Copies the current contents of <paramref name="destination"/> aside, so an interrupted
+        /// write is recoverable. Prefers "&lt;destination&gt;.bak"; when the install directory is not
+        /// writable — the usual case for the default Program Files install, where only the file
+        /// itself was granted modify — falls back to the user's local application data, which
+        /// always is. Failing to back up is logged, never fatal.
+        /// </summary>
+        private static void BackupExistingFile(string destination)
+        {
+            if (!File.Exists(destination))
+            {
+                return;
+            }
+
+            try
+            {
+                File.Copy(destination, destination + ".bak", overwrite: true);
+                return;
+            }
+            catch (Exception ex)
+            {
+                logger.Debug($"ConfigService - Cannot write a backup beside {destination} ({ex.GetType().Name}); falling back to local app data");
+            }
+
+            try
+            {
+                var backupPath = GetFallbackBackupPath(destination);
+                Directory.CreateDirectory(Path.GetDirectoryName(backupPath));
+                File.Copy(destination, backupPath, overwrite: true);
+                logger.Info($"ConfigService - Backed up {destination} to {backupPath}");
+            }
+            catch (Exception ex)
+            {
+                logger.Warn($"ConfigService - Could not write any backup for {destination}: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// A stable, always-writable backup location. The destination path is flattened into the
+        /// file name so Apollo and Sunshine configs cannot overwrite each other's backup.
+        /// </summary>
+        internal static string GetFallbackBackupPath(string destination)
+        {
+            var flattened = destination;
+            foreach (var invalid in Path.GetInvalidFileNameChars())
+            {
+                flattened = flattened.Replace(invalid, '_');
+            }
+
+            return Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "ApolloSync",
+                "backups",
+                flattened + ".bak");
         }
 
         /// <summary>

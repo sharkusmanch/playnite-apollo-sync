@@ -42,17 +42,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">インストール状態フィルター</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">インストール済みゲームを含める</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">有効にすると、インストール済みのゲームのみがエクスポート対象になります。</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">プラットフォームフィルター</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">エクスポートに含めるプラットフォームを選択します。未選択の場合、すべてのプラットフォームが含まれます。</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">ラベルフィルター</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">このラベルが付いたゲームのみをエクスポートします。未選択の場合、すべてのゲームがエクスポートされます。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">ラベル指定なし</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">既定のラベルを作成</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">クリア状況フィルター</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">エクスポートに含めるクリア状況を選択します。未選択の場合、すべてのクリア状況が含まれます。</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">カテゴリフィルター</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">エクスポートに含めるカテゴリを選択します。未選択の場合、すべてのカテゴリが含まれます。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">フィルタープリセット</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playniteのフィルタープリセットを使用</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">有効にすると、以下の個別フィルターの代わりに選択したフィルタープリセットが使用されます。フィルタープリセットはPlayniteのメインライブラリ画面で作成できます。</sys:String>
@@ -80,5 +71,5 @@
     <sys:String x:Key="LOC_ApolloSync_Message_Errors">エラーが発生しました</sys:String>
     <!-- New: Permission prompt for apps.json write -->
     <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSyncはProgram Files内のapps.jsonに書き込む権限が必要です。権限を修正しますか？</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSyncはProgram Files内のapps.jsonに書き込む権限が必要です。&#10;&#10;この操作により、お使いのWindowsユーザーアカウントにのみ、このファイルを変更する権限が付与されます。Windowsが管理者の承認を求めます。この変更は、元に戻すまで永続的に有効です。&#10;&#10;権限を修正しますか？</sys:String>
 </ResourceDictionary>

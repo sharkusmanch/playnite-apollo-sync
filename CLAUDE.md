@@ -71,7 +71,8 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 This project targets **.NET Framework 4.6.2**. C# 8+ features (nullable reference types, switch expressions, using declarations) are not available.
 
 **Build**
-- Use `MSBuild.exe` (Visual Studio / VS Build Tools), not `dotnet build`. The `dotnet` CLI does not generate `.g.cs` XAML code-behind files for WPF on .NET Framework — the build will succeed but the view won't work.
+- Use `dotnet build ApolloSync.csproj -c Release`. This is what CI runs. It does generate the XAML `.g.cs` code-behind (verified: `obj/Release/net462/Settings/ApolloSyncSettingsView.g.cs` is produced on a clean build with the .NET 8 SDK).
+- A previous version of this file mandated `MSBuild.exe` on the grounds that `dotnet build` skips WPF XAML codegen on .NET Framework. That is not true here. `MSBuild.exe` from a **Build Tools**-only install additionally fails to resolve `Microsoft.NET.Sdk.WindowsDesktop` unless the managed desktop workload is present.
 - This project uses **SDK-style `.csproj`** (`Microsoft.NET.Sdk.WindowsDesktop`). New `.cs` files are auto-included by default. Do not add `<Compile Include>` entries manually.
 - When adding NuGet packages, only use versions that ship a `net462` (or `net461`/`net45`) target folder. Don't rely on `netstandard2.0` fallbacks — they can silently break at runtime inside Playnite's AppDomain.
 
@@ -145,15 +146,22 @@ This project targets **.NET Framework 4.6.2**. C# 8+ features (nullable referenc
 - `Game.Platforms`, `Game.Genres`, `Game.Tags`, etc. are `List<T>` — check for `null` before iterating; they're not initialized to empty lists by default.
 
 **ManagedStore (plugin-specific state)**
-- `ManagedStore` (UUID map + manually removed set) is custom state that lives outside Playnite's database — it must be explicitly serialized/deserialized and kept in sync with `apps.json`.
+- `ManagedStore` holds two things: `GameToUuid` (the UUID map) and `ManuallyRemoved` (games the user explicitly removed). Both live outside Playnite's database and are persisted by projecting them into plugin settings in `SaveManagedStore()`.
 - When modifying sync logic, verify the store roundtrips correctly (write → reload → compare).
 - The store and `apps.json` can diverge if a sync is interrupted; treat them as potentially inconsistent and reconcile defensively.
 - UUID mapping is bidirectional: adding a game must write the entry to `apps.json` AND add to `store.GameToUuid`; removing must do both. Partial updates cause divergence.
+- `ManuallyRemoved` must be recorded explicitly at the point of user action. Do not infer it from "in the store but missing from `apps.json`" — `SyncManagedStore()` prunes exactly those entries on startup, so the inference is always false after a restart.
 
 **apps.json invariants**
 - UUIDs in `apps.json` are always uppercase. `ConfigService` normalizes on load and save via `DeduplicateApps()`.
 - Duplicate UUIDs are resolved by keeping the entry with the highest `id` value — lower-id duplicates are silently discarded.
-- Writes use an atomic temp-file strategy: write to `%TEMP%` with `FileMode.CreateNew`, then `File.Copy` to the destination. Retry up to 3 times on `IOException`. Always delete the temp file in a `finally` block. Never write directly to `apps.json` in place.
+- Writes go through two strategies, in order:
+  - **Preferred** — temp file in the *destination directory*, `Flush(flushToDisk: true)`, then `File.Replace`. Atomic, and keeps the previous contents as `apps.json.bak`. Requires create rights in the destination directory.
+  - **Fallback** — write to `%TEMP%` with `FileMode.CreateNew`, then `File.Copy` over the destination, retrying up to 3 times on `IOException`. **Not atomic**: `File.Copy` truncates and rewrites in place, so a crash mid-copy is recoverable only from the backup.
+- **The default Program Files install always takes the fallback.** `TryFixFilePermissionsWithElevation` grants modify on the *file*, not the directory, so `File.Replace` can never create its temp file there. Do not describe the write as atomic in user-facing text.
+- The backup is taken exactly once, *before* the retry loop — taking it inside would let a later attempt copy a half-written destination over the only good copy. `BackupExistingFile` tries `<destination>.bak` first and falls back to `%LOCALAPPDATA%\ApolloSync\backups\` (with the destination path flattened into the file name) when the install directory isn't writable, so a backup exists even in the Program Files case.
+- Always delete the temp file in a `finally` block. Never write directly to `apps.json` in place.
+- `SaveAppsConfig` propagates write failures. Callers must not persist the managed store after a failed write, or the store will claim ownership that `apps.json` doesn't reflect.
 
 **Lock files and launch command**
 - Lock files are named `apollosync-{gameId:N}.lock` (format specifier `N` = no-hyphen GUID) and always live in `Path.GetTempPath()`. Different games get different lock paths.

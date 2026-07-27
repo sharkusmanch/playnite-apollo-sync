@@ -7,7 +7,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Validate version consistency
         run: |
@@ -37,6 +37,23 @@ jobs:
             errors=$((errors + 1))
           fi
 
+          # The assembly version is what shows up in Playnite logs and crash reports,
+          # so it must track extension.yaml. Assembly versions are 4-part.
+          assembly_version=$(grep -oP '^\[assembly: AssemblyVersion\("\K[^"]+' Properties/AssemblyInfo.cs)
+          assembly_file_version=$(grep -oP '^\[assembly: AssemblyFileVersion\("\K[^"]+' Properties/AssemblyInfo.cs)
+
+          echo "AssemblyInfo version:   $assembly_version"
+
+          if [ "$assembly_version" != "${ext_version}.0" ]; then
+            echo "::error::AssemblyVersion ($assembly_version) does not match extension.yaml (expected ${ext_version}.0)"
+            errors=$((errors + 1))
+          fi
+
+          if [ "$assembly_file_version" != "${ext_version}.0" ]; then
+            echo "::error::AssemblyFileVersion ($assembly_file_version) does not match extension.yaml (expected ${ext_version}.0)"
+            errors=$((errors + 1))
+          fi
+
           if [ $errors -gt 0 ]; then
             exit 1
           fi
@@ -46,26 +63,18 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: robinraju/release-downloader@v1.8
-        id: download_playnite
-        with:
-          repository: "JosefNemec/Playnite"
-          latest: true
-          tarBall: false
-          zipBall: false
-          fileName: "Playnite*.zip"
-          out-file-path: ${{ runner.temp }}/playnite
-          extract: true
-
+      # No Playnite download here: only the release job needs Toolbox.exe to pack the
+      # .pext. The glob also asked for "Playnite*.zip", which current Playnite releases
+      # do not publish.
       - run: |
           dotnet build ApolloSync.csproj -c Release
 
   test:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - run: |
           dotnet test Tests/ApolloSync.Tests.csproj
