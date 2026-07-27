@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Collections.Generic;
 using ApolloSync.Models;
 using ApolloSync.Services;
@@ -65,6 +66,36 @@ namespace ApolloSync.Tests
         }
 
         [TestMethod]
+        public void Save_KeepsBackupOfPreviousContents()
+        {
+            // The write must be survivable: the previous apps.json is recoverable from .bak
+            // if the process dies before the new contents are committed.
+            var configService = new ConfigService();
+            var sync = new SyncService();
+            var store = new ManagedStore();
+            var path = CreateTempFilePath();
+
+            var first = new Game("First") { Id = Guid.NewGuid(), InstallDirectory = "C:\\F" };
+            var config = configService.Load(path);
+            Assert.IsTrue(sync.AddOrUpdate(config, store, first));
+            configService.Save(path, config);
+            Assert.IsFalse(File.Exists(path + ".bak"), "No backup expected on first write");
+
+            var second = new Game("Second") { Id = Guid.NewGuid(), InstallDirectory = "C:\\S" };
+            Assert.IsTrue(sync.AddOrUpdate(config, store, second));
+            configService.Save(path, config);
+
+            Assert.IsTrue(File.Exists(path + ".bak"), "Second write should leave a backup");
+            var backup = JObject.Parse(File.ReadAllText(path + ".bak"));
+            var backupNames = ((JArray)backup["apps"]).Select(a => (string)((JObject)a)["name"]).ToList();
+            CollectionAssert.AreEquivalent(new[] { "First" }, backupNames);
+
+            var current = JObject.Parse(File.ReadAllText(path));
+            var currentNames = ((JArray)current["apps"]).Select(a => (string)((JObject)a)["name"]).ToList();
+            CollectionAssert.AreEquivalent(new[] { "First", "Second" }, currentNames);
+        }
+
+        [TestMethod]
         public void Remove_Selected_Single_Removes_From_Apps_And_Store()
         {
             // Arrange
@@ -86,56 +117,237 @@ namespace ApolloSync.Tests
             Assert.IsFalse(store.GameToUuid.ContainsKey(game.Id));
         }
 
+        // ── ShouldRemoveManagedGame ───────────────────────────────────────────────
+        // The real decision rule used by RemoveFilteredOutGames. These previously
+        // reimplemented the loop inline, which left the production method untested.
+
+        [TestMethod]
+        public void ShouldRemoveManagedGame_RemovesUnpinnedGameThatNoLongerMatches()
+        {
+            Assert.IsTrue(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: false, filterEvaluationFailed: false));
+        }
+
+        [TestMethod]
+        public void ShouldRemoveManagedGame_KeepsMatchingGame()
+        {
+            Assert.IsFalse(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: true, filterEvaluationFailed: false));
+        }
+
+        [TestMethod]
+        public void ShouldRemoveManagedGame_KeepsPinnedGameThatNoLongerMatches()
+        {
+            Assert.IsFalse(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: true, meetsFilters: false, filterEvaluationFailed: false));
+        }
+
+        [TestMethod]
+        public void ShouldRemoveManagedGame_RemovesGameDeletedFromLibrary()
+        {
+            Assert.IsTrue(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: false, isPinned: false, meetsFilters: false, filterEvaluationFailed: false));
+        }
+
+        [TestMethod]
+        public void ShouldRemoveManagedGame_RemovesGameDeletedFromLibraryEvenWhenPinned()
+        {
+            // Pinning cannot preserve a game that no longer exists.
+            Assert.IsTrue(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: false, isPinned: true, meetsFilters: false, filterEvaluationFailed: false));
+        }
+
+        [TestMethod]
+        public void ShouldRemoveManagedGame_KeepsGameWhenFilterEvaluationFailed()
+        {
+            // Regression: a throwing filter preset used to surface as "does not match", which
+            // deleted every non-pinned managed entry on one transient failure.
+            Assert.IsFalse(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: false, filterEvaluationFailed: true));
+        }
+
+        // ── Removal wiring ────────────────────────────────────────────────────────
+
         [TestMethod]
         public void Remove_FilteredOut_NotPinned_Removes_Entry()
         {
-            // This test simulates the logic of RemoveFilteredOutGames without using ApolloSync internals.
             // Arrange
-            var config = new JObject { ["apps"] = new JArray() };
+            var sync = new SyncService();
             var store = new ManagedStore();
+            var config = new JObject { ["apps"] = new JArray() };
 
-            var g1 = new Playnite.SDK.Models.Game("Match") { Id = Guid.NewGuid() };
-            var g2 = new Playnite.SDK.Models.Game("NoMatch") { Id = Guid.NewGuid() };
+            var match = new Game("Match") { Id = Guid.NewGuid(), InstallDirectory = "C:\\M" };
+            var noMatch = new Game("NoMatch") { Id = Guid.NewGuid(), InstallDirectory = "C:\\N" };
 
-            var uuid1 = Guid.NewGuid();
-            var uuid2 = Guid.NewGuid();
-            store.GameToUuid[g1.Id] = uuid1;
-            store.GameToUuid[g2.Id] = uuid2;
+            Assert.IsTrue(sync.AddOrUpdate(config, store, match));
+            Assert.IsTrue(sync.AddOrUpdate(config, store, noMatch));
 
-            var apps = (JArray)config["apps"];
-            apps.Add(new JObject { ["name"] = g1.Name, ["uuid"] = uuid1.ToString().ToUpperInvariant() });
-            apps.Add(new JObject { ["name"] = g2.Name, ["uuid"] = uuid2.ToString().ToUpperInvariant() });
-
-            // Simulate filter: only g1 matches, g2 does not, and g2 is not pinned.
+            // Act: apply the production decision rule, then the production removal.
             var pinned = new HashSet<Guid>();
-            Func<Playnite.SDK.Models.Game, bool> meetsFilter = game => game.Id == g1.Id;
-
-            // Act: perform simplified removal similar to RemoveFilteredOutGames
-            var removedCount = 0;
-            var toRemoveApps = new System.Collections.Generic.List<JObject>();
-            var toRemoveGames = new System.Collections.Generic.List<Guid>();
-            foreach (var kv in store.GameToUuid.ToList())
+            foreach (var game in new[] { match, noMatch })
             {
-                var gameId = kv.Key;
-                var appUuid = kv.Value;
-                // Look up pseudo game by mapping
-                var game = gameId == g1.Id ? g1 : g2;
-                if (pinned.Contains(gameId)) continue;
-                if (!meetsFilter(game))
+                var meetsFilters = game.Id == match.Id;
+                if (global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                        gameExistsInLibrary: true,
+                        isPinned: pinned.Contains(game.Id),
+                        meetsFilters: meetsFilters,
+                        filterEvaluationFailed: false))
                 {
-                    toRemoveGames.Add(gameId);
-                    var app = apps.OfType<JObject>().FirstOrDefault(a => Guid.TryParse((string)a["uuid"], out var u) && u == appUuid);
-                    if (app != null) toRemoveApps.Add(app);
+                    Assert.IsTrue(sync.Remove(config, store, game));
                 }
             }
-            foreach (var a in toRemoveApps) { apps.Remove(a); removedCount++; }
-            foreach (var gid in toRemoveGames) { Guid _removedVal; store.GameToUuid.TryRemove(gid, out _removedVal); }
 
             // Assert
-            Assert.AreEqual(1, removedCount);
+            var apps = (JArray)config["apps"];
             Assert.AreEqual(1, apps.Count);
-            Assert.IsTrue(store.GameToUuid.ContainsKey(g1.Id));
-            Assert.IsFalse(store.GameToUuid.ContainsKey(g2.Id));
+            Assert.AreEqual("Match", (string)((JObject)apps[0])["name"]);
+            Assert.IsTrue(store.GameToUuid.ContainsKey(match.Id));
+            Assert.IsFalse(store.GameToUuid.ContainsKey(noMatch.Id));
+        }
+
+        // ── ManuallyRemoved round-trip ────────────────────────────────────────────
+
+        [TestMethod]
+        public void ManagedStore_ManuallyRemoved_RoundTripsThroughSettingsProjection()
+        {
+            // Mirrors LoadManagedStore/SaveManagedStore, which project the store to and from
+            // plugin settings. The manual-removal record must survive a restart — inferring it
+            // from "missing from apps.json" is what made the feature dead.
+            var store = new ManagedStore();
+            var kept = Guid.NewGuid();
+            var removed = Guid.NewGuid();
+            store.GameToUuid[kept] = Guid.NewGuid();
+            store.MarkManuallyRemoved(removed);
+
+            var mappings = new Dictionary<Guid, Guid>(store.GameToUuid);
+            var manuallyRemoved = store.ManuallyRemovedSnapshot();
+
+            var reloaded = new ManagedStore
+            {
+                GameToUuid = new System.Collections.Concurrent.ConcurrentDictionary<Guid, Guid>(mappings)
+            };
+            reloaded.ResetManuallyRemoved(manuallyRemoved);
+
+            Assert.IsTrue(reloaded.GameToUuid.ContainsKey(kept));
+            Assert.IsTrue(reloaded.IsManuallyRemoved(removed));
+            Assert.IsFalse(reloaded.IsManuallyRemoved(kept));
+        }
+
+        [TestMethod]
+        public void ManagedStore_ClearManualRemoval_AllowsGameToBeExportedAgain()
+        {
+            var store = new ManagedStore();
+            var id = Guid.NewGuid();
+
+            store.MarkManuallyRemoved(id);
+            Assert.IsTrue(store.IsManuallyRemoved(id));
+
+            store.ClearManualRemoval(id);
+            Assert.IsFalse(store.IsManuallyRemoved(id));
+        }
+
+        [TestMethod]
+        public void ManagedStore_ResetManuallyRemoved_HandlesNullAndReplacesContents()
+        {
+            var store = new ManagedStore();
+            var stale = Guid.NewGuid();
+            var fresh = Guid.NewGuid();
+
+            store.MarkManuallyRemoved(stale);
+            store.ResetManuallyRemoved(new[] { fresh });
+
+            Assert.IsFalse(store.IsManuallyRemoved(stale), "Reset should replace, not merge");
+            Assert.IsTrue(store.IsManuallyRemoved(fresh));
+
+            // LoadManagedStore passes the settings list straight through, which may be null.
+            store.ResetManuallyRemoved(null);
+            Assert.AreEqual(0, store.ManuallyRemovedCount);
+        }
+
+        [TestMethod]
+        public void ManagedStore_ManuallyRemoved_SurvivesConcurrentReadsAndWrites()
+        {
+            // The sync thread calls IsManuallyRemoved outside _configLock while UI-thread
+            // handlers mark removals. A plain HashSet throws or returns garbage when a write
+            // resizes it mid-read.
+            var store = new ManagedStore();
+            var probe = Guid.NewGuid();
+            store.MarkManuallyRemoved(probe);
+
+            var error = (Exception)null;
+            var writer = new System.Threading.Thread(() =>
+            {
+                try
+                {
+                    for (var i = 0; i < 20000; i++)
+                    {
+                        store.MarkManuallyRemoved(Guid.NewGuid());
+                    }
+                }
+                catch (Exception ex) { error = ex; }
+            });
+
+            var reader = new System.Threading.Thread(() =>
+            {
+                try
+                {
+                    for (var i = 0; i < 20000; i++)
+                    {
+                        Assert.IsTrue(store.IsManuallyRemoved(probe));
+                    }
+                }
+                catch (Exception ex) { error = ex; }
+            });
+
+            writer.Start();
+            reader.Start();
+            writer.Join();
+            reader.Join();
+
+            Assert.IsNull(error, "Concurrent access threw: " + error);
+        }
+
+        // ── Write fallback path ───────────────────────────────────────────────────
+
+        [TestMethod]
+        public void CopyThroughTempFile_BacksUpPreviousContentsBeforeOverwriting()
+        {
+            // This is the path that actually runs for a Program Files install, where the
+            // directory is not writable and the atomic swap is unavailable.
+            var path = CreateTempFilePath();
+            File.WriteAllText(path, "{\"apps\":[{\"name\":\"Old\"}]}");
+
+            ConfigService.CopyThroughTempFile(path, Encoding.UTF8.GetBytes("{\"apps\":[{\"name\":\"New\"}]}"));
+
+            Assert.IsTrue(File.Exists(path + ".bak"), "Fallback write must leave a backup");
+            StringAssert.Contains(File.ReadAllText(path + ".bak"), "Old");
+            StringAssert.Contains(File.ReadAllText(path), "New");
+        }
+
+        [TestMethod]
+        public void CopyThroughTempFile_CreatesDestinationWhenMissing()
+        {
+            var path = CreateTempFilePath();
+            Assert.IsFalse(File.Exists(path));
+
+            ConfigService.CopyThroughTempFile(path, Encoding.UTF8.GetBytes("{\"apps\":[]}"));
+
+            Assert.IsTrue(File.Exists(path));
+            Assert.IsFalse(File.Exists(path + ".bak"), "Nothing to back up when the file did not exist");
+        }
+
+        [TestMethod]
+        public void GetFallbackBackupPath_IsDistinctPerConfigAndAValidFileName()
+        {
+            var apollo = ConfigService.GetFallbackBackupPath(@"C:\Program Files\Apollo\config\apps.json");
+            var sunshine = ConfigService.GetFallbackBackupPath(@"C:\Program Files\Sunshine\config\apps.json");
+
+            Assert.AreNotEqual(apollo, sunshine, "Apollo and Sunshine backups must not collide");
+            CollectionAssert.DoesNotContain(Path.GetInvalidFileNameChars(), Path.GetFileName(apollo).ToCharArray()[0]);
+            foreach (var c in Path.GetInvalidFileNameChars())
+            {
+                Assert.IsFalse(Path.GetFileName(apollo).Contains(c.ToString()), "Backup file name must be valid");
+            }
         }
 
         // ── IsLocalAbsolutePath ───────────────────────────────────────────────────

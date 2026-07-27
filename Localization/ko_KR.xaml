@@ -42,17 +42,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">설치 상태 필터</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">설치된 게임 포함</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">활성화하면 설치된 게임만 내보내기 대상이 됩니다.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">플랫폼 필터</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">내보내기에 포함할 플랫폼을 선택합니다. 선택하지 않으면 모든 플랫폼이 포함됩니다.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">라벨 필터</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">이 라벨이 있는 게임만 내보냅니다. 선택하지 않으면 모든 게임이 내보내집니다.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">라벨 필요 없음</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">기본 라벨 만들기</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">완료 상태 필터</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">내보내기에 포함할 완료 상태를 선택합니다. 선택하지 않으면 모든 완료 상태가 포함됩니다.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">카테고리 필터</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">내보내기에 포함할 카테고리를 선택합니다. 선택하지 않으면 모든 카테고리가 포함됩니다.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">필터 프리셋</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite 필터 프리셋 사용</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">활성화하면 아래의 개별 필터 대신 선택한 필터 프리셋이 사용됩니다. 필터 프리셋은 Playnite의 메인 라이브러리 화면에서 만들 수 있습니다.</sys:String>
@@ -80,5 +71,5 @@
     <sys:String x:Key="LOC_ApolloSync_Message_Errors">오류가 발생했습니다</sys:String>
     <!-- New: Permission prompt for apps.json write -->
     <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync에서 Program Files의 apps.json에 쓰기 권한이 필요합니다. 권한을 수정하시겠습니까?</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync에서 Program Files의 apps.json에 쓰기 권한이 필요합니다.&#10;&#10;이 작업은 사용자의 Windows 계정에만 해당 파일을 수정할 수 있는 권한을 부여합니다. Windows에서 관리자 승인을 요청합니다. 이 변경 사항은 직접 되돌리기 전까지 유지됩니다.&#10;&#10;권한을 수정하시겠습니까?</sys:String>
 </ResourceDictionary>

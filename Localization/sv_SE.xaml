@@ -42,17 +42,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">Installationsstatusfilter</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">Inkludera installerade spel</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">När aktiverat kommer bara installerade spel att övervägas för export.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">Plattformsfilter</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">Välj plattformar att inkludera i exporten. Om inga är valda inkluderas alla plattformar.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">Etikettfilter</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">Exportera bara spel med denna etikett. Lämna tomt för att exportera alla spel.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Ingen etikett krävs</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">Skapa standardetikett</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">Slutförandestatusfilter</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">Välj slutförandestatusar att inkludera i exporten. Om inga är valda inkluderas alla slutförandestatusar.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">Kategorifilter</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">Välj kategorier att inkludera i exporten. Om inga är valda inkluderas alla kategorier.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filterförinställning</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Använd Playnite-filterförinställning</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">När aktiverat används den valda filterförinställningen istället för de enskilda filtren nedan. Skapa filterförinställningar i Playnites huvudbiblioteksvy.</sys:String>
@@ -80,5 +71,5 @@ Misslyckades: {1}</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Message_Errors">Fel uppstod</sys:String>
     <!-- New: Permission prompt for apps.json write -->
     <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync behöver behörighet att skriva apps.json i Program Files. Tillåt rättning av behörigheter?</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync behöver behörighet att skriva apps.json i Program Files.&#10;&#10;Detta ger ditt Windows-användarkonto – och ingen annan – behörighet att ändra filen. Windows ber om godkännande av en administratör. Ändringen är permanent tills du ångrar den.&#10;&#10;Tillåt rättning av behörigheter?</sys:String>
 </ResourceDictionary>

@@ -8,7 +8,7 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Validate version consistency
         run: |
@@ -44,13 +44,24 @@ jobs:
 
           echo "All validations passed."
 
-  build:
+  test:
     needs: validate
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: robinraju/release-downloader@v1.8
+      - run: |
+          dotnet test Tests/ApolloSync.Tests.csproj
+
+  build:
+    # Gate on tests: this workflow is workflow_dispatch only, so without this a release
+    # can ship from a commit the test suite never ran against.
+    needs: [validate, test]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: robinraju/release-downloader@v1.13
         id: download_playnite
         with:
           repository: "JosefNemec/Playnite"
@@ -67,7 +78,7 @@ jobs:
           dotnet build ApolloSync.csproj -c Release
           ${{ runner.temp }}/playnite/Toolbox.exe pack bin/Release/net462/ dist
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: artifacts
           path: |
@@ -81,16 +92,16 @@ jobs:
       contents: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
+      # Uses the runner's preinstalled yq rather than mikefarah/yq@master: a floating
+      # branch ref is not a safe pin for a workflow with contents: write.
       - name: Get Version
         id: version
-        uses: mikefarah/yq@master
-        with:
-          cmd: yq '.Version' extension.yaml
+        run: echo "result=$(yq '.Version' extension.yaml)" >> "$GITHUB_OUTPUT"
 
       - name: Pull artifacts
-        uses: actions/download-artifact@v7
+        uses: actions/download-artifact@v8
         with:
           name: artifacts
 

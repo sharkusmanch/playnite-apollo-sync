@@ -42,17 +42,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">Yükleme Durumu Filtresi</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">Yüklü oyunları dahil et</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Etkinleştirildiğinde, yalnızca yüklü oyunlar aktarım için değerlendirilir.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">Platform Filtreleri</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">Aktarıma dahil edilecek platformları seçin. Hiçbiri seçilmezse tüm platformlar dahil edilir.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">Etiket Filtresi</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">Yalnızca bu etikete sahip oyunları aktar. Tüm oyunları aktarmak için seçim yapmayın.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Etiket gerekli değil</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">Varsayılan Etiket Oluştur</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">Tamamlanma Durumu Filtresi</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">Aktarıma dahil edilecek tamamlanma durumlarını seçin. Hiçbiri seçilmezse tüm tamamlanma durumları dahil edilir.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">Kategori Filtresi</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">Aktarıma dahil edilecek kategorileri seçin. Hiçbiri seçilmezse tüm kategoriler dahil edilir.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filtre Ön Ayarı</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite Filtre Ön Ayarını Kullan</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Etkinleştirildiğinde, aşağıdaki ayrı filtreler yerine seçilen filtre ön ayarı kullanılır. Filtre ön ayarlarını Playnite'ın ana kütüphane görünümünde oluşturabilirsiniz.</sys:String>
@@ -80,5 +71,5 @@ Başarısız: {1}</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Message_Errors">Hatalarla karşılaşıldı</sys:String>
     <!-- New: Permission prompt for apps.json write -->
     <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync, Program Files klasöründeki apps.json dosyasına yazmak için izin gerektirir. İzinlerin düzeltilmesine izin verilsin mi?</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync, Program Files klasöründeki apps.json dosyasına yazmak için izin gerektirir.&#10;&#10;Bu işlem, bu dosyayı değiştirme iznini yalnızca sizin Windows kullanıcı hesabınıza verir, başka hiç kimseye vermez. Windows yönetici onayı isteyecektir. Bu değişiklik, siz geri alana kadar kalıcıdır.&#10;&#10;İzinlerin düzeltilmesine izin verilsin mi?</sys:String>
 </ResourceDictionary>

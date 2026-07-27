@@ -17,7 +17,7 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -46,6 +46,11 @@ jobs:
 
           # Bump extension.yaml
           yq -i ".Version = \"${version}\"" extension.yaml
+
+          # Bump the assembly version so shipped DLLs report the real version in logs
+          # and crash reports. Assembly versions are 4-part.
+          sed -i -E "s/^\[assembly: AssemblyVersion\(\".*\"\)\]/[assembly: AssemblyVersion(\"${version}.0\")]/" Properties/AssemblyInfo.cs
+          sed -i -E "s/^\[assembly: AssemblyFileVersion\(\".*\"\)\]/[assembly: AssemblyFileVersion(\"${version}.0\")]/" Properties/AssemblyInfo.cs
 
           # Prepend new package entry to manifest.yaml
           VERSION="$version" \
@@ -77,7 +82,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git checkout -b "$branch"
-          git add extension.yaml manifest.yaml
+          git add extension.yaml manifest.yaml Properties/AssemblyInfo.cs
           git commit -m "Bump version to ${version}"
           git push -u origin "$branch"
 

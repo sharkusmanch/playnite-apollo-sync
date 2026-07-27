@@ -3,7 +3,13 @@
   "extends": [
     "config:recommended"
   ],
-  "ignoreDeps": [
-    "Newtonsoft.Json"
+  "packageRules": [
+    {
+      "description": "Newtonsoft.Json is pinned to 10.0.3 to match the assembly Playnite loads at runtime. The reference is ExcludeAssets=runtime, so the plugin binds to Playnite's copy; compiling against a newer version risks a MethodNotFound at load time inside Playnite's AppDomain. Do not bump without verifying what Playnite ships.",
+      "matchPackageNames": [
+        "Newtonsoft.Json"
+      ],
+      "enabled": false
+    }
   ]
 }

@@ -42,17 +42,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">Фільтр за статусом встановлення</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">Включати встановлені ігри</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Якщо увімкнено, лише встановлені ігри будуть розглядатися для експорту.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">Фільтри платформ</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">Виберіть платформи для включення в експорт. Якщо жодна не вибрана, будуть включені всі платформи.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">Фільтр за мітками</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">Експортувати лише ігри з цією міткою. Залиште порожнім, щоб експортувати всі ігри.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Мітка не потрібна</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">Створити мітку за замовчуванням</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">Фільтр за статусом проходження</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">Виберіть статуси проходження для включення в експорт. Якщо жоден не вибраний, будуть включені всі статуси проходження.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">Фільтр за категоріями</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">Виберіть категорії для включення в експорт. Якщо жодна не вибрана, будуть включені всі категорії.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Набір фільтрів</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Використовувати набір фільтрів Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Якщо увімкнено, замість окремих фільтрів нижче буде використовуватися вибраний набір фільтрів. Створюйте набори фільтрів у головному вигляді бібліотеки Playnite.</sys:String>
@@ -80,5 +71,5 @@
     <sys:String x:Key="LOC_ApolloSync_Message_Errors">Виявлено помилки</sys:String>
     <!-- New: Permission prompt for apps.json write -->
     <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync потребує дозволу на запис apps.json у Program Files. Дозволити виправлення прав доступу?</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync потребує дозволу на запис apps.json у Program Files.&#10;&#10;Це надасть вашому обліковому запису Windows — і більше нікому — право змінювати цей файл. Windows запитає підтвердження адміністратора. Зміну буде збережено, доки ви її не скасуєте.&#10;&#10;Дозволити виправлення прав доступу?</sys:String>
 </ResourceDictionary>

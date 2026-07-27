@@ -42,17 +42,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">Filtru stare instalare</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">Include jocurile instalate</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Când este activat, doar jocurile instalate vor fi luate în considerare pentru export.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">Filtre platformă</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">Selectează platformele de inclus în export. Dacă nu este selectată niciuna, toate platformele vor fi incluse.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">Filtru etichetă</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">Exportă doar jocurile care au această etichetă. Lasă neselectat pentru a exporta toate jocurile.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Nicio etichetă necesară</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">Creează etichetă implicită</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">Filtru stare finalizare</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">Selectează stările de finalizare de inclus în export. Dacă nu este selectată niciuna, toate stările vor fi incluse.</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">Filtru categorie</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">Selectează categoriile de inclus în export. Dacă nu este selectată niciuna, toate categoriile vor fi incluse.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Presetare filtru</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Folosește presetarea de filtru Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Când este activat, presetarea de filtru selectată va fi folosită în locul filtrelor individuale de mai jos. Creează presetări de filtru în vizualizarea principală a bibliotecii Playnite.</sys:String>
@@ -80,5 +71,5 @@ Eșuate: {1}</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Message_Errors">Au fost întâmpinate erori</sys:String>
     <!-- New: Permission prompt for apps.json write -->
     <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync are nevoie de permisiunea de a scrie apps.json în Program Files. Permiți corectarea permisiunilor?</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync are nevoie de permisiunea de a scrie apps.json în Program Files.&#10;&#10;Aceasta acordă contului tău de utilizator Windows, și nimănui altcuiva, permisiunea de a modifica acel fișier. Windows va cere aprobarea administratorului. Modificarea este permanentă până când o anulezi.&#10;&#10;Permiți corectarea permisiunilor?</sys:String>
 </ResourceDictionary>

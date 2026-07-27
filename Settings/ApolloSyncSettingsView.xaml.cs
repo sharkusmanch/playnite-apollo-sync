@@ -15,27 +15,24 @@ namespace ApolloSync
     {
         private static readonly ILogger logger = LogManager.GetLogger();
 
+        // Held directly rather than looked up with FindChild: the Manage Games tab is not the
+        // selected tab when the window opens, so its content is not in the visual tree yet and
+        // a VisualTreeHelper search returns null.
+        private StackPanel _managedGamesPanel;
+
         public ApolloSyncSettingsView()
         {
             BuildUI();
 
-            // Auto-load managed games when the settings window opens
+            // Auto-load managed games when the settings window opens. BuildUI runs before
+            // Playnite assigns the DataContext, so the list cannot be populated there.
             Loaded += (sender, e) =>
             {
-                // Wait for DataContext to be set, then refresh managed games
                 Dispatcher.BeginInvoke(new System.Action(() =>
                 {
-                    if (DataContext != null)
+                    if (DataContext != null && _managedGamesPanel != null)
                     {
-                        var manageGamesTab = FindChild<TabItem>("ManageGamesTab");
-                        if (manageGamesTab != null)
-                        {
-                            var gamesPanel = FindChild<StackPanel>("ManagedGamesPanel");
-                            if (gamesPanel != null)
-                            {
-                                RefreshManagedGamesList(gamesPanel);
-                            }
-                        }
+                        RefreshManagedGamesList(_managedGamesPanel);
                     }
                 }), System.Windows.Threading.DispatcherPriority.Background);
             };
@@ -222,142 +219,10 @@ namespace ApolloSync
         {
             var stack = new StackPanel { Margin = new Thickness(8) };
 
-            // Platform Filters (collapsible)
-            var platformExpander = new Expander
-            {
-                Header = ResourceProvider.GetString("LOC_ApolloSync_Settings_IncludedPlatforms"),
-                IsExpanded = false,
-                Margin = new Thickness(0, 0, 0, 8)
-            };
-
-            var platformContentPanel = new StackPanel();
-
-            // Create platform selection table
-            var platformsBorder = new Border
-            {
-                BorderBrush = System.Windows.Media.Brushes.Gray,
-                BorderThickness = new Thickness(1),
-                Margin = new Thickness(0, 4, 0, 0)
-            };
-
-            var platformsScrollViewer = new ScrollViewer { MaxHeight = 150, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-            var platformsPanel = new StackPanel { Name = "PlatformsPanel" };
-            platformsScrollViewer.Content = platformsPanel;
-            platformsBorder.Child = platformsScrollViewer;
-            platformContentPanel.Children.Add(platformsBorder);
-
-            // Add "Select All" and "Clear All" buttons
-            var buttonPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };
-            var selectAllBtn = new Button { Content = "Select All", Width = 80, Margin = new Thickness(0, 0, 4, 0) };
-            var clearAllBtn = new Button { Content = "Clear All", Width = 80 };
-            // Platform filtering disabled - using filter presets only
-            // selectAllBtn.Click += SelectAllPlatforms_Click;
-            // clearAllBtn.Click += ClearAllPlatforms_Click;
-            buttonPanel.Children.Add(selectAllBtn);
-            buttonPanel.Children.Add(clearAllBtn);
-            platformContentPanel.Children.Add(buttonPanel);
-            platformContentPanel.Children.Add(new TextBlock { Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_IncludedPlatforms_Help"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
-
-            // Platform filtering disabled - using filter presets only
-            // if (DataContext is ApolloSyncSettingsViewModel vm)
-            // {
-            //     UpdatePlatformCheckboxes(platformsPanel);
-            // }
-            // DataContextChanged += (s, e) =>
-            // {
-            //     if (DataContext is ApolloSyncSettingsViewModel viewModel)
-            //     {
-            //         UpdatePlatformCheckboxes(platformsPanel);
-            //     }
-            // };
-
-            platformExpander.Content = platformContentPanel;
-            platformExpander.Visibility = Visibility.Collapsed; // TEMP: Disable custom filters
-            stack.Children.Add(platformExpander);
-
-            // Label Filter (collapsible)
-            var labelExpander = new Expander
-            {
-                Header = ResourceProvider.GetString("LOC_ApolloSync_Settings_RequiredLabel"),
-                IsExpanded = false,
-                Margin = new Thickness(0, 0, 0, 8)
-            };
-
-            var labelContentPanel = new StackPanel();
-            var labelCombo = new ComboBox { MinWidth = 200, Margin = new Thickness(0, 4, 0, 0) };
-            labelCombo.SetBinding(ComboBox.ItemsSourceProperty, new Binding("LabelOptions"));
-            labelCombo.SetBinding(ComboBox.SelectedValueProperty, new Binding("Settings.RequiredLabelId") { Mode = BindingMode.TwoWay });
-            labelCombo.DisplayMemberPath = "Name";
-            labelCombo.SelectedValuePath = "Id";
-            labelContentPanel.Children.Add(labelCombo);
-
-            var btnCreateLabel = new Button
-            {
-                Content = ResourceProvider.GetString("LOC_ApolloSync_Settings_CreateDefaultLabel"),
-                Width = 150,
-                HorizontalAlignment = HorizontalAlignment.Left,
-                Margin = new Thickness(0, 4, 0, 0)
-            };
-            btnCreateLabel.Click += CreateDefaultLabel_Click;
-            labelContentPanel.Children.Add(btnCreateLabel);
-            labelContentPanel.Children.Add(new TextBlock { Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_RequiredLabel_Help"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
-
-            labelExpander.Content = labelContentPanel;
-            labelExpander.Visibility = Visibility.Collapsed; // TEMP: Disable custom filters
-            stack.Children.Add(labelExpander);
-
-            // Completion Status Filter (collapsible)
-            var completionExpander = new Expander
-            {
-                Header = ResourceProvider.GetString("LOC_ApolloSync_Settings_CompletionStatusFilter"),
-                IsExpanded = false,
-                Margin = new Thickness(0, 0, 0, 8)
-            };
-
-            var completionContentPanel = new StackPanel();
-
-            // Create completion status selection table
-            var completionBorder = new Border
-            {
-                BorderBrush = System.Windows.Media.Brushes.Gray,
-                BorderThickness = new Thickness(1),
-                Margin = new Thickness(0, 4, 0, 0)
-            };
-
-            var completionScrollViewer = new ScrollViewer { MaxHeight = 150, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-            var completionPanel = new StackPanel { Name = "CompletionPanel" };
-            completionScrollViewer.Content = completionPanel;
-            completionBorder.Child = completionScrollViewer;
-            completionContentPanel.Children.Add(completionBorder);
-
-            // Add "Select All" and "Clear All" buttons for completion status
-            var completionButtonPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };
-            var selectAllCompletionBtn = new Button { Content = "Select All", Width = 80, Margin = new Thickness(0, 0, 4, 0) };
-            var clearAllCompletionBtn = new Button { Content = "Clear All", Width = 80 };
-            // Completion status filtering disabled - using filter presets only
-            // selectAllCompletionBtn.Click += SelectAllCompletionStatuses_Click;
-            // clearAllCompletionBtn.Click += ClearAllCompletionStatuses_Click;
-            completionButtonPanel.Children.Add(selectAllCompletionBtn);
-            completionButtonPanel.Children.Add(clearAllCompletionBtn);
-            completionContentPanel.Children.Add(completionButtonPanel);
-            completionContentPanel.Children.Add(new TextBlock { Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_CompletionStatusFilter_Help"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
-
-            // Completion status filtering disabled - using filter presets only
-            // if (DataContext is ApolloSyncSettingsViewModel vm2)
-            // {
-            //     UpdateCompletionStatusCheckboxes(completionPanel);
-            // }
-            // DataContextChanged += (s, e) =>
-            // {
-            //     if (DataContext is ApolloSyncSettingsViewModel viewModel2)
-            //     {
-            //         UpdateCompletionStatusCheckboxes(completionPanel);
-            //     }
-            // };
-
-            completionExpander.Content = completionContentPanel;
-            completionExpander.Visibility = Visibility.Collapsed; // TEMP: Disable custom filters
-            stack.Children.Add(completionExpander);
+            // Filter presets are the only filter mechanism. Platform, label, completion status
+            // and category sections used to sit here, permanently Visibility.Collapsed and bound
+            // to settings properties that never existed. Playnite's own filter presets already
+            // cover those dimensions.
 
             // Filter Presets (collapsible)
             var filterPresetExpander = new Expander
@@ -419,59 +284,6 @@ namespace ApolloSync
             filterPresetExpander.Content = filterPresetContentPanel;
             stack.Children.Add(filterPresetExpander);
 
-            // Category Filter (collapsible)
-            var categoryExpander = new Expander
-            {
-                Header = ResourceProvider.GetString("LOC_ApolloSync_Settings_CategoryFilter"),
-                IsExpanded = false,
-                Margin = new Thickness(0, 0, 0, 8)
-            };
-
-            var categoryContentPanel = new StackPanel();
-
-            // Create category selection table
-            var categoryBorder = new Border
-            {
-                BorderBrush = System.Windows.Media.Brushes.Gray,
-                BorderThickness = new Thickness(1),
-                Margin = new Thickness(0, 4, 0, 0)
-            };
-
-            var categoryScrollViewer = new ScrollViewer { MaxHeight = 150, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-            var categoryPanel = new StackPanel { Name = "CategoriesPanel" };
-            categoryScrollViewer.Content = categoryPanel;
-            categoryBorder.Child = categoryScrollViewer;
-            categoryContentPanel.Children.Add(categoryBorder);
-
-            // Add "Select All" and "Clear All" buttons for categories
-            var categoryButtonPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };
-            var selectAllCategoryBtn = new Button { Content = "Select All", Width = 80, Margin = new Thickness(0, 0, 4, 0) };
-            var clearAllCategoryBtn = new Button { Content = "Clear All", Width = 80 };
-            // Category filtering disabled - using filter presets only
-            // selectAllCategoryBtn.Click += SelectAllCategories_Click;
-            // clearAllCategoryBtn.Click += ClearAllCategories_Click;
-            categoryButtonPanel.Children.Add(selectAllCategoryBtn);
-            categoryButtonPanel.Children.Add(clearAllCategoryBtn);
-            categoryContentPanel.Children.Add(categoryButtonPanel);
-            categoryContentPanel.Children.Add(new TextBlock { Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_CategoryFilter_Help"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
-
-            // Category filtering disabled - using filter presets only
-            // if (DataContext is ApolloSyncSettingsViewModel vm3)
-            // {
-            //     UpdateCategoryCheckboxes(categoryPanel);
-            // }
-            // DataContextChanged += (s, e) =>
-            // {
-            //     if (DataContext is ApolloSyncSettingsViewModel viewModel3)
-            //     {
-            //         UpdateCategoryCheckboxes(categoryPanel);
-            //     }
-            // };
-
-            categoryExpander.Content = categoryContentPanel;
-            categoryExpander.Visibility = Visibility.Collapsed; // TEMP: Disable custom filters
-            stack.Children.Add(categoryExpander);
-
             return stack;
         }
 
@@ -493,6 +305,7 @@ namespace ApolloSync
 
             var gamesScrollViewer = new ScrollViewer { VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
             var gamesPanel = new StackPanel { Name = "ManagedGamesPanel" };
+            _managedGamesPanel = gamesPanel;
             gamesScrollViewer.Content = gamesPanel;
             gamesListBorder.Child = gamesScrollViewer;
             stack.Children.Add(gamesListBorder);
@@ -518,8 +331,7 @@ namespace ApolloSync
             // Help text
             stack.Children.Add(new TextBlock { Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_ManageGames_Help"), TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0, 4, 0, 0) });
 
-            // Populate games list when tab is created
-            RefreshManagedGamesList(gamesPanel);
+            // Populated from the Loaded handler — the DataContext is not assigned yet here.
 
             return stack;
         }
@@ -616,45 +428,43 @@ namespace ApolloSync
             }
         }
 
-        private void CreateDefaultLabel_Click(object sender, RoutedEventArgs e)
-        {
-            // Default label creation disabled - using filter presets only
-            // if (DataContext is ApolloSyncSettingsViewModel vm)
-            // {
-            //     vm.CreateDefaultLabel();
-            // }
-        }
-
         // Manage Games Tab Methods
         private void RefreshManagedGames_Click(object sender, RoutedEventArgs e)
         {
-            var gamesPanel = FindChild<StackPanel>("ManagedGamesPanel");
-            if (gamesPanel != null)
+            if (_managedGamesPanel != null)
             {
-                RefreshManagedGamesList(gamesPanel);
+                RefreshManagedGamesList(_managedGamesPanel);
             }
         }
 
         private void RemoveSelectedGames_Click(object sender, RoutedEventArgs e)
         {
-            var gamesPanel = FindChild<StackPanel>("ManagedGamesPanel");
-            if (gamesPanel != null && DataContext is ApolloSyncSettingsViewModel vm)
+            if (_managedGamesPanel != null && DataContext is ApolloSyncSettingsViewModel vm)
             {
-                var selectedGames = GetSelectedManagedGames(gamesPanel);
+                var selectedGames = GetSelectedManagedGames(_managedGamesPanel);
                 if (selectedGames.Any())
                 {
-                    vm.RemoveGamesFromManaged(selectedGames);
-                    RefreshManagedGamesList(gamesPanel);
+                    // Off the UI thread: RemoveGamesFromManaged waits for any running sync and
+                    // writes apps.json under _configLock, and a failed write dispatches a
+                    // permission prompt back to this thread. Doing that synchronously here
+                    // deadlocks.
+                    System.Threading.Tasks.Task.Run(() => vm.RemoveGamesFromManaged(selectedGames))
+                        .ContinueWith(_ => Dispatcher.BeginInvoke(new System.Action(() =>
+                        {
+                            if (_managedGamesPanel != null)
+                            {
+                                RefreshManagedGamesList(_managedGamesPanel);
+                            }
+                        })));
                 }
             }
         }
 
         private void PinSelectedGames_Click(object sender, RoutedEventArgs e)
         {
-            var gamesPanel = FindChild<StackPanel>("ManagedGamesPanel");
-            if (gamesPanel != null && DataContext is ApolloSyncSettingsViewModel vm)
+            if (_managedGamesPanel != null && DataContext is ApolloSyncSettingsViewModel vm)
             {
-                var selectedGames = GetSelectedManagedGames(gamesPanel);
+                var selectedGames = GetSelectedManagedGames(_managedGamesPanel);
                 foreach (var gameId in selectedGames)
                 {
                     if (!vm.Settings.PinnedGameIds.Contains(gameId))
@@ -662,21 +472,20 @@ namespace ApolloSync
                         vm.Settings.PinnedGameIds.Add(gameId);
                     }
                 }
-                RefreshManagedGamesList(gamesPanel);
+                RefreshManagedGamesList(_managedGamesPanel);
             }
         }
 
         private void UnpinSelectedGames_Click(object sender, RoutedEventArgs e)
         {
-            var gamesPanel = FindChild<StackPanel>("ManagedGamesPanel");
-            if (gamesPanel != null && DataContext is ApolloSyncSettingsViewModel vm)
+            if (_managedGamesPanel != null && DataContext is ApolloSyncSettingsViewModel vm)
             {
-                var selectedGames = GetSelectedManagedGames(gamesPanel);
+                var selectedGames = GetSelectedManagedGames(_managedGamesPanel);
                 foreach (var gameId in selectedGames)
                 {
                     vm.Settings.PinnedGameIds.Remove(gameId);
                 }
-                RefreshManagedGamesList(gamesPanel);
+                RefreshManagedGamesList(_managedGamesPanel);
             }
         }
 
@@ -783,11 +592,6 @@ namespace ApolloSync
                 }
             }
             return selectedGames;
-        }
-
-        private T FindChild<T>(string name) where T : FrameworkElement
-        {
-            return FindChild<T>(this, name);
         }
 
         private T FindChild<T>(DependencyObject parent, string name) where T : FrameworkElement

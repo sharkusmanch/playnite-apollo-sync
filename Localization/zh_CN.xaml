@@ -42,17 +42,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_InstallationStatus">安装状态筛选</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames">包含已安装的游戏</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">启用后，仅已安装的游戏会被纳入导出范围。</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms">平台筛选</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_IncludedPlatforms_Help">选择要包含在导出中的平台。如果未选择任何平台，则包含所有平台。</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel">标签筛选</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_RequiredLabel_Help">仅导出具有此标签的游戏。不选择则导出所有游戏。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">不需要标签</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CreateDefaultLabel">创建默认标签</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter">完成状态筛选</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CompletionStatusFilter_Help">选择要包含在导出中的完成状态。如果未选择，则包含所有完成状态。</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter">分类筛选</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Settings_CategoryFilter_Help">选择要包含在导出中的分类。如果未选择，则包含所有分类。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">筛选预设</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">使用Playnite筛选预设</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">启用后，将使用所选的筛选预设替代下方的各项筛选条件。可在Playnite的主库视图中创建筛选预设。</sys:String>
@@ -80,5 +71,5 @@
     <sys:String x:Key="LOC_ApolloSync_Message_Errors">遇到错误</sys:String>
     <!-- New: Permission prompt for apps.json write -->
     <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Title">ApolloSync</sys:String>
-    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync需要权限以写入Program Files中的apps.json。是否允许修复权限？</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Permissions_Prompt_Body">ApolloSync需要权限以写入Program Files中的apps.json。&#10;&#10;此操作仅向您的Windows用户账户授予修改该文件的权限，其他任何人都不会获得该权限。Windows将请求管理员授权。此更改将一直保留，直到您手动撤销。&#10;&#10;是否允许修复权限？</sys:String>
 </ResourceDictionary>
