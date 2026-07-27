@@ -712,8 +712,10 @@ namespace ApolloSync
 
         #region User Operations with Feedback
         private volatile int _syncRunning;
-        private CancellationTokenSource _syncCts;
-        private Task _syncTask;
+        private volatile CancellationTokenSource _syncCts;
+        // volatile: read by callers on other threads that must observe the current sync's task,
+        // not a stale one. See SyncFilteredGamesWithProgress for why it is published early.
+        private volatile Task _syncTask;
 
         private void SyncFilteredGamesWithProgress()
         {
@@ -725,9 +727,17 @@ namespace ApolloSync
             }
 
             var cts = new CancellationTokenSource();
+
+            // Publish _syncTask and _syncCts BEFORE dispatching the work. Assigning
+            // "_syncTask = Task.Run(...)" would publish the field only after the body had already
+            // been queued, so a caller doing CancelSync() + _syncTask.Wait() could observe a null
+            // or already-completed task while this sync was mid-flight, skip the wait, and have
+            // its changes overwritten when the sync saved its own stale snapshot.
+            var completion = new TaskCompletionSource<bool>();
+            _syncTask = completion.Task;
             _syncCts = cts;
 
-            _syncTask = Task.Run(() =>
+            Task.Run(() =>
             {
                 try
                 {
@@ -738,6 +748,8 @@ namespace ApolloSync
                     _syncCts = null;
                     cts.Dispose();
                     Interlocked.Exchange(ref _syncRunning, 0);
+                    // Signalled last: waiters must not resume until the sync's final save is done.
+                    completion.SetResult(true);
                 }
             });
         }
