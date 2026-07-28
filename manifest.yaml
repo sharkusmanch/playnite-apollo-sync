@@ -1,5 +1,16 @@
 AddonId: ApolloSync_f987343d-4168-4f44-9fb0-e3a21da314ad
 Packages:
+  - Version: 1.3.1
+    RequiredApiVersion: 6.16.0
+    ReleaseDate: 2026-07-28
+    PackageUrl: https://github.com/sharkusmanch/playnite-apollo-sync/releases/download/v1.3.1/ApolloSync_v1.3.1.pext
+    Changelog:
+      - Unchecking a filter preset now removes its games from apps.json on the next sync, instead of leaving them until something else happened to match
+      - Deleting a filter preset in Playnite no longer causes every unpinned game to be removed
+      - A failed apps.json write no longer leaves the plugin tracking games it did not export, which made them vanish from the managed games list until a restart
+      - Games removed and re-added within the same sync are no longer left orphaned in apps.json
+      - Editing filter presets while a sync is running no longer risks removing the games you were about to re-select
+      - A filter that matches nothing now shows one notification instead of two contradictory ones
   - Version: 1.3.0
     RequiredApiVersion: 6.16.0
     ReleaseDate: 2026-07-26

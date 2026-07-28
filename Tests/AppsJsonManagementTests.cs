@@ -166,6 +166,292 @@ namespace ApolloSync.Tests
                 gameExistsInLibrary: true, isPinned: false, meetsFilters: false, filterEvaluationFailed: true));
         }
 
+        // ── EvaluateFilterPresets ─────────────────────────────────────────────────
+        // The safety interlock that makes "removal runs on every sync" survivable. The delegate
+        // stands in for the Playnite lookup: null means the id did not resolve, throwing means
+        // the evaluation itself failed. Both must read as "could not determine".
+
+        [TestMethod]
+        public void EvaluateFilterPresets_MatchingPresetMeetsFilters()
+        {
+            bool failed;
+            var matched = global::ApolloSync.ApolloSync.EvaluateFilterPresets(
+                new List<Guid> { Guid.NewGuid() }, id => true, out failed);
+
+            Assert.IsTrue(matched);
+            Assert.IsFalse(failed);
+        }
+
+        [TestMethod]
+        public void EvaluateFilterPresets_NonMatchingPresetIsADefiniteNo()
+        {
+            // The case that must stay prunable: the preset resolved, it just did not match.
+            bool failed;
+            var matched = global::ApolloSync.ApolloSync.EvaluateFilterPresets(
+                new List<Guid> { Guid.NewGuid() }, id => false, out failed);
+
+            Assert.IsFalse(matched);
+            Assert.IsFalse(failed);
+            Assert.IsTrue(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: matched, filterEvaluationFailed: failed));
+        }
+
+        [TestMethod]
+        public void EvaluateFilterPresets_EmptySelectionIsDeliberateAndPrunes()
+        {
+            // Unchecking everything means "export nothing" — the behaviour this branch delivers.
+            // It must NOT be confused with "could not determine".
+            bool failed;
+            var matched = global::ApolloSync.ApolloSync.EvaluateFilterPresets(
+                new List<Guid>(), id => true, out failed);
+
+            Assert.IsFalse(matched);
+            Assert.IsFalse(failed);
+            Assert.IsTrue(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: matched, filterEvaluationFailed: failed));
+        }
+
+        [TestMethod]
+        public void EvaluateFilterPresets_DeletedPresetBlocksRemoval()
+        {
+            // Regression: deleting a preset in Playnite (or deleting and recreating it, which
+            // assigns a new id) leaves a stale id in IncludedFilterPresetIds that resolves to
+            // nothing. Read as "did not match", it would delete every non-pinned managed game on
+            // the next automatic sync.
+            bool failed;
+            var matched = global::ApolloSync.ApolloSync.EvaluateFilterPresets(
+                new List<Guid> { Guid.NewGuid() }, id => null, out failed);
+
+            Assert.IsFalse(matched);
+            Assert.IsTrue(failed, "An unresolvable preset id must flag the evaluation as failed");
+            Assert.IsFalse(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: matched, filterEvaluationFailed: failed));
+        }
+
+        [TestMethod]
+        public void EvaluateFilterPresets_ThrowingPresetBlocksRemoval()
+        {
+            bool failed;
+            var matched = global::ApolloSync.ApolloSync.EvaluateFilterPresets(
+                new List<Guid> { Guid.NewGuid() },
+                id => { throw new InvalidOperationException("preset blew up"); },
+                out failed);
+
+            Assert.IsFalse(matched);
+            Assert.IsTrue(failed);
+        }
+
+        [TestMethod]
+        public void EvaluateFilterPresets_OneMissingPresetAmongWorkingOnesStillBlocksRemoval()
+        {
+            // Partial resolution is still "could not determine" — the missing preset may well be
+            // the one that used to match this game.
+            var missing = Guid.NewGuid();
+            var working = Guid.NewGuid();
+
+            bool failed;
+            var matched = global::ApolloSync.ApolloSync.EvaluateFilterPresets(
+                new List<Guid> { working, missing },
+                id => id == missing ? (bool?)null : false,
+                out failed);
+
+            Assert.IsFalse(matched);
+            Assert.IsTrue(failed);
+        }
+
+        [TestMethod]
+        public void EvaluateFilterPresets_MatchWinsOverAMissingPreset()
+        {
+            // A match means "keep" regardless, so an unresolvable id alongside it changes nothing.
+            var missing = Guid.NewGuid();
+            var matching = Guid.NewGuid();
+
+            bool failed;
+            var matched = global::ApolloSync.ApolloSync.EvaluateFilterPresets(
+                new List<Guid> { matching, missing },
+                id => id == matching ? true : (bool?)null,
+                out failed);
+
+            Assert.IsTrue(matched);
+            Assert.IsFalse(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: matched, filterEvaluationFailed: failed));
+        }
+
+        [TestMethod]
+        public void EvaluateFilterPresets_EveryPresetIsConsultedUntilOneMatches()
+        {
+            var consulted = new List<Guid>();
+            var a = Guid.NewGuid();
+            var b = Guid.NewGuid();
+            var c = Guid.NewGuid();
+
+            bool failed;
+            var matched = global::ApolloSync.ApolloSync.EvaluateFilterPresets(
+                new List<Guid> { a, b, c },
+                id => { consulted.Add(id); return id == b; },
+                out failed);
+
+            Assert.IsTrue(matched);
+            CollectionAssert.AreEqual(new[] { a, b }, consulted,
+                "Evaluation must short-circuit on the first match");
+        }
+
+        // ── ApplyRemovals ─────────────────────────────────────────────────────────
+
+        [TestMethod]
+        public void ApplyRemovals_RemovesTheMatchingAppEntry()
+        {
+            var sync = new SyncService();
+            var store = new ManagedStore();
+            var config = new JObject { ["apps"] = new JArray() };
+            var game = new Game("Filtered Out") { Id = Guid.NewGuid(), InstallDirectory = "C:\\F" };
+            Assert.IsTrue(sync.AddOrUpdate(config, store, game));
+
+            var disowned = global::ApolloSync.ApolloSync.ApplyRemovals(config, store.GameToUuid.ToList());
+
+            Assert.AreEqual(0, ((JArray)config["apps"]).Count);
+            CollectionAssert.AreEqual(new[] { game.Id }, disowned);
+        }
+
+        [TestMethod]
+        public void ApplyRemovals_LeavesEntriesThisExtensionDoesNotOwnAlone()
+        {
+            // The plugin's core promise: it only ever touches the entries it created.
+            var sync = new SyncService();
+            var store = new ManagedStore();
+            var config = new JObject
+            {
+                ["apps"] = new JArray
+                {
+                    new JObject { ["name"] = "Desktop", ["uuid"] = Guid.NewGuid().ToString().ToUpperInvariant() },
+                    new JObject { ["name"] = "Steam Big Picture" } // no uuid at all
+                }
+            };
+
+            var game = new Game("Managed") { Id = Guid.NewGuid(), InstallDirectory = "C:\\M" };
+            Assert.IsTrue(sync.AddOrUpdate(config, store, game));
+
+            global::ApolloSync.ApolloSync.ApplyRemovals(config, store.GameToUuid.ToList());
+
+            var apps = (JArray)config["apps"];
+            Assert.AreEqual(2, apps.Count);
+            CollectionAssert.AreEquivalent(
+                new[] { "Desktop", "Steam Big Picture" },
+                apps.Select(a => (string)((JObject)a)["name"]).ToList());
+        }
+
+        [TestMethod]
+        public void ApplyRemovals_ReportsAnOrphanWithNoAppEntry()
+        {
+            // A managed game whose entry is already gone must still be reported, or the caller
+            // sees "nothing changed", skips the save, and the store stays diverged for the
+            // session.
+            var config = new JObject { ["apps"] = new JArray() };
+            var orphan = new KeyValuePair<Guid, Guid>(Guid.NewGuid(), Guid.NewGuid());
+
+            var disowned = global::ApolloSync.ApolloSync.ApplyRemovals(config, new[] { orphan });
+
+            CollectionAssert.AreEqual(new[] { orphan.Key }, disowned);
+        }
+
+        [TestMethod]
+        public void ApplyRemovals_MatchesUppercaseUuidsAsWrittenToDisk()
+        {
+            // ConfigService upper-cases every uuid on load and save, so that is the form the
+            // matching actually has to cope with.
+            var gameId = Guid.NewGuid();
+            var uuid = Guid.NewGuid();
+            var config = new JObject
+            {
+                ["apps"] = new JArray
+                {
+                    new JObject { ["name"] = "Managed", ["uuid"] = uuid.ToString().ToUpperInvariant() }
+                }
+            };
+
+            var disowned = global::ApolloSync.ApolloSync.ApplyRemovals(
+                config, new[] { new KeyValuePair<Guid, Guid>(gameId, uuid) });
+
+            Assert.AreEqual(0, ((JArray)config["apps"]).Count);
+            CollectionAssert.AreEqual(new[] { gameId }, disowned);
+        }
+
+        // ── SaveThenDisown ────────────────────────────────────────────────────────
+
+        [TestMethod]
+        public void SaveThenDisown_FailedWriteLeavesTheStoreOwningTheGames()
+        {
+            // Regression: the store used to be updated during the removal pass, before the write.
+            // A failed write then left the in-memory store disowning entries still present in
+            // apps.json — invisible to the Manage Games list and to every later sync, until a
+            // restart. The exception here comes from the injected save, exactly as in production.
+            var store = new ManagedStore();
+            var game = new Game("Filtered Out") { Id = Guid.NewGuid(), InstallDirectory = "C:\\F" };
+            store.GameToUuid[game.Id] = Guid.NewGuid();
+
+            try
+            {
+                global::ApolloSync.ApolloSync.SaveThenDisown(
+                    () => { throw new UnauthorizedAccessException("apps.json is not writable"); },
+                    store,
+                    new[] { game.Id });
+                Assert.Fail("The write failure must propagate so the caller can report it");
+            }
+            catch (UnauthorizedAccessException)
+            {
+            }
+
+            Assert.IsTrue(store.GameToUuid.ContainsKey(game.Id),
+                "A failed write must leave the store owning the game, matching the unchanged apps.json");
+        }
+
+        [TestMethod]
+        public void SaveThenDisown_SuccessfulWriteDisownsExactlyTheReportedGames()
+        {
+            var store = new ManagedStore();
+            var disowned = Guid.NewGuid();
+            var kept = Guid.NewGuid();
+            store.GameToUuid[disowned] = Guid.NewGuid();
+            store.GameToUuid[kept] = Guid.NewGuid();
+
+            var saved = false;
+            global::ApolloSync.ApolloSync.SaveThenDisown(() => saved = true, store, new[] { disowned });
+
+            Assert.IsTrue(saved);
+            Assert.IsFalse(store.GameToUuid.ContainsKey(disowned));
+            Assert.IsTrue(store.GameToUuid.ContainsKey(kept), "Only the reported games may be disowned");
+        }
+
+        // ── ExcludeReAddedGames ───────────────────────────────────────────────────
+
+        [TestMethod]
+        public void ExcludeReAddedGames_KeepsAGameTheAddPhaseRestored()
+        {
+            // Phase 1 re-evaluates the library while the add/update set was snapshotted earlier,
+            // so the two can disagree. Disowning a game whose entry Phase 2 just rewrote strands
+            // that entry in apps.json permanently — SyncManagedStore only prunes the other way.
+            var reAdded = Guid.NewGuid();
+            var genuinelyRemoved = Guid.NewGuid();
+
+            var result = global::ApolloSync.ApolloSync.ExcludeReAddedGames(
+                new[] { reAdded, genuinelyRemoved },
+                new HashSet<Guid> { reAdded });
+
+            CollectionAssert.AreEqual(new[] { genuinelyRemoved }, result);
+        }
+
+        [TestMethod]
+        public void ExcludeReAddedGames_KeepsEveryRemovalWhenNothingWasReAdded()
+        {
+            var a = Guid.NewGuid();
+            var b = Guid.NewGuid();
+
+            var result = global::ApolloSync.ApolloSync.ExcludeReAddedGames(
+                new[] { a, b }, new HashSet<Guid>());
+
+            CollectionAssert.AreEqual(new[] { a, b }, result);
+        }
+
         // ── Removal wiring ────────────────────────────────────────────────────────
 
         [TestMethod]

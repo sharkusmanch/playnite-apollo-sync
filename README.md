@@ -5,7 +5,7 @@ A Playnite extension that syncs your game library to [Apollo](https://github.com
 ## Features
 
 - **Automatic sync** -- exports games matching your filters to Apollo/Sunshine's `apps.json` on install, library update, settings change, or Playnite startup (each individually configurable)
-- **Filter presets** -- uses your existing Playnite filter presets to decide what gets exported (OR logic when multiple are selected). Filter by platform, category, completion status or anything else by building the preset in Playnite's library view.
+- **Filter presets** -- uses your existing Playnite filter presets to decide what gets exported (OR logic when multiple are selected). Filter by tag, platform, category, completion status or anything else by building the preset in Playnite's library view. Unchecking a preset removes its games from `apps.json` on the next sync, unless they are pinned.
 - **Pin/unpin** -- pin games to prevent auto-removal even when they stop matching filters
 - **Manual export/remove** -- right-click context menu for individual games. A game you remove by hand stays removed; sync will not re-add it until you export it again.
 - **Manage exported games** -- view and manage all synced games from the settings tab
