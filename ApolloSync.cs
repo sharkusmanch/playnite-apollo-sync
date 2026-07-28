@@ -523,33 +523,56 @@ namespace ApolloSync
         #endregion
 
         #region Game Filtering
+        /// <summary>
+        /// Snapshots the selected preset ids. The settings view edits
+        /// <see cref="ApolloSyncSettings.IncludedFilterPresetIds"/> in place on the UI thread as
+        /// the user ticks boxes — before OK is pressed, and undone only in memory by CancelEdit —
+        /// so a sync reading the live list can enumerate it mid-mutation, or observe a transient
+        /// empty list and prune everything the user was about to re-select.
+        /// </summary>
+        private List<Guid> SnapshotSelectedPresetIds()
+        {
+            var selected = _settings.Settings.IncludedFilterPresetIds;
+            return selected == null ? new List<Guid>() : new List<Guid>(selected);
+        }
+
         private List<Game> GetFilteredGames()
         {
+            return GetFilteredGames(SnapshotSelectedPresetIds());
+        }
+
+        private List<Game> GetFilteredGames(List<Guid> selectedPresetIds)
+        {
             // Use filter presets with OR logic - game matches if it matches ANY selected preset
-            if (_settings.Settings.IncludedFilterPresetIds?.Count > 0)
+            if (selectedPresetIds.Count > 0)
             {
                 var matchingGames = new HashSet<Game>();
 
-                foreach (var presetId in _settings.Settings.IncludedFilterPresetIds)
+                foreach (var presetId in selectedPresetIds)
                 {
                     var filterPreset = PlayniteApi.Database.FilterPresets
                         .FirstOrDefault(fp => fp.Id == presetId);
 
-                    if (filterPreset?.Settings != null)
+                    if (filterPreset?.Settings == null)
                     {
-                        try
+                        // Logged once per sync here rather than in GameMeetsCurrentFilters, which
+                        // now runs per managed game per sync and would emit this hundreds of times.
+                        logger.Warn($"Selected filter preset {presetId} no longer exists - it was probably deleted in Playnite. No games will be removed while it is missing.");
+                        continue;
+                    }
+
+                    try
+                    {
+                        var presetGames = PlayniteApi.Database.GetFilteredGames(filterPreset.Settings);
+                        foreach (var game in presetGames)
                         {
-                            var presetGames = PlayniteApi.Database.GetFilteredGames(filterPreset.Settings);
-                            foreach (var game in presetGames)
-                            {
-                                matchingGames.Add(game);
-                            }
-                            logger.Debug($"Filter preset '{filterPreset.Name}' matched {presetGames.Count()} games");
+                            matchingGames.Add(game);
                         }
-                        catch (Exception ex)
-                        {
-                            logger.Error(ex, $"Failed to apply filter preset: {filterPreset.Name}");
-                        }
+                        logger.Debug($"Filter preset '{filterPreset.Name}' matched {presetGames.Count()} games");
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.Error(ex, $"Failed to apply filter preset: {filterPreset.Name}");
                     }
                 }
 
@@ -565,75 +588,89 @@ namespace ApolloSync
         private bool GameMeetsCurrentFilters(Game game)
         {
             bool evaluationFailed;
-            return GameMeetsCurrentFilters(game, out evaluationFailed);
+            return GameMeetsCurrentFilters(game, SnapshotSelectedPresetIds(), out evaluationFailed);
         }
 
         /// <summary>
-        /// Distinguishes "the user selected nothing" from "a preset the user selected has gone
-        /// missing". Selecting nothing is a deliberate export-nothing, so pruning is correct. A
-        /// selected id that no longer resolves means the preset was deleted or recreated in
-        /// Playnite (recreating assigns a new id, and nothing prunes the stale one from settings),
-        /// and we cannot tell what it used to match — so no removal decision can be made.
-        /// Kept pure so the distinction is directly testable.
+        /// Applies the OR-across-presets rule. <paramref name="matchPreset"/> returns null when an
+        /// id does not resolve to a usable preset, and may throw if the evaluation itself fails.
+        /// Both mean "could not determine", and both set <paramref name="evaluationFailed"/> —
+        /// callers that delete on a false result must check it, or a deleted preset or one
+        /// transient failure wipes every non-pinned managed entry.
+        ///
+        /// An empty selection is different: it is a deliberate "export nothing", so it returns
+        /// false with no failure flagged and pruning proceeds.
+        ///
+        /// Pure apart from the delegate, so all of this is directly testable without Playnite.
         /// </summary>
-        internal static bool FilterPresetsAreEvaluable(int selectedPresetCount, int resolvedPresetCount)
-        {
-            return selectedPresetCount == resolvedPresetCount;
-        }
-
-        /// <summary>
-        /// Evaluates the game against the selected filter presets (OR logic).
-        /// <paramref name="evaluationFailed"/> is set when a preset could not be evaluated at all,
-        /// which is not the same as "did not match" — callers that delete on a false result must
-        /// check it, or one transient failure wipes every non-pinned managed entry.
-        /// </summary>
-        private bool GameMeetsCurrentFilters(Game game, out bool evaluationFailed)
+        internal static bool EvaluateFilterPresets(
+            IList<Guid> selectedPresetIds,
+            Func<Guid, bool?> matchPreset,
+            out bool evaluationFailed)
         {
             evaluationFailed = false;
 
-            // Use filter presets with OR logic - game matches if it matches ANY selected preset
-            var selectedPresetIds = _settings.Settings.IncludedFilterPresetIds;
-            if (selectedPresetIds?.Count > 0)
+            if (selectedPresetIds == null || selectedPresetIds.Count == 0)
             {
-                var resolvedPresets = 0;
+                return false;
+            }
 
-                foreach (var presetId in selectedPresetIds)
+            var unresolved = 0;
+
+            foreach (var presetId in selectedPresetIds)
+            {
+                bool? matched;
+                try
                 {
-                    var filterPreset = PlayniteApi.Database.FilterPresets
-                        .FirstOrDefault(fp => fp.Id == presetId);
-
-                    if (filterPreset?.Settings == null)
-                    {
-                        logger.Warn($"Selected filter preset {presetId} no longer exists - cannot evaluate it");
-                        continue;
-                    }
-
-                    resolvedPresets++;
-
-                    try
-                    {
-                        if (PlayniteApi.Database.GetGameMatchesFilter(game, filterPreset.Settings))
-                        {
-                            return true; // Match found, return true immediately
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        evaluationFailed = true;
-                        logger.Error(ex, $"Failed to check game against filter preset: {filterPreset.Name}");
-                    }
+                    matched = matchPreset(presetId);
                 }
-
-                if (!FilterPresetsAreEvaluable(selectedPresetIds.Count, resolvedPresets))
+                catch (Exception ex)
                 {
                     evaluationFailed = true;
+                    logger.Error(ex, $"Failed to check game against filter preset {presetId}");
+                    continue;
+                }
+
+                if (matched == null)
+                {
+                    unresolved++;
+                    continue;
+                }
+
+                if (matched.Value)
+                {
+                    // A match is a match — the caller keeps the game either way, so whether the
+                    // remaining presets were evaluable cannot change the outcome.
+                    return true;
                 }
             }
 
-            // No filter presets selected or no matches found
+            if (unresolved > 0)
+            {
+                evaluationFailed = true;
+            }
+
             return false;
+        }
 
+        /// <summary>
+        /// Evaluates the game against the given filter presets (OR logic). Takes the ids as a
+        /// snapshot rather than reading settings directly — see <see cref="SnapshotSelectedPresetIds"/>.
+        /// </summary>
+        private bool GameMeetsCurrentFilters(Game game, IList<Guid> selectedPresetIds, out bool evaluationFailed)
+        {
+            return EvaluateFilterPresets(selectedPresetIds, presetId =>
+            {
+                var filterPreset = PlayniteApi.Database.FilterPresets
+                    .FirstOrDefault(fp => fp.Id == presetId);
 
+                if (filterPreset?.Settings == null)
+                {
+                    return null; // Deleted in Playnite — cannot say what it used to match.
+                }
+
+                return PlayniteApi.Database.GetGameMatchesFilter(game, filterPreset.Settings);
+            }, out evaluationFailed);
         }
 
         /// <summary>
@@ -662,29 +699,54 @@ namespace ApolloSync
         }
 
         /// <summary>
+        /// Deletes the given games' entries from <paramref name="config"/> and returns the ids the
+        /// caller must disown. An id is returned even when no matching entry existed — that game
+        /// is an orphan and the store should stop claiming it either way, and the caller relies on
+        /// the count to know a save is needed. Entries this extension does not own are never
+        /// touched: matching is by the store's recorded UUID only.
+        /// Pure — no Playnite database access — so the apps.json surgery is directly testable.
+        /// </summary>
+        internal static List<Guid> ApplyRemovals(JObject config, IEnumerable<KeyValuePair<Guid, Guid>> gamesToRemove)
+        {
+            var removed = new List<Guid>();
+            var apps = config["apps"] as JArray;
+
+            foreach (var entry in gamesToRemove)
+            {
+                if (apps != null)
+                {
+                    var appToRemove = apps.OfType<JObject>().FirstOrDefault(app =>
+                        Guid.TryParse((string)app["uuid"], out var uuid) && uuid == entry.Value);
+                    if (appToRemove != null)
+                    {
+                        apps.Remove(appToRemove);
+                    }
+                }
+
+                removed.Add(entry.Key);
+            }
+
+            return removed;
+        }
+
+        /// <summary>
         /// Drops filtered-out games from <paramref name="config"/> and returns the game ids whose
         /// managed-store entries should go with them. The store is deliberately NOT mutated here:
         /// the caller applies the returned ids only once the write to disk has succeeded, so a
         /// failed write cannot leave the in-memory store disowning entries that are still in
         /// apps.json. Same ordering rule as ExportGamesWithFeedback.
         /// </summary>
-        private List<Guid> RemoveFilteredOutGames(JObject config, HashSet<Guid> pinnedGameIds = null)
+        private List<Guid> RemoveFilteredOutGames(JObject config, HashSet<Guid> pinnedGameIds, IList<Guid> selectedPresetIds)
         {
-            // Every id here is one the caller must drop from the store, including games whose
-            // apps.json entry was already missing — those are orphans and the store should stop
-            // claiming them either way.
-            var gamesToUnmanage = new List<Guid>();
             var pinned = pinnedGameIds ?? new HashSet<Guid>(_settings.Settings.PinnedGameIds);
+            var gamesToRemove = new List<KeyValuePair<Guid, Guid>>();
 
             try
             {
-                var apps = (JArray)(config["apps"] ?? new JArray());
-
                 // Check each managed game
                 foreach (var gameEntry in _managedStore.GameToUuid.ToList())
                 {
                     var gameId = gameEntry.Key;
-                    var appUuid = gameEntry.Value;
 
                     // Get the game from database
                     var game = PlayniteApi.Database.Games.Get(gameId);
@@ -693,7 +755,7 @@ namespace ApolloSync
                     var filterEvaluationFailed = false;
                     if (game != null)
                     {
-                        meetsFilters = GameMeetsCurrentFilters(game, out filterEvaluationFailed);
+                        meetsFilters = GameMeetsCurrentFilters(game, selectedPresetIds, out filterEvaluationFailed);
                     }
 
                     if (!ShouldRemoveManagedGame(game != null, pinned.Contains(gameId), meetsFilters, filterEvaluationFailed))
@@ -708,27 +770,48 @@ namespace ApolloSync
                     logger.Info(game == null
                         ? $"Removing game {gameId} - no longer exists in database"
                         : $"Removing game {game.Name} - no longer meets filters (not pinned)");
-
-                    // Removed from the config immediately rather than batched afterwards: if
-                    // anything below throws, the ids already returned must be exactly the ones
-                    // whose app entries are actually gone.
-                    var appToRemove = apps.OfType<JObject>().FirstOrDefault(app =>
-                        Guid.TryParse((string)app["uuid"], out var uuid) && uuid == appUuid);
-                    if (appToRemove != null)
-                    {
-                        apps.Remove(appToRemove);
-                    }
-
-                    gamesToUnmanage.Add(gameId);
+                    gamesToRemove.Add(gameEntry);
                 }
 
+                var gamesToUnmanage = ApplyRemovals(config, gamesToRemove);
                 logger.Info($"RemoveFilteredOutGames completed: {gamesToUnmanage.Count} games to drop from apps.json and the managed store");
                 return gamesToUnmanage;
             }
             catch (Exception ex)
             {
+                // The decision loop threw, so nothing has been applied to the config yet and
+                // there is nothing for the caller to disown.
                 logger.Error(ex, "Error in RemoveFilteredOutGames");
-                return gamesToUnmanage;
+                return new List<Guid>();
+            }
+        }
+
+        /// <summary>
+        /// Removes ids that the add/update phase put back. Phase 1 decides removals against a
+        /// freshly re-evaluated library while the add/update set was snapshotted earlier, so the
+        /// two can disagree — a game deleted from Playnite mid-sync, say. Disowning a game whose
+        /// entry Phase 2 just rewrote would strand that entry in apps.json with nothing tracking
+        /// it, and SyncManagedStore only prunes the opposite direction, so a restart cannot
+        /// recover it.
+        /// </summary>
+        internal static List<Guid> ExcludeReAddedGames(IEnumerable<Guid> gamesToUnmanage, ICollection<Guid> reAddedGameIds)
+        {
+            return gamesToUnmanage.Where(id => !reAddedGameIds.Contains(id)).ToList();
+        }
+
+        /// <summary>
+        /// Writes the config and only then disowns the games, so a failed write leaves the store
+        /// matching the apps.json that is still on disk. Kept separate from the sync body so the
+        /// ordering itself can be tested with a save that throws.
+        /// </summary>
+        internal static void SaveThenDisown(Action save, ManagedStore store, IEnumerable<Guid> gamesToUnmanage)
+        {
+            save();
+
+            foreach (var gameId in gamesToUnmanage)
+            {
+                Guid removedUuid;
+                store.GameToUuid.TryRemove(gameId, out removedUuid);
             }
         }
         #endregion
@@ -786,11 +869,15 @@ namespace ApolloSync
         {
             logger.Info("Starting sync filtered games operation");
 
+            // One snapshot for the whole sync: both phases must agree on which presets were
+            // selected, and the live list can change under us while the settings view is open.
+            var selectedPresetIds = SnapshotSelectedPresetIds();
+
             // Deliberately no early return when nothing matches. Unchecking a preset is how the
             // user says "stop exporting these", and it is the removal phase below — not the
             // add/update phase — that carries it out. Returning here left the games in apps.json
             // until something else happened to match again.
-            var filteredGames = GetFilteredGames();
+            var filteredGames = GetFilteredGames(selectedPresetIds);
             logger.Info($"Found {filteredGames.Count} games matching filter presets to sync");
 
             var localSuccess = 0;
@@ -820,9 +907,11 @@ namespace ApolloSync
 
             logger.Info($"Starting batch sync operation with {filteredGames.Count} games");
 
-            // Removal is the destructive half and no longer sits behind an early return, so it
-            // must honour cancellation too. Without this, a sync cancelled at shutdown could
-            // still commit a net-destructive apps.json: removals applied, additions skipped.
+            // Removal is the destructive half and no longer sits behind an early return, so a
+            // sync that is already cancelled must not start it. Note this only covers the window
+            // before Phase 1: cancelling later still commits whatever both phases completed,
+            // which is correct — the removals are valid and the missing additions are redone by
+            // the next sync.
             if (cancellationToken.IsCancellationRequested)
             {
                 logger.Info("Sync cancelled by user before removal phase");
@@ -831,11 +920,12 @@ namespace ApolloSync
 
             // Phase 1: Remove managed games that no longer meet filters (unless pinned). The
             // store entries are dropped further down, once the write has actually landed.
-            var gamesToUnmanage = RemoveFilteredOutGames(config, pinnedSnapshot);
+            var gamesToUnmanage = RemoveFilteredOutGames(config, pinnedSnapshot, selectedPresetIds);
             localRemoved = gamesToUnmanage.Count;
             logger.Info($"Removed {localRemoved} games that no longer meet filters");
 
             // Phase 2: Add/update games that meet current filters
+            var reAddedGameIds = new HashSet<Guid>();
             for (int i = 0; i < filteredGames.Count; i++)
             {
                 if (cancellationToken.IsCancellationRequested)
@@ -860,6 +950,7 @@ namespace ApolloSync
                     if (TryAddOrUpdateAppBatch(game, config))
                     {
                         localSuccess++;
+                        reAddedGameIds.Add(game.Id);
                         logger.Debug($"Successfully processed: {game.Name}");
                     }
                     else
@@ -881,15 +972,20 @@ namespace ApolloSync
 
             if (filteredGames.Count == 0 && localRemoved == 0)
             {
-                // Still worth surfacing — an empty result with nothing to clean up is usually a
-                // misconfiguration. Suppressed when the sync did remove something, because that
-                // is the user unchecking their last preset on purpose; the completion
-                // notification below already reports it, and an error here would be wrong.
+                // Nothing matched and there was nothing to clean up, which is usually a
+                // misconfiguration. Returning here also keeps this to a single notification —
+                // there is nothing to save, and the completion notification would only add a
+                // contradictory "0 succeeded, 0 failed" beside it.
                 ShowNotificationIfEnabled(new NotificationMessage(
                     "apollosync-no-games",
                     "No games match the selected filter presets. Please check your filter preset configuration.",
                     NotificationType.Error), isUpdateOperation: true);
+                return;
             }
+
+            // A game the add/update phase restored must keep its store entry, or its apps.json
+            // entry is stranded with nothing tracking it.
+            gamesToUnmanage = ExcludeReAddedGames(gamesToUnmanage, reAddedGameIds);
 
             // Save everything once at the end
             if (localSuccess > 0 || localRemoved > 0)
@@ -899,18 +995,11 @@ namespace ApolloSync
                 {
                     try
                     {
-                        SaveAppsConfig(config);
-
-                        // Only now disown the removed games. If the write above threw, the store
-                        // still matches the unchanged apps.json; dropping them earlier would
-                        // strand their entries there with nothing tracking them, invisible to
-                        // both the Manage Games list and every later sync, until a restart.
-                        foreach (var gameId in gamesToUnmanage)
-                        {
-                            Guid removedUuid;
-                            _managedStore.GameToUuid.TryRemove(gameId, out removedUuid);
-                        }
-
+                        // Disown only after the write lands. If it throws, the store still
+                        // matches the unchanged apps.json; dropping them earlier would strand
+                        // their entries there with nothing tracking them, invisible to both the
+                        // Manage Games list and every later sync, until a restart.
+                        SaveThenDisown(() => SaveAppsConfig(config), _managedStore, gamesToUnmanage);
                         SaveManagedStore();
                         logger.Info("Batch save completed successfully");
                     }
