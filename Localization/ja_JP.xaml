@@ -44,6 +44,9 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">有効にすると、インストール済みのゲームのみがエクスポート対象になります。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">ラベル指定なし</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CoverImages">カバー画像:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages">カバー画像をエクスポート</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages_Help">各ゲームのPlayniteのカバー画像を、PNGに変換したうえでMoonlightが想定する3:4の枠に合わせ、ボックスアートとしてエクスポートします。オフにすると、Apollo/Sunshineでご自身が設定したアートワークが保持され、既存のボックスアートは変更されません。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">フィルタープリセット</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playniteのフィルタープリセットを使用</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">有効にすると、以下の個別フィルターの代わりに選択したフィルタープリセットが使用されます。フィルタープリセットはPlayniteのメインライブラリ画面で作成できます。</sys:String>

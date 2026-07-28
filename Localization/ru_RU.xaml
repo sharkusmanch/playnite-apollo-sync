@@ -44,6 +44,9 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Если включено, только установленные игры будут рассматриваться для экспорта.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Метка не требуется</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CoverImages">Обложки:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages">Экспортировать обложки</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages_Help">Экспортирует обложку каждой игры из Playnite, преобразуя её в PNG и подгоняя под соотношение сторон 3:4, которое ожидает Moonlight. Отключите этот параметр, чтобы сохранить изображения, заданные вами вручную в Apollo/Sunshine — существующие обложки останутся без изменений.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Предустановка фильтра</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Использовать предустановку фильтра Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Если включено, вместо отдельных фильтров ниже будет использоваться выбранная предустановка фильтра. Создавайте предустановки фильтров в главном представлении библиотеки Playnite.</sys:String>

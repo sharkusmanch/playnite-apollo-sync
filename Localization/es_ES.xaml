@@ -44,6 +44,9 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Cuando está activado, solo se considerarán para exportar los juegos instalados.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Sin etiqueta requerida</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CoverImages">Imágenes de portada:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages">Exportar imágenes de portada</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages_Help">Exporta la portada de Playnite de cada juego como carátula, convertida a PNG y ajustada al marco 3:4 que espera Moonlight. Desactiva esta opción para conservar las imágenes que hayas configurado tú mismo en Apollo/Sunshine — las carátulas existentes no se modificarán.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Preajuste de filtro</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Usar preajuste de filtro de Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Cuando está activado, se usará el preajuste de filtro seleccionado en lugar de los filtros individuales de abajo. Crea preajustes de filtro en la vista principal de la biblioteca de Playnite.</sys:String>

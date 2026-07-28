@@ -44,6 +44,9 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Etkinleştirildiğinde, yalnızca yüklü oyunlar aktarım için değerlendirilir.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Etiket gerekli değil</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CoverImages">Kapak görselleri:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages">Kapak görsellerini aktar</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages_Help">Her oyunun Playnite kapak görselini PNG'ye dönüştürüp Moonlight'ın beklediği 3:4 çerçeveye uyarlayarak kutu görseli olarak aktarır. Apollo/Sunshine üzerinde kendi ayarladığınız görselleri korumak için bunu kapatın — mevcut kutu görselleri o zaman olduğu gibi bırakılır.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filtre Ön Ayarı</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite Filtre Ön Ayarını Kullan</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Etkinleştirildiğinde, aşağıdaki ayrı filtreler yerine seçilen filtre ön ayarı kullanılır. Filtre ön ayarlarını Playnite'ın ana kütüphane görünümünde oluşturabilirsiniz.</sys:String>

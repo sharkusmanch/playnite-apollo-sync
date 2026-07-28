@@ -44,6 +44,9 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Wanneer ingeschakeld, worden alleen geïnstalleerde games in aanmerking genomen voor export.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Geen label vereist</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CoverImages">Coverafbeeldingen:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages">Coverafbeeldingen exporteren</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages_Help">Exporteert de Playnite-cover van elke game als box art, geconverteerd naar PNG en passend gemaakt voor het 3:4-kader dat Moonlight verwacht. Schakel dit uit om afbeeldingen te behouden die u zelf in Apollo/Sunshine hebt ingesteld – bestaande box art blijft dan ongewijzigd.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filtervoorinstelling</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite-filtervoorinstelling gebruiken</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Wanneer ingeschakeld, wordt de geselecteerde filtervoorinstelling gebruikt in plaats van de afzonderlijke filters hieronder. Maak filtervoorinstellingen aan in de hoofdbibliotheekweergave van Playnite.</sys:String>

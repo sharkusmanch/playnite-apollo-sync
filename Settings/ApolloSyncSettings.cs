@@ -61,6 +61,18 @@ namespace ApolloSync
             set => SetValue(ref _includedFilterPresetIds, value);
         }
 
+        private bool _manageCoverImages = true;
+        /// <summary>
+        /// When false the plugin never writes or clears the "image-path" field, leaving whatever
+        /// artwork the user has set in Apollo/Sunshine's own UI alone. Everything else about the
+        /// entry is still synced.
+        /// </summary>
+        public bool ManageCoverImages
+        {
+            get => _manageCoverImages;
+            set => SetValue(ref _manageCoverImages, value);
+        }
+
         private bool _showNotifications = true;
         public bool ShowNotifications
         {
