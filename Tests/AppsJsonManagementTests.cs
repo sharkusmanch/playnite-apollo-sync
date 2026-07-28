@@ -166,6 +166,72 @@ namespace ApolloSync.Tests
                 gameExistsInLibrary: true, isPinned: false, meetsFilters: false, filterEvaluationFailed: true));
         }
 
+        // ── FilterPresetsAreEvaluable ─────────────────────────────────────────────
+        // Guards the case that made removal-on-every-sync dangerous: a selected preset id
+        // that no longer resolves reads as "matched nothing" unless it is caught here.
+
+        [TestMethod]
+        public void FilterPresetsAreEvaluable_NoPresetsSelectedIsDeliberate()
+        {
+            // Selecting nothing means "export nothing", so pruning must still be allowed.
+            Assert.IsTrue(global::ApolloSync.ApolloSync.FilterPresetsAreEvaluable(
+                selectedPresetCount: 0, resolvedPresetCount: 0));
+        }
+
+        [TestMethod]
+        public void FilterPresetsAreEvaluable_AllSelectedPresetsResolve()
+        {
+            Assert.IsTrue(global::ApolloSync.ApolloSync.FilterPresetsAreEvaluable(
+                selectedPresetCount: 3, resolvedPresetCount: 3));
+        }
+
+        [TestMethod]
+        public void FilterPresetsAreEvaluable_OneSelectedPresetWentMissing()
+        {
+            Assert.IsFalse(global::ApolloSync.ApolloSync.FilterPresetsAreEvaluable(
+                selectedPresetCount: 3, resolvedPresetCount: 2));
+        }
+
+        [TestMethod]
+        public void FilterPresetsAreEvaluable_EverySelectedPresetWentMissing()
+        {
+            Assert.IsFalse(global::ApolloSync.ApolloSync.FilterPresetsAreEvaluable(
+                selectedPresetCount: 2, resolvedPresetCount: 0));
+        }
+
+        [TestMethod]
+        public void DeletedFilterPreset_DoesNotRemoveManagedGames()
+        {
+            // Regression: deleting a preset in Playnite (or deleting and recreating it, which
+            // assigns a new id) leaves a stale id in IncludedFilterPresetIds. That used to
+            // resolve to nothing, evaluate as "no match", and — now that removal runs on every
+            // sync rather than only when something matched — delete every non-pinned entry.
+            var evaluable = global::ApolloSync.ApolloSync.FilterPresetsAreEvaluable(
+                selectedPresetCount: 1, resolvedPresetCount: 0);
+
+            Assert.IsFalse(evaluable);
+            Assert.IsFalse(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true,
+                isPinned: false,
+                meetsFilters: false,
+                filterEvaluationFailed: !evaluable));
+        }
+
+        [TestMethod]
+        public void ClearingEveryFilterPreset_StillRemovesManagedGames()
+        {
+            // The behaviour this change exists to deliver: unchecking everything prunes.
+            var evaluable = global::ApolloSync.ApolloSync.FilterPresetsAreEvaluable(
+                selectedPresetCount: 0, resolvedPresetCount: 0);
+
+            Assert.IsTrue(evaluable);
+            Assert.IsTrue(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true,
+                isPinned: false,
+                meetsFilters: false,
+                filterEvaluationFailed: !evaluable));
+        }
+
         // ── Removal wiring ────────────────────────────────────────────────────────
 
         [TestMethod]

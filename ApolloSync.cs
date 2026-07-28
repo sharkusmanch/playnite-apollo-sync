@@ -569,6 +569,19 @@ namespace ApolloSync
         }
 
         /// <summary>
+        /// Distinguishes "the user selected nothing" from "a preset the user selected has gone
+        /// missing". Selecting nothing is a deliberate export-nothing, so pruning is correct. A
+        /// selected id that no longer resolves means the preset was deleted or recreated in
+        /// Playnite (recreating assigns a new id, and nothing prunes the stale one from settings),
+        /// and we cannot tell what it used to match — so no removal decision can be made.
+        /// Kept pure so the distinction is directly testable.
+        /// </summary>
+        internal static bool FilterPresetsAreEvaluable(int selectedPresetCount, int resolvedPresetCount)
+        {
+            return selectedPresetCount == resolvedPresetCount;
+        }
+
+        /// <summary>
         /// Evaluates the game against the selected filter presets (OR logic).
         /// <paramref name="evaluationFailed"/> is set when a preset could not be evaluated at all,
         /// which is not the same as "did not match" — callers that delete on a false result must
@@ -579,28 +592,41 @@ namespace ApolloSync
             evaluationFailed = false;
 
             // Use filter presets with OR logic - game matches if it matches ANY selected preset
-            if (_settings.Settings.IncludedFilterPresetIds?.Count > 0)
+            var selectedPresetIds = _settings.Settings.IncludedFilterPresetIds;
+            if (selectedPresetIds?.Count > 0)
             {
-                foreach (var presetId in _settings.Settings.IncludedFilterPresetIds)
+                var resolvedPresets = 0;
+
+                foreach (var presetId in selectedPresetIds)
                 {
                     var filterPreset = PlayniteApi.Database.FilterPresets
                         .FirstOrDefault(fp => fp.Id == presetId);
 
-                    if (filterPreset?.Settings != null)
+                    if (filterPreset?.Settings == null)
                     {
-                        try
+                        logger.Warn($"Selected filter preset {presetId} no longer exists - cannot evaluate it");
+                        continue;
+                    }
+
+                    resolvedPresets++;
+
+                    try
+                    {
+                        if (PlayniteApi.Database.GetGameMatchesFilter(game, filterPreset.Settings))
                         {
-                            if (PlayniteApi.Database.GetGameMatchesFilter(game, filterPreset.Settings))
-                            {
-                                return true; // Match found, return true immediately
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            evaluationFailed = true;
-                            logger.Error(ex, $"Failed to check game against filter preset: {filterPreset.Name}");
+                            return true; // Match found, return true immediately
                         }
                     }
+                    catch (Exception ex)
+                    {
+                        evaluationFailed = true;
+                        logger.Error(ex, $"Failed to check game against filter preset: {filterPreset.Name}");
+                    }
+                }
+
+                if (!FilterPresetsAreEvaluable(selectedPresetIds.Count, resolvedPresets))
+                {
+                    evaluationFailed = true;
                 }
             }
 
@@ -797,6 +823,15 @@ namespace ApolloSync
 
             logger.Info($"Starting batch sync operation with {filteredGames.Count} games");
 
+            // Removal is the destructive half and no longer sits behind an early return, so it
+            // must honour cancellation too. Without this, a sync cancelled at shutdown could
+            // still commit a net-destructive apps.json: removals applied, additions skipped.
+            if (cancellationToken.IsCancellationRequested)
+            {
+                logger.Info("Sync cancelled by user before removal phase");
+                return;
+            }
+
             // Phase 1: Remove managed games that no longer meet filters (unless pinned)
             var removedGames = RemoveFilteredOutGames(config, pinnedSnapshot);
             localRemoved = removedGames;
@@ -846,10 +881,12 @@ namespace ApolloSync
                 }
             }
 
-            if (filteredGames.Count == 0)
+            if (filteredGames.Count == 0 && localRemoved == 0)
             {
-                // Still worth surfacing — an empty result is usually a misconfiguration — but
-                // only after the removal above has been allowed to run.
+                // Still worth surfacing — an empty result with nothing to clean up is usually a
+                // misconfiguration. Suppressed when the sync did remove something, because that
+                // is the user unchecking their last preset on purpose; the completion
+                // notification below already reports it, and an error here would be wrong.
                 ShowNotificationIfEnabled(new NotificationMessage(
                     "apollosync-no-games",
                     "No games match the selected filter presets. Please check your filter preset configuration.",
