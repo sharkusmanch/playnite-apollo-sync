@@ -44,6 +44,9 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Quando attivato, solo i giochi installati verranno considerati per l'esportazione.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Nessuna etichetta richiesta</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CoverImages">Immagini di copertina:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages">Esporta le immagini di copertina</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages_Help">Esporta la copertina Playnite di ogni gioco come box art, convertita in PNG e adattata al formato 3:4 richiesto da Moonlight. Disattiva questa opzione per mantenere le immagini che hai impostato tu stesso in Apollo/Sunshine — le box art esistenti non verranno modificate.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Preset filtro</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Usa preset filtro di Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Quando attivato, verrà utilizzato il preset filtro selezionato al posto dei filtri individuali sottostanti. Crea i preset filtro nella vista principale della libreria di Playnite.</sys:String>

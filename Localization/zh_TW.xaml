@@ -44,6 +44,9 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">啟用後，僅已安裝的遊戲會被納入匯出範圍。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">不需要標籤</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CoverImages">封面圖片：</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages">匯出封面圖片</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages_Help">將每款遊戲在Playnite中的封面匯出為封面圖，轉換為PNG並符合Moonlight所需的3:4畫框。關閉此項可保留您自行在Apollo/Sunshine中設定的圖片——現有封面圖將維持不變。</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">篩選預設</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">使用Playnite篩選預設</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">啟用後，將使用所選的篩選預設取代下方的各項篩選條件。可在Playnite的主媒體庫檢視中建立篩選預設。</sys:String>

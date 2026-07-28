@@ -44,6 +44,9 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Quando ativado, apenas os jogos instalados serão considerados para exportação.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Nenhuma etiqueta necessária</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CoverImages">Imagens de capa:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages">Exportar imagens de capa</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages_Help">Exporta a capa do Playnite de cada jogo como arte de capa, convertida para PNG e ajustada ao formato 3:4 esperado pelo Moonlight. Desative esta opção para preservar as imagens que tenha definido no Apollo/Sunshine — as artes de capa existentes ficam inalteradas.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Predefinição de filtro</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Usar predefinição de filtro do Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Quando ativado, a predefinição de filtro selecionada será utilizada em vez dos filtros individuais abaixo. Crie predefinições de filtro na vista principal da biblioteca do Playnite.</sys:String>

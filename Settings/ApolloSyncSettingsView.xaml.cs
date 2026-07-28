@@ -101,6 +101,36 @@ namespace ApolloSync
 
             stack.Children.Add(new Separator { Margin = new Thickness(0, 8, 0, 8) });
 
+            // Cover images
+            var coverImagesHeader = new TextBlock
+            {
+                Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_CoverImages"),
+                FontWeight = FontWeights.Bold,
+                FontSize = 14,
+                Margin = new Thickness(0, 8, 0, 8)
+            };
+            stack.Children.Add(coverImagesHeader);
+
+            var chkManageCoverImages = new CheckBox
+            {
+                Content = ResourceProvider.GetString("LOC_ApolloSync_Settings_ManageCoverImages"),
+                Margin = new Thickness(20, 0, 0, 4)
+            };
+            chkManageCoverImages.SetBinding(CheckBox.IsCheckedProperty,
+                new Binding("Settings.ManageCoverImages") { Mode = BindingMode.TwoWay });
+            stack.Children.Add(chkManageCoverImages);
+
+            stack.Children.Add(new TextBlock
+            {
+                Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_ManageCoverImages_Help"),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(20, 0, 0, 8),
+                FontStyle = FontStyles.Italic,
+                Foreground = System.Windows.Media.Brushes.Gray
+            });
+
+            stack.Children.Add(new Separator { Margin = new Thickness(0, 8, 0, 8) });
+
             // Notifications header
             var notificationsHeader = new TextBlock
             {

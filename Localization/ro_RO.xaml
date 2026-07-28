@@ -44,6 +44,9 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Când este activat, doar jocurile instalate vor fi luate în considerare pentru export.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Nicio etichetă necesară</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CoverImages">Imagini de copertă:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages">Exportă imaginile de copertă</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages_Help">Exportă coperta Playnite a fiecărui joc drept copertă de joc, convertită în PNG și încadrată în formatul 3:4 așteptat de Moonlight. Dezactivează această opțiune pentru a păstra imaginile pe care le-ai setat tu însuți în Apollo/Sunshine — copertele existente rămân neatinse.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Presetare filtru</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Folosește presetarea de filtru Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Când este activat, presetarea de filtru selectată va fi folosită în locul filtrelor individuale de mai jos. Creează presetări de filtru în vizualizarea principală a bibliotecii Playnite.</sys:String>

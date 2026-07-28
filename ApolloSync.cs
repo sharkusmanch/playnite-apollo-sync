@@ -34,7 +34,9 @@ namespace ApolloSync
         public ApolloSync(IPlayniteAPI api) : base(api)
         {
             _settings = new ApolloSyncSettingsViewModel(this);
-            syncService = new SyncService(api);
+            // Read through a delegate rather than a snapshot: the user can toggle this while the
+            // plugin is loaded, and the next sync must honour the current value.
+            syncService = new SyncService(api, manageCoverImages: () => _settings.Settings.ManageCoverImages);
             Properties = new GenericPluginProperties
             {
                 HasSettings = true
@@ -208,6 +210,10 @@ namespace ApolloSync
         {
             // Skip if a full sync is already running
             if (_syncRunning == 1) return;
+
+            // This handler exists purely to react to cover art changes. With cover management
+            // off there is nothing to re-export, and rewriting apps.json would be pure churn.
+            if (!_settings.Settings.ManageCoverImages) return;
 
             foreach (var update in args.UpdatedItems)
             {

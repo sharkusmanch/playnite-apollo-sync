@@ -44,6 +44,9 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Pokud je povoleno, budou pro export zvažovány pouze nainstalované hry.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Štítek není vyžadován</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CoverImages">Obrázky obalů:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages">Exportovat obrázky obalů</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages_Help">Exportuje obal každé hry z Playnite jako obrázek obalu, převedený do formátu PNG a přizpůsobený poměru 3:4, který Moonlight očekává. Vypnutím této volby zachováte obrázky, které jste si sami nastavili v Apollo/Sunshine – stávající obaly pak zůstanou nezměněny.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Předvolba filtru</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Použít předvolbu filtru Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Pokud je povoleno, bude místo jednotlivých filtrů níže použita vybraná předvolba filtru. Předvolby filtrů vytvořte v hlavním zobrazení knihovny Playnite.</sys:String>

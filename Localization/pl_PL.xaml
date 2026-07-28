@@ -44,6 +44,9 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_IncludeInstalledGames_Help">Po włączeniu tylko zainstalowane gry będą brane pod uwagę przy eksporcie.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_NoLabel">Etykieta nie jest wymagana</sys:String>
     <sys:String x:Key="LOC_ApolloSync_DefaultLabel_Name">Apollo/Sunshine</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_CoverImages">Okładki:</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages">Eksportuj okładki</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ManageCoverImages_Help">Eksportuje okładkę każdej gry z Playnite jako grafikę pudełkową, konwertuje ją do formatu PNG i dopasowuje do proporcji 3:4 oczekiwanych przez Moonlight. Wyłącz tę opcję, aby zachować grafikę ustawioną samodzielnie w Apollo/Sunshine – istniejąca grafika pudełkowa pozostanie wtedy nienaruszona.</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Szablon filtrów</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Użyj szablonu filtrów Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Po włączeniu wybrany szablon filtrów zostanie użyty zamiast poszczególnych filtrów poniżej. Twórz szablony filtrów w głównym widoku biblioteki Playnite.</sys:String>
