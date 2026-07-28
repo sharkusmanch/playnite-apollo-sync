@@ -1,5 +1,16 @@
 AddonId: ApolloSync_f987343d-4168-4f44-9fb0-e3a21da314ad
 Packages:
+  - Version: 1.3.2
+    RequiredApiVersion: 6.16.0
+    ReleaseDate: 2026-07-28
+    PackageUrl: https://github.com/sharkusmanch/playnite-apollo-sync/releases/download/v1.3.2/ApolloSync_v1.3.2.pext
+    Changelog:
+      - Cover art now appears in Moonlight for games whose Playnite cover is a JPEG saved under a .png name - those games previously showed no artwork at all
+      - Covers are fitted to the 3:4 frame Moonlight expects instead of being stretched, so square and 2:3 artwork is no longer distorted
+      - New setting to turn cover image export off entirely, leaving artwork you set yourself in Apollo/Sunshine untouched
+      - Converted covers are now cached under %LOCALAPPDATA% instead of %TEMP%, where Windows disk cleanup could delete them and silently strip artwork from every exported game
+      - A cover that fails to convert no longer clears artwork that was already exported for that game
+      - "Note: Moonlight caches box art per app on the client, so after upgrading you may need to clear your client's cache or re-add the host before the corrected artwork appears"
   - Version: 1.3.1
     RequiredApiVersion: 6.16.0
     ReleaseDate: 2026-07-28

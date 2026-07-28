@@ -67,7 +67,10 @@ jobs:
             range="HEAD"
           fi
 
-          git log $range --pretty=format:"%s" --no-merges --reverse | while IFS= read -r msg; do
+          # tformat, not format: "format" omits the trailing newline, so "while read" drops the
+          # last commit — and when only one commit separates two releases, that is the whole
+          # changelog. Every generated changelog before this silently lost its final entry.
+          git log $range --pretty=tformat:"%s" --no-merges --reverse | while IFS= read -r msg; do
             ENTRY="$msg" yq -i '.Packages[0].Changelog += [strenv(ENTRY)]' manifest.yaml
           done
 
