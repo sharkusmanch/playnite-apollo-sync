@@ -763,16 +763,11 @@ namespace ApolloSync
         {
             logger.Info("Starting sync filtered games operation");
 
+            // Deliberately no early return when nothing matches. Unchecking a preset is how the
+            // user says "stop exporting these", and it is the removal phase below — not the
+            // add/update phase — that carries it out. Returning here left the games in apps.json
+            // until something else happened to match again.
             var filteredGames = GetFilteredGames();
-            if (filteredGames.Count == 0)
-            {
-                ShowNotificationIfEnabled(new NotificationMessage(
-                    "apollosync-no-games",
-                    "No games match the selected filter presets. Please check your filter preset configuration.",
-                    NotificationType.Error), isUpdateOperation: true);
-                return;
-            }
-
             logger.Info($"Found {filteredGames.Count} games matching filter presets to sync");
 
             var localSuccess = 0;
@@ -802,7 +797,7 @@ namespace ApolloSync
 
             logger.Info($"Starting batch sync operation with {filteredGames.Count} games");
 
-            // Phase 1: Remove games that no longer meet filters (unless pinned)
+            // Phase 1: Remove managed games that no longer meet filters (unless pinned)
             var removedGames = RemoveFilteredOutGames(config, pinnedSnapshot);
             localRemoved = removedGames;
             logger.Info($"Removed {removedGames} games that no longer meet filters");
@@ -849,6 +844,16 @@ namespace ApolloSync
                     localErrors.Add(error);
                     logger.Error(ex, error);
                 }
+            }
+
+            if (filteredGames.Count == 0)
+            {
+                // Still worth surfacing — an empty result is usually a misconfiguration — but
+                // only after the removal above has been allowed to run.
+                ShowNotificationIfEnabled(new NotificationMessage(
+                    "apollosync-no-games",
+                    "No games match the selected filter presets. Please check your filter preset configuration.",
+                    NotificationType.Error), isUpdateOperation: true);
             }
 
             // Save everything once at the end
