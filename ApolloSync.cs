@@ -661,16 +661,24 @@ namespace ApolloSync
             return !meetsFilters;
         }
 
-        private int RemoveFilteredOutGames(JObject config, HashSet<Guid> pinnedGameIds = null)
+        /// <summary>
+        /// Drops filtered-out games from <paramref name="config"/> and returns the game ids whose
+        /// managed-store entries should go with them. The store is deliberately NOT mutated here:
+        /// the caller applies the returned ids only once the write to disk has succeeded, so a
+        /// failed write cannot leave the in-memory store disowning entries that are still in
+        /// apps.json. Same ordering rule as ExportGamesWithFeedback.
+        /// </summary>
+        private List<Guid> RemoveFilteredOutGames(JObject config, HashSet<Guid> pinnedGameIds = null)
         {
-            var removedCount = 0;
+            // Every id here is one the caller must drop from the store, including games whose
+            // apps.json entry was already missing — those are orphans and the store should stop
+            // claiming them either way.
+            var gamesToUnmanage = new List<Guid>();
             var pinned = pinnedGameIds ?? new HashSet<Guid>(_settings.Settings.PinnedGameIds);
 
             try
             {
                 var apps = (JArray)(config["apps"] ?? new JArray());
-                var appsToRemove = new List<JObject>();
-                var managedGamesToRemove = new List<Guid>();
 
                 // Check each managed game
                 foreach (var gameEntry in _managedStore.GameToUuid.ToList())
@@ -700,38 +708,27 @@ namespace ApolloSync
                     logger.Info(game == null
                         ? $"Removing game {gameId} - no longer exists in database"
                         : $"Removing game {game.Name} - no longer meets filters (not pinned)");
-                    managedGamesToRemove.Add(gameId);
 
-                    // Find and mark app for removal
+                    // Removed from the config immediately rather than batched afterwards: if
+                    // anything below throws, the ids already returned must be exactly the ones
+                    // whose app entries are actually gone.
                     var appToRemove = apps.OfType<JObject>().FirstOrDefault(app =>
                         Guid.TryParse((string)app["uuid"], out var uuid) && uuid == appUuid);
                     if (appToRemove != null)
                     {
-                        appsToRemove.Add(appToRemove);
+                        apps.Remove(appToRemove);
                     }
+
+                    gamesToUnmanage.Add(gameId);
                 }
 
-                // Remove apps from config
-                foreach (var appToRemove in appsToRemove)
-                {
-                    apps.Remove(appToRemove);
-                    removedCount++;
-                }
-
-                // Remove from managed store
-                foreach (var gameId in managedGamesToRemove)
-                {
-                    Guid removedId;
-                    _managedStore.GameToUuid.TryRemove(gameId, out removedId);
-                }
-
-                logger.Info($"RemoveFilteredOutGames completed: removed {removedCount} games from apps.json");
-                return removedCount;
+                logger.Info($"RemoveFilteredOutGames completed: {gamesToUnmanage.Count} games to drop from apps.json and the managed store");
+                return gamesToUnmanage;
             }
             catch (Exception ex)
             {
                 logger.Error(ex, "Error in RemoveFilteredOutGames");
-                return removedCount;
+                return gamesToUnmanage;
             }
         }
         #endregion
@@ -832,10 +829,11 @@ namespace ApolloSync
                 return;
             }
 
-            // Phase 1: Remove managed games that no longer meet filters (unless pinned)
-            var removedGames = RemoveFilteredOutGames(config, pinnedSnapshot);
-            localRemoved = removedGames;
-            logger.Info($"Removed {removedGames} games that no longer meet filters");
+            // Phase 1: Remove managed games that no longer meet filters (unless pinned). The
+            // store entries are dropped further down, once the write has actually landed.
+            var gamesToUnmanage = RemoveFilteredOutGames(config, pinnedSnapshot);
+            localRemoved = gamesToUnmanage.Count;
+            logger.Info($"Removed {localRemoved} games that no longer meet filters");
 
             // Phase 2: Add/update games that meet current filters
             for (int i = 0; i < filteredGames.Count; i++)
@@ -902,6 +900,17 @@ namespace ApolloSync
                     try
                     {
                         SaveAppsConfig(config);
+
+                        // Only now disown the removed games. If the write above threw, the store
+                        // still matches the unchanged apps.json; dropping them earlier would
+                        // strand their entries there with nothing tracking them, invisible to
+                        // both the Manage Games list and every later sync, until a restart.
+                        foreach (var gameId in gamesToUnmanage)
+                        {
+                            Guid removedUuid;
+                            _managedStore.GameToUuid.TryRemove(gameId, out removedUuid);
+                        }
+
                         SaveManagedStore();
                         logger.Info("Batch save completed successfully");
                     }

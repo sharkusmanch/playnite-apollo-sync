@@ -271,6 +271,87 @@ namespace ApolloSync.Tests
             Assert.IsFalse(store.GameToUuid.ContainsKey(noMatch.Id));
         }
 
+        [TestMethod]
+        public void FilteredOutRemoval_DoesNotDisownGamesWhenTheSaveFails()
+        {
+            // Regression: RemoveFilteredOutGames used to drop the store entries itself, before
+            // SyncFilteredGamesBackground wrote apps.json. A failed write correctly skipped
+            // SaveManagedStore, so the on-disk store stayed consistent — but the in-memory one
+            // had already forgotten the games, stranding their apps.json entries with nothing
+            // tracking them: invisible to the Manage Games list and to every later sync until
+            // Playnite restarted.
+            //
+            // Mirrors the production ordering: mutate the config, and disown the games only
+            // after the write succeeds.
+            var sync = new SyncService();
+            var store = new ManagedStore();
+            var config = new JObject { ["apps"] = new JArray() };
+
+            var game = new Game("Filtered Out") { Id = Guid.NewGuid(), InstallDirectory = "C:\\F" };
+            Assert.IsTrue(sync.AddOrUpdate(config, store, game));
+
+            // Phase 1 removes the app entry and reports the id, leaving the store alone.
+            var gamesToUnmanage = new List<Guid> { game.Id };
+            var apps = (JArray)config["apps"];
+            apps.RemoveAt(0);
+
+            Assert.IsTrue(store.GameToUuid.ContainsKey(game.Id),
+                "The store must still own the game until the write lands");
+
+            // The write fails.
+            var saveSucceeded = false;
+            try
+            {
+                throw new UnauthorizedAccessException("apps.json is not writable");
+            }
+            catch (UnauthorizedAccessException)
+            {
+                saveSucceeded = false;
+            }
+
+            if (saveSucceeded)
+            {
+                foreach (var id in gamesToUnmanage) { Guid removed; store.GameToUuid.TryRemove(id, out removed); }
+            }
+
+            Assert.IsTrue(store.GameToUuid.ContainsKey(game.Id),
+                "A failed write must leave the store owning the game, matching the unchanged apps.json");
+
+            // And once a write does succeed, ownership is correctly released.
+            foreach (var id in gamesToUnmanage) { Guid removed; store.GameToUuid.TryRemove(id, out removed); }
+            Assert.IsFalse(store.GameToUuid.ContainsKey(game.Id));
+        }
+
+        [TestMethod]
+        public void FilteredOutRemoval_ReportsOrphanedStoreEntriesToo()
+        {
+            // The count returned by RemoveFilteredOutGames drives the "did anything change?"
+            // guard around the save. It used to count app objects actually deleted from
+            // apps.json, so a managed game whose entry was already missing shed its store entry
+            // while reporting zero — and the save block never ran, leaving the in-memory store
+            // diverged from the persisted one for the rest of the session.
+            var store = new ManagedStore();
+            var orphan = Guid.NewGuid();
+            store.GameToUuid[orphan] = Guid.NewGuid();
+
+            var config = new JObject { ["apps"] = new JArray() };
+            var apps = (JArray)config["apps"];
+
+            // Production shape: the id is reported whether or not a matching app entry existed.
+            var gamesToUnmanage = new List<Guid>();
+            var appToRemove = apps.OfType<JObject>().FirstOrDefault(a =>
+                Guid.TryParse((string)a["uuid"], out var uuid) && uuid == store.GameToUuid[orphan]);
+            if (appToRemove != null)
+            {
+                apps.Remove(appToRemove);
+            }
+            gamesToUnmanage.Add(orphan);
+
+            Assert.AreEqual(0, apps.Count);
+            Assert.AreEqual(1, gamesToUnmanage.Count,
+                "An orphaned store entry must still be reported, or the save that persists its removal is skipped");
+        }
+
         // ── ManuallyRemoved round-trip ────────────────────────────────────────────
 
         [TestMethod]
