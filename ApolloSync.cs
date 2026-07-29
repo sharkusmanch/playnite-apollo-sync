@@ -1556,6 +1556,8 @@ namespace ApolloSync
         {
             try
             {
+                TryApplyPlaylistOrder(config);
+
                 var path = _settings.Settings.AppsJsonPath;
                 // Resolve to the concrete path ConfigService.Save will write to, so the
                 // elevation path below receives a valid local absolute path even when
@@ -1602,6 +1604,55 @@ namespace ApolloSync
                 // the failure. Swallowing it here made every caller's catch unreachable.
                 logger.Error(ex, $"Exception occurred while saving apps config");
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// When the Playlist filter preset is included and the Playlist plugin is loaded,
+        /// reorders managed apps to match playlist.txt (with pinned hybrid ordering).
+        /// Preset check runs before plugin detection. Fail-soft on IO errors.
+        /// </summary>
+        private void TryApplyPlaylistOrder(JObject config)
+        {
+            if (config == null || _settings?.Settings == null || _managedStore == null)
+            {
+                return;
+            }
+
+            var includedCopy = _settings.Settings.IncludedFilterPresetIds != null
+                ? new List<Guid>(_settings.Settings.IncludedFilterPresetIds)
+                : new List<Guid>();
+
+            if (!PlaylistOrderService.IsPlaylistPresetIncluded(includedCopy, id =>
+            {
+                var preset = PlayniteApi.Database.FilterPresets.FirstOrDefault(fp => fp.Id == id);
+                return preset?.Name;
+            }))
+            {
+                return;
+            }
+
+            if (!PlaylistOrderService.IsPluginLoaded(PlayniteApi))
+            {
+                return;
+            }
+
+            var apps = config["apps"] as JArray;
+            if (apps == null)
+            {
+                return;
+            }
+
+            var playlistPath = PlaylistOrderService.GetPlaylistFilePath(PlayniteApi);
+            var playlistIds = PlaylistOrderService.TryReadOrderedGameIds(playlistPath);
+
+            var pinnedCopy = _settings.Settings.PinnedGameIds != null
+                ? new HashSet<Guid>(_settings.Settings.PinnedGameIds)
+                : new HashSet<Guid>();
+
+            if (PlaylistOrderService.ReorderApps(apps, playlistIds, _managedStore, pinnedCopy))
+            {
+                logger.Debug("Reordered apps.json entries for Playlist / pinned hybrid order");
             }
         }
 
