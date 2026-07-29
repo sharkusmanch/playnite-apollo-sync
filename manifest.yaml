@@ -1,5 +1,15 @@
 AddonId: ApolloSync_f987343d-4168-4f44-9fb0-e3a21da314ad
 Packages:
+  - Version: 1.4.0
+    RequiredApiVersion: 6.16.0
+    ReleaseDate: 2026-07-29
+    PackageUrl: https://github.com/sharkusmanch/playnite-apollo-sync/releases/download/v1.4.0/ApolloSync_v1.4.0.pext
+    Changelog:
+      - New - excluded filter presets. Games matching an excluded preset are never exported, even if they also match an included one, so you can keep mouse-only, VR or otherwise unstreamable games out without rebuilding your include presets
+      - Pinned games that match an excluded preset are kept rather than auto-removed
+      - Deleting an excluded preset in Playnite, or one that fails to evaluate, no longer silently re-exports the games it was suppressing
+      - The filter preset lists are laid out in three columns so the included and excluded lists both fit on screen
+      - Excluded filter presets contributed by @kinland
   - Version: 1.3.2
     RequiredApiVersion: 6.16.0
     ReleaseDate: 2026-07-28
