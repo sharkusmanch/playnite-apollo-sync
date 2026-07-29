@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Media;
 using Microsoft.Win32;
@@ -289,7 +290,7 @@ namespace ApolloSync
             };
 
             var filterPresetScrollViewer = new ScrollViewer { MaxHeight = 150, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-            var filterPresetPanel = new StackPanel { Name = "FilterPresetsPanel" };
+            var filterPresetPanel = new UniformGrid { Name = "FilterPresetsPanel", Columns = 3 };
             filterPresetScrollViewer.Content = filterPresetPanel;
             filterPresetBorder.Child = filterPresetScrollViewer;
             filterPresetContentPanel.Children.Add(filterPresetBorder);
@@ -339,7 +340,7 @@ namespace ApolloSync
             };
 
             var excludedFilterPresetScrollViewer = new ScrollViewer { MaxHeight = 150, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
-            var excludedFilterPresetPanel = new StackPanel { Name = "ExcludedFilterPresetsPanel" };
+            var excludedFilterPresetPanel = new UniformGrid { Name = "ExcludedFilterPresetsPanel", Columns = 3 };
             excludedFilterPresetScrollViewer.Content = excludedFilterPresetPanel;
             excludedFilterPresetBorder.Child = excludedFilterPresetScrollViewer;
             excludedFilterPresetContentPanel.Children.Add(excludedFilterPresetBorder);
@@ -473,7 +474,7 @@ namespace ApolloSync
                 {
                     vm.Settings.IncludedFilterPresetIds.Add(filterPreset.Id);
                 }
-                UpdateFilterPresetCheckboxes(FindChild<StackPanel>(this, "FilterPresetsPanel"));
+                UpdateFilterPresetCheckboxes(FindChild<UniformGrid>(this, "FilterPresetsPanel"));
             }
         }
 
@@ -482,7 +483,7 @@ namespace ApolloSync
             if (DataContext is ApolloSyncSettingsViewModel vm)
             {
                 vm.Settings.IncludedFilterPresetIds.Clear();
-                UpdateFilterPresetCheckboxes(FindChild<StackPanel>(this, "FilterPresetsPanel"));
+                UpdateFilterPresetCheckboxes(FindChild<UniformGrid>(this, "FilterPresetsPanel"));
             }
         }
 
@@ -558,7 +559,7 @@ namespace ApolloSync
                 {
                     vm.Settings.ExcludedFilterPresetIds.Add(filterPreset.Id);
                 }
-                UpdateExcludedFilterPresetCheckboxes(FindChild<StackPanel>(this, "ExcludedFilterPresetsPanel"));
+                UpdateExcludedFilterPresetCheckboxes(FindChild<UniformGrid>(this, "ExcludedFilterPresetsPanel"));
             }
         }
 
@@ -572,7 +573,7 @@ namespace ApolloSync
                 }
 
                 vm.Settings.ExcludedFilterPresetIds.Clear();
-                UpdateExcludedFilterPresetCheckboxes(FindChild<StackPanel>(this, "ExcludedFilterPresetsPanel"));
+                UpdateExcludedFilterPresetCheckboxes(FindChild<UniformGrid>(this, "ExcludedFilterPresetsPanel"));
             }
         }
 
