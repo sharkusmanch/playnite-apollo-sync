@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Préréglage de filtre</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Utiliser un préréglage de filtre Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Lorsque activé, le préréglage de filtre sélectionné sera utilisé à la place des filtres individuels ci-dessous. Créez des préréglages de filtre dans la vue principale de la bibliothèque Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">Préréglages de filtre exclus</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">Les jeux correspondant à un préréglage exclu ne sont pas exportés, même s'ils correspondent à un préréglage inclus. Les jeux épinglés ne sont pas automatiquement supprimés lorsqu'ils correspondent à un préréglage exclu.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Gérer les jeux exportés</sys:String>

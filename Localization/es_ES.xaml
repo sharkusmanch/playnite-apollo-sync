@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Preajuste de filtro</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Usar preajuste de filtro de Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Cuando está activado, se usará el preajuste de filtro seleccionado en lugar de los filtros individuales de abajo. Crea preajustes de filtro en la vista principal de la biblioteca de Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">Preajustes de filtro excluidos</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">Los juegos que coincidan con cualquier preajuste excluido no se exportan, aunque coincidan con un preajuste incluido. Los juegos fijados no se eliminan automáticamente cuando coinciden con un preajuste excluido.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Administrar juegos exportados</sys:String>

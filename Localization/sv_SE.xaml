@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filterförinställning</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Använd Playnite-filterförinställning</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">När aktiverat används den valda filterförinställningen istället för de enskilda filtren nedan. Skapa filterförinställningar i Playnites huvudbiblioteksvy.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">Uteslutna filterförinställningar</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">Spel som matchar en utesluten förinställning exporteras inte, även om de matchar en inkluderad förinställning. Fästa spel tas inte bort automatiskt när de matchar en utesluten förinställning.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Hantera exporterade spel</sys:String>

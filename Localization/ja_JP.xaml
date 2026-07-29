@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">フィルタープリセット</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playniteのフィルタープリセットを使用</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">有効にすると、以下の個別フィルターの代わりに選択したフィルタープリセットが使用されます。フィルタープリセットはPlayniteのメインライブラリ画面で作成できます。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">除外フィルタープリセット</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">除外プリセットに一致するゲームは、含めるプリセットに一致していてもエクスポートされません。ピン留めされたゲームは、除外プリセットに一致しても自動削除されません。</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">エクスポート済みゲームの管理</sys:String>

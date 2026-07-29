@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Szablon filtrów</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Użyj szablonu filtrów Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Po włączeniu wybrany szablon filtrów zostanie użyty zamiast poszczególnych filtrów poniżej. Twórz szablony filtrów w głównym widoku biblioteki Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">Wykluczone szablony filtrów</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">Gry pasujące do dowolnego wykluczonego szablonu nie są eksportowane, nawet jeśli pasują do szablonu uwzględnionego. Przypięte gry nie są automatycznie usuwane, gdy pasują do wykluczonego szablonu.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Zarządzaj wyeksportowanymi grami</sys:String>

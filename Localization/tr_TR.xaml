@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filtre Ön Ayarı</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite Filtre Ön Ayarını Kullan</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Etkinleştirildiğinde, aşağıdaki ayrı filtreler yerine seçilen filtre ön ayarı kullanılır. Filtre ön ayarlarını Playnite'ın ana kütüphane görünümünde oluşturabilirsiniz.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">Hariç Tutulan Filtre Ön Ayarları</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">Hariç tutulan herhangi bir ön ayarla eşleşen oyunlar, dahil edilen bir ön ayarla eşleşseler bile aktarılmaz. Sabitlenen oyunlar, hariç tutulan bir ön ayarla eşleştiklerinde otomatik olarak silinmez.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Aktarılan Oyunları Yönet</sys:String>

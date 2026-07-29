@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Предустановка фильтра</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Использовать предустановку фильтра Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Если включено, вместо отдельных фильтров ниже будет использоваться выбранная предустановка фильтра. Создавайте предустановки фильтров в главном представлении библиотеки Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">Исключённые предустановки фильтров</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">Игры, соответствующие любой исключённой предустановке, не экспортируются, даже если они соответствуют включённой предустановке. Закреплённые игры не удаляются автоматически при соответствии исключённой предустановке.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Управление экспортированными играми</sys:String>

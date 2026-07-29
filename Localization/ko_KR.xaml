@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">필터 프리셋</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite 필터 프리셋 사용</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">활성화하면 아래의 개별 필터 대신 선택한 필터 프리셋이 사용됩니다. 필터 프리셋은 Playnite의 메인 라이브러리 화면에서 만들 수 있습니다.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">제외 필터 프리셋</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">제외된 프리셋에 일치하는 게임은 포함된 프리셋에 일치하더라도 내보내지지 않습니다. 고정된 게임은 제외 프리셋에 일치해도 자동으로 삭제되지 않습니다.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">내보낸 게임 관리</sys:String>

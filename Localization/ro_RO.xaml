@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Presetare filtru</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Folosește presetarea de filtru Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Când este activat, presetarea de filtru selectată va fi folosită în locul filtrelor individuale de mai jos. Creează presetări de filtru în vizualizarea principală a bibliotecii Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">Presetări filtru excluse</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">Jocurile care se potrivesc cu orice presetare exclusă nu sunt exportate, chiar dacă se potrivesc cu o presetare inclusă. Jocurile fixate nu sunt eliminate automat când se potrivesc cu o presetare exclusă.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Gestionează jocurile exportate</sys:String>
