@@ -490,8 +490,37 @@ namespace ApolloSync.Tests
         [TestMethod]
         public void EvaluateExportEligibility_PinnedGameThatMatchesExcludeIsKept()
         {
+            // Pinning protects a game from removal but never forces it into the export set, so a
+            // pinned game that matches an exclude must come back ineligible AND still be kept.
+            // Written this way deliberately: asserting ShouldRemoveManagedGame with a hardcoded
+            // meetsFilters:false would duplicate ShouldRemoveManagedGame_KeepsPinnedGameThat-
+            // NoLongerMatches and would pass with the exclude feature reverted entirely.
+            var included = Guid.NewGuid();
+            var excluded = Guid.NewGuid();
+
+            bool failed;
+            var eligible = global::ApolloSync.ApolloSync.EvaluateExportEligibility(
+                new List<Guid> { included },
+                new List<Guid> { excluded },
+                id => id == included || id == excluded,
+                out failed);
+
+            Assert.IsFalse(eligible, "an excluded game is never eligible, even when also included");
+            Assert.IsFalse(failed, "a definite exclusion is not an evaluation failure");
+
             Assert.IsFalse(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
-                gameExistsInLibrary: true, isPinned: true, meetsFilters: false, filterEvaluationFailed: false));
+                gameExistsInLibrary: true,
+                isPinned: true,
+                meetsFilters: eligible,
+                filterEvaluationFailed: failed));
+
+            // And the same game unpinned is removed — otherwise the assertion above would hold
+            // for reasons unrelated to pinning.
+            Assert.IsTrue(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true,
+                isPinned: false,
+                meetsFilters: eligible,
+                filterEvaluationFailed: failed));
         }
 
         // ── ApplyRemovals ─────────────────────────────────────────────────────────
