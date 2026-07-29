@@ -296,6 +296,204 @@ namespace ApolloSync.Tests
                 "Evaluation must short-circuit on the first match");
         }
 
+        // ── EvaluateExportEligibility ─────────────────────────────────────────────
+        // include ∪ − exclude ∪, with dangling-exclude safety. Exclusion beats inclusion;
+        // pin/removal rules stay in ShouldRemoveManagedGame.
+
+        [TestMethod]
+        public void EvaluateExportEligibility_IncludeMatchWithNoExcludesIsEligible()
+        {
+            bool failed;
+            var eligible = global::ApolloSync.ApolloSync.EvaluateExportEligibility(
+                new List<Guid> { Guid.NewGuid() },
+                new List<Guid>(),
+                id => true,
+                out failed);
+
+            Assert.IsTrue(eligible);
+            Assert.IsFalse(failed);
+        }
+
+        [TestMethod]
+        public void EvaluateExportEligibility_IncludeMatchWithNullExcludesIsEligible()
+        {
+            bool failed;
+            var eligible = global::ApolloSync.ApolloSync.EvaluateExportEligibility(
+                new List<Guid> { Guid.NewGuid() },
+                null,
+                id => true,
+                out failed);
+
+            Assert.IsTrue(eligible);
+            Assert.IsFalse(failed);
+        }
+
+        [TestMethod]
+        public void EvaluateExportEligibility_IncludeAndExcludeMatchIsNotEligible()
+        {
+            var includeId = Guid.NewGuid();
+            var excludeId = Guid.NewGuid();
+
+            bool failed;
+            var eligible = global::ApolloSync.ApolloSync.EvaluateExportEligibility(
+                new List<Guid> { includeId },
+                new List<Guid> { excludeId },
+                id => true,
+                out failed);
+
+            Assert.IsFalse(eligible);
+            Assert.IsFalse(failed);
+            Assert.IsTrue(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: eligible, filterEvaluationFailed: failed));
+        }
+
+        [TestMethod]
+        public void EvaluateExportEligibility_EmptyIncludesIsNotEligibleAndPrunes()
+        {
+            bool failed;
+            var eligible = global::ApolloSync.ApolloSync.EvaluateExportEligibility(
+                new List<Guid>(),
+                new List<Guid> { Guid.NewGuid() },
+                id => true,
+                out failed);
+
+            Assert.IsFalse(eligible);
+            Assert.IsFalse(failed);
+            Assert.IsTrue(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: eligible, filterEvaluationFailed: failed));
+        }
+
+        [TestMethod]
+        public void EvaluateExportEligibility_NullIncludesIsNotEligibleAndPrunes()
+        {
+            bool failed;
+            var eligible = global::ApolloSync.ApolloSync.EvaluateExportEligibility(
+                null,
+                new List<Guid> { Guid.NewGuid() },
+                id => true,
+                out failed);
+
+            Assert.IsFalse(eligible);
+            Assert.IsFalse(failed);
+        }
+
+        [TestMethod]
+        public void EvaluateExportEligibility_IncludeMatchWithDanglingExcludeBlocksRemoval()
+        {
+            // Ticket #30: a deleted exclusion preset must not silently re-export / treat as
+            // "excludes nothing".
+            var includeId = Guid.NewGuid();
+            var danglingExclude = Guid.NewGuid();
+
+            bool failed;
+            var eligible = global::ApolloSync.ApolloSync.EvaluateExportEligibility(
+                new List<Guid> { includeId },
+                new List<Guid> { danglingExclude },
+                id => id == includeId ? true : (bool?)null,
+                out failed);
+
+            Assert.IsFalse(eligible);
+            Assert.IsTrue(failed);
+            Assert.IsFalse(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: eligible, filterEvaluationFailed: failed));
+        }
+
+        [TestMethod]
+        public void EvaluateExportEligibility_IncludeMatchWithThrowingExcludeBlocksRemoval()
+        {
+            var includeId = Guid.NewGuid();
+            var throwingExclude = Guid.NewGuid();
+
+            bool failed;
+            var eligible = global::ApolloSync.ApolloSync.EvaluateExportEligibility(
+                new List<Guid> { includeId },
+                new List<Guid> { throwingExclude },
+                id =>
+                {
+                    if (id == throwingExclude)
+                    {
+                        throw new InvalidOperationException("exclude blew up");
+                    }
+                    return true;
+                },
+                out failed);
+
+            Assert.IsFalse(eligible);
+            Assert.IsTrue(failed);
+            Assert.IsFalse(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: eligible, filterEvaluationFailed: failed));
+        }
+
+        [TestMethod]
+        public void EvaluateExportEligibility_DefiniteExcludeWinsOverDanglingInclude()
+        {
+            var danglingInclude = Guid.NewGuid();
+            var excludeId = Guid.NewGuid();
+
+            bool failed;
+            var eligible = global::ApolloSync.ApolloSync.EvaluateExportEligibility(
+                new List<Guid> { danglingInclude },
+                new List<Guid> { excludeId },
+                id => id == excludeId ? true : (bool?)null,
+                out failed);
+
+            Assert.IsFalse(eligible);
+            Assert.IsFalse(failed, "A definite exclude must clear sibling include-failure flags");
+        }
+
+        [TestMethod]
+        public void EvaluateExportEligibility_DefiniteIncludeMissWithDanglingExcludeIsPrunable()
+        {
+            // Exclude cannot resurrect a game that definitely does not match includes.
+            var includeId = Guid.NewGuid();
+            var danglingExclude = Guid.NewGuid();
+
+            bool failed;
+            var eligible = global::ApolloSync.ApolloSync.EvaluateExportEligibility(
+                new List<Guid> { includeId },
+                new List<Guid> { danglingExclude },
+                id => id == includeId ? false : (bool?)null,
+                out failed);
+
+            Assert.IsFalse(eligible);
+            Assert.IsFalse(failed);
+            Assert.IsTrue(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: false, meetsFilters: eligible, filterEvaluationFailed: failed));
+        }
+
+        [TestMethod]
+        public void EvaluateExportEligibility_IncludeMatchAfterThrowingSiblingIncludeIsEligible()
+        {
+            // Branch on included, not bare includeFailed — EvaluateFilterPresets can return
+            // matched=true with evaluationFailed=true after an earlier throw.
+            var throwingInclude = Guid.NewGuid();
+            var matchingInclude = Guid.NewGuid();
+
+            bool failed;
+            var eligible = global::ApolloSync.ApolloSync.EvaluateExportEligibility(
+                new List<Guid> { throwingInclude, matchingInclude },
+                new List<Guid>(),
+                id =>
+                {
+                    if (id == throwingInclude)
+                    {
+                        throw new InvalidOperationException("include blew up");
+                    }
+                    return id == matchingInclude;
+                },
+                out failed);
+
+            Assert.IsTrue(eligible);
+            Assert.IsFalse(failed);
+        }
+
+        [TestMethod]
+        public void EvaluateExportEligibility_PinnedGameThatMatchesExcludeIsKept()
+        {
+            Assert.IsFalse(global::ApolloSync.ApolloSync.ShouldRemoveManagedGame(
+                gameExistsInLibrary: true, isPinned: true, meetsFilters: false, filterEvaluationFailed: false));
+        }
+
         // ── ApplyRemovals ─────────────────────────────────────────────────────────
 
         [TestMethod]

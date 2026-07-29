@@ -529,72 +529,128 @@ namespace ApolloSync
         #endregion
 
         #region Game Filtering
+
         /// <summary>
-        /// Snapshots the selected preset ids. The settings view edits
-        /// <see cref="ApolloSyncSettings.IncludedFilterPresetIds"/> in place on the UI thread as
+        /// Immutable copy of the include/exclude preset id lists for one sync or evaluation.
+        /// Constructor copies both lists so a mid-edit settings mutation cannot race the sync.
+        /// </summary>
+        private sealed class FilterPresetSelection
+        {
+            public List<Guid> Included { get; private set; }
+            public List<Guid> Excluded { get; private set; }
+
+            public FilterPresetSelection(IList<Guid> included, IList<Guid> excluded)
+            {
+                Included = included != null ? new List<Guid>(included) : new List<Guid>();
+                Excluded = excluded != null ? new List<Guid>(excluded) : new List<Guid>();
+            }
+        }
+
+        /// <summary>
+        /// Snapshots the selected include and exclude preset ids. The settings view edits
+        /// <see cref="ApolloSyncSettings.IncludedFilterPresetIds"/> and
+        /// <see cref="ApolloSyncSettings.ExcludedFilterPresetIds"/> in place on the UI thread as
         /// the user ticks boxes — before OK is pressed, and undone only in memory by CancelEdit —
         /// so a sync reading the live list can enumerate it mid-mutation, or observe a transient
         /// empty list and prune everything the user was about to re-select.
         /// </summary>
-        private List<Guid> SnapshotSelectedPresetIds()
+        private FilterPresetSelection SnapshotFilterPresetSelection()
         {
-            var selected = _settings.Settings.IncludedFilterPresetIds;
-            return selected == null ? new List<Guid>() : new List<Guid>(selected);
+            return new FilterPresetSelection(
+                _settings.Settings.IncludedFilterPresetIds,
+                _settings.Settings.ExcludedFilterPresetIds);
         }
 
         private List<Game> GetFilteredGames()
         {
-            return GetFilteredGames(SnapshotSelectedPresetIds());
+            return GetFilteredGames(SnapshotFilterPresetSelection());
         }
 
-        private List<Game> GetFilteredGames(List<Guid> selectedPresetIds)
+        private List<Game> GetFilteredGames(FilterPresetSelection selection)
         {
-            // Use filter presets with OR logic - game matches if it matches ANY selected preset
-            if (selectedPresetIds.Count > 0)
+            // Use filter presets with OR logic - game matches if it matches ANY selected include
+            if (selection.Included.Count == 0)
             {
-                var matchingGames = new HashSet<Game>();
+                // No filter presets selected - return no games
+                logger.Warn("No filter presets selected - no games will be filtered. Please select filter presets in settings.");
+                return new List<Game>();
+            }
 
-                foreach (var presetId in selectedPresetIds)
+            var matchingGames = new HashSet<Game>();
+
+            foreach (var presetId in selection.Included)
+            {
+                var filterPreset = PlayniteApi.Database.FilterPresets
+                    .FirstOrDefault(fp => fp.Id == presetId);
+
+                if (filterPreset?.Settings == null)
                 {
-                    var filterPreset = PlayniteApi.Database.FilterPresets
-                        .FirstOrDefault(fp => fp.Id == presetId);
-
-                    if (filterPreset?.Settings == null)
-                    {
-                        // Logged once per sync here rather than in GameMeetsCurrentFilters, which
-                        // now runs per managed game per sync and would emit this hundreds of times.
-                        logger.Warn($"Selected filter preset {presetId} no longer exists - it was probably deleted in Playnite. No games will be removed while it is missing.");
-                        continue;
-                    }
-
-                    try
-                    {
-                        var presetGames = PlayniteApi.Database.GetFilteredGames(filterPreset.Settings);
-                        foreach (var game in presetGames)
-                        {
-                            matchingGames.Add(game);
-                        }
-                        logger.Debug($"Filter preset '{filterPreset.Name}' matched {presetGames.Count()} games");
-                    }
-                    catch (Exception ex)
-                    {
-                        logger.Error(ex, $"Failed to apply filter preset: {filterPreset.Name}");
-                    }
+                    // Logged once per sync here rather than in GameMeetsCurrentFilters, which
+                    // now runs per managed game per sync and would emit this hundreds of times.
+                    logger.Warn($"Selected filter preset {presetId} no longer exists - it was probably deleted in Playnite. No games will be removed while it is missing.");
+                    continue;
                 }
 
+                try
+                {
+                    var presetGames = PlayniteApi.Database.GetFilteredGames(filterPreset.Settings);
+                    foreach (var game in presetGames)
+                    {
+                        matchingGames.Add(game);
+                    }
+                    logger.Debug($"Filter preset '{filterPreset.Name}' matched {presetGames.Count()} games");
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Failed to apply filter preset: {filterPreset.Name}");
+                }
+            }
+
+            if (selection.Excluded.Count == 0)
+            {
                 logger.Info($"Combined filter presets matched {matchingGames.Count} games");
                 return matchingGames.ToList();
             }
 
-            // No filter presets selected - return no games
-            logger.Warn("No filter presets selected - no games will be filtered. Please select filter presets in settings.");
-            return new List<Game>();
+            var excludedGames = new HashSet<Game>();
+            foreach (var presetId in selection.Excluded)
+            {
+                var filterPreset = PlayniteApi.Database.FilterPresets
+                    .FirstOrDefault(fp => fp.Id == presetId);
+
+                if (filterPreset?.Settings == null)
+                {
+                    // An unresolvable exclude must not mean "excludes nothing" — that would
+                    // silently re-export games the missing preset used to suppress.
+                    logger.Warn($"Excluded filter preset {presetId} no longer exists - it was probably deleted in Playnite. No games will be added while it is missing.");
+                    return new List<Game>();
+                }
+
+                try
+                {
+                    var presetGames = PlayniteApi.Database.GetFilteredGames(filterPreset.Settings);
+                    foreach (var game in presetGames)
+                    {
+                        excludedGames.Add(game);
+                    }
+                    logger.Debug($"Excluded filter preset '{filterPreset.Name}' matched {presetGames.Count()} games");
+                }
+                catch (Exception ex)
+                {
+                    logger.Error(ex, $"Failed to apply excluded filter preset: {filterPreset.Name}. No games will be added while evaluation fails.");
+                    return new List<Game>();
+                }
+            }
+
+            matchingGames.ExceptWith(excludedGames);
+            logger.Info($"Combined filter presets matched {matchingGames.Count} games after exclusions");
+            return matchingGames.ToList();
         }
 
         private bool GameMeetsCurrentFilters(Game game)
         {
             bool evaluationFailed;
-            return GameMeetsCurrentFilters(game, SnapshotSelectedPresetIds(), out evaluationFailed);
+            return GameMeetsCurrentFilters(game, SnapshotFilterPresetSelection(), out evaluationFailed);
         }
 
         /// <summary>
@@ -660,12 +716,49 @@ namespace ApolloSync
         }
 
         /// <summary>
-        /// Evaluates the game against the given filter presets (OR logic). Takes the ids as a
-        /// snapshot rather than reading settings directly — see <see cref="SnapshotSelectedPresetIds"/>.
+        /// Combines include and exclude preset evaluation:
+        /// <c>eligible = (any include match) AND NOT (any exclude match)</c>.
+        /// Exclusion beats inclusion. Pinning is a removal override only (see
+        /// <see cref="ShouldRemoveManagedGame"/>) and does not force a game into the add set.
+        /// Pure apart from the delegate — directly testable without Playnite.
         /// </summary>
-        private bool GameMeetsCurrentFilters(Game game, IList<Guid> selectedPresetIds, out bool evaluationFailed)
+        internal static bool EvaluateExportEligibility(
+            IList<Guid> includedPresetIds,
+            IList<Guid> excludedPresetIds,
+            Func<Guid, bool?> matchPreset,
+            out bool evaluationFailed)
         {
-            return EvaluateFilterPresets(selectedPresetIds, presetId =>
+            bool excludeFailed;
+            bool includeFailed;
+            var excluded = EvaluateFilterPresets(excludedPresetIds, matchPreset, out excludeFailed);
+            var included = EvaluateFilterPresets(includedPresetIds, matchPreset, out includeFailed);
+
+            if (excluded)
+            {
+                // Definite exclusion wins. Clear any sibling-failure flags from either list.
+                evaluationFailed = false;
+                return false;
+            }
+
+            if (included)
+            {
+                // Dangling/throwing exclude must not mean "excludes nothing".
+                evaluationFailed = excludeFailed;
+                return !excludeFailed;
+            }
+
+            // Definite include-miss: dangling exclude cannot resurrect the game.
+            evaluationFailed = includeFailed;
+            return false;
+        }
+
+        /// <summary>
+        /// Evaluates the game against the given include/exclude filter presets. Takes a
+        /// snapshot rather than reading settings directly — see <see cref="SnapshotFilterPresetSelection"/>.
+        /// </summary>
+        private bool GameMeetsCurrentFilters(Game game, FilterPresetSelection selection, out bool evaluationFailed)
+        {
+            return EvaluateExportEligibility(selection.Included, selection.Excluded, presetId =>
             {
                 var filterPreset = PlayniteApi.Database.FilterPresets
                     .FirstOrDefault(fp => fp.Id == presetId);
@@ -742,7 +835,7 @@ namespace ApolloSync
         /// failed write cannot leave the in-memory store disowning entries that are still in
         /// apps.json. Same ordering rule as ExportGamesWithFeedback.
         /// </summary>
-        private List<Guid> RemoveFilteredOutGames(JObject config, HashSet<Guid> pinnedGameIds, IList<Guid> selectedPresetIds)
+        private List<Guid> RemoveFilteredOutGames(JObject config, HashSet<Guid> pinnedGameIds, FilterPresetSelection selection)
         {
             var pinned = pinnedGameIds ?? new HashSet<Guid>(_settings.Settings.PinnedGameIds);
             var gamesToRemove = new List<KeyValuePair<Guid, Guid>>();
@@ -761,7 +854,7 @@ namespace ApolloSync
                     var filterEvaluationFailed = false;
                     if (game != null)
                     {
-                        meetsFilters = GameMeetsCurrentFilters(game, selectedPresetIds, out filterEvaluationFailed);
+                        meetsFilters = GameMeetsCurrentFilters(game, selection, out filterEvaluationFailed);
                     }
 
                     if (!ShouldRemoveManagedGame(game != null, pinned.Contains(gameId), meetsFilters, filterEvaluationFailed))
@@ -877,13 +970,13 @@ namespace ApolloSync
 
             // One snapshot for the whole sync: both phases must agree on which presets were
             // selected, and the live list can change under us while the settings view is open.
-            var selectedPresetIds = SnapshotSelectedPresetIds();
+            var selection = SnapshotFilterPresetSelection();
 
             // Deliberately no early return when nothing matches. Unchecking a preset is how the
             // user says "stop exporting these", and it is the removal phase below — not the
             // add/update phase — that carries it out. Returning here left the games in apps.json
             // until something else happened to match again.
-            var filteredGames = GetFilteredGames(selectedPresetIds);
+            var filteredGames = GetFilteredGames(selection);
             logger.Info($"Found {filteredGames.Count} games matching filter presets to sync");
 
             var localSuccess = 0;
@@ -926,7 +1019,7 @@ namespace ApolloSync
 
             // Phase 1: Remove managed games that no longer meet filters (unless pinned). The
             // store entries are dropped further down, once the write has actually landed.
-            var gamesToUnmanage = RemoveFilteredOutGames(config, pinnedSnapshot, selectedPresetIds);
+            var gamesToUnmanage = RemoveFilteredOutGames(config, pinnedSnapshot, selection);
             localRemoved = gamesToUnmanage.Count;
             logger.Info($"Removed {localRemoved} games that no longer meet filters");
 

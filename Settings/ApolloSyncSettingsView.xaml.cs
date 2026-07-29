@@ -245,8 +245,15 @@ namespace ApolloSync
             return stack;
         }
 
-        private StackPanel BuildFiltersTab()
+        private FrameworkElement BuildFiltersTab()
         {
+            // Outer scroll so both expanders (help + list + buttons) remain reachable when the
+            // settings window is short — StackPanel alone was clipping the excluded section.
+            var outerScroll = new ScrollViewer
+            {
+                VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
+                HorizontalScrollBarVisibility = ScrollBarVisibility.Disabled
+            };
             var stack = new StackPanel { Margin = new Thickness(8) };
 
             // Filter presets are the only filter mechanism. Platform, label, completion status
@@ -264,12 +271,21 @@ namespace ApolloSync
 
             var filterPresetContentPanel = new StackPanel();
 
+            filterPresetContentPanel.Children.Add(new TextBlock
+            {
+                Text = "Select one or more filter presets. Games that match ANY selected preset will be eligible for export (OR logic). Create filter presets in Playnite's main library view first.",
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 4),
+                Foreground = System.Windows.Media.Brushes.Gray,
+                FontStyle = FontStyles.Italic
+            });
+
             // Create filter preset selection table
             var filterPresetBorder = new Border
             {
                 BorderBrush = System.Windows.Media.Brushes.Gray,
                 BorderThickness = new Thickness(1),
-                Margin = new Thickness(0, 4, 0, 0)
+                Margin = new Thickness(0, 0, 0, 0)
             };
 
             var filterPresetScrollViewer = new ScrollViewer { MaxHeight = 150, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
@@ -288,33 +304,75 @@ namespace ApolloSync
             filterPresetButtonPanel.Children.Add(clearAllFilterPresetBtn);
             filterPresetContentPanel.Children.Add(filterPresetButtonPanel);
 
-            // Help text
-            filterPresetContentPanel.Children.Add(new TextBlock
-            {
-                Text = "Select one or more filter presets. Games that match ANY selected preset will be eligible for export (OR logic). Create filter presets in Playnite's main library view first.",
-                TextWrapping = TextWrapping.Wrap,
-                Margin = new Thickness(0, 4, 0, 0),
-                Foreground = System.Windows.Media.Brushes.Gray,
-                FontStyle = FontStyles.Italic
-            });
-
-            // Populate filter presets when DataContext is available
-            if (DataContext is ApolloSyncSettingsViewModel vm4)
+            if (DataContext is ApolloSyncSettingsViewModel)
             {
                 UpdateFilterPresetCheckboxes(filterPresetPanel);
             }
-            DataContextChanged += (s, e) =>
-            {
-                if (DataContext is ApolloSyncSettingsViewModel viewModel4)
-                {
-                    UpdateFilterPresetCheckboxes(filterPresetPanel);
-                }
-            };
 
             filterPresetExpander.Content = filterPresetContentPanel;
             stack.Children.Add(filterPresetExpander);
 
-            return stack;
+            // Excluded Filter Presets (collapsible)
+            var excludedFilterPresetExpander = new Expander
+            {
+                Header = ResourceProvider.GetString("LOC_ApolloSync_Settings_ExcludedFilterPresets"),
+                IsExpanded = true,
+                Margin = new Thickness(0, 0, 0, 8)
+            };
+
+            var excludedFilterPresetContentPanel = new StackPanel();
+
+            excludedFilterPresetContentPanel.Children.Add(new TextBlock
+            {
+                Text = ResourceProvider.GetString("LOC_ApolloSync_Settings_ExcludedFilterPresets_Help"),
+                TextWrapping = TextWrapping.Wrap,
+                Margin = new Thickness(0, 0, 0, 4),
+                Foreground = System.Windows.Media.Brushes.Gray,
+                FontStyle = FontStyles.Italic
+            });
+
+            var excludedFilterPresetBorder = new Border
+            {
+                BorderBrush = System.Windows.Media.Brushes.Gray,
+                BorderThickness = new Thickness(1),
+                Margin = new Thickness(0, 0, 0, 0)
+            };
+
+            var excludedFilterPresetScrollViewer = new ScrollViewer { MaxHeight = 150, VerticalScrollBarVisibility = ScrollBarVisibility.Auto };
+            var excludedFilterPresetPanel = new StackPanel { Name = "ExcludedFilterPresetsPanel" };
+            excludedFilterPresetScrollViewer.Content = excludedFilterPresetPanel;
+            excludedFilterPresetBorder.Child = excludedFilterPresetScrollViewer;
+            excludedFilterPresetContentPanel.Children.Add(excludedFilterPresetBorder);
+
+            var excludedFilterPresetButtonPanel = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 4, 0, 0) };
+            var selectAllExcludedFilterPresetBtn = new Button { Content = "Select All", Width = 80, Margin = new Thickness(0, 0, 4, 0) };
+            var clearAllExcludedFilterPresetBtn = new Button { Content = "Clear All", Width = 80 };
+            selectAllExcludedFilterPresetBtn.Click += SelectAllExcludedFilterPresets_Click;
+            clearAllExcludedFilterPresetBtn.Click += ClearAllExcludedFilterPresets_Click;
+            excludedFilterPresetButtonPanel.Children.Add(selectAllExcludedFilterPresetBtn);
+            excludedFilterPresetButtonPanel.Children.Add(clearAllExcludedFilterPresetBtn);
+            excludedFilterPresetContentPanel.Children.Add(excludedFilterPresetButtonPanel);
+
+            
+            // Populate filter presets when DataContext is available
+            if (DataContext is ApolloSyncSettingsViewModel)
+            {
+                UpdateExcludedFilterPresetCheckboxes(excludedFilterPresetPanel);
+            }
+            DataContextChanged += (s, e) =>
+            {
+                if (DataContext is ApolloSyncSettingsViewModel)
+                {
+                    UpdateFilterPresetCheckboxes(filterPresetPanel);
+                    UpdateExcludedFilterPresetCheckboxes(excludedFilterPresetPanel);
+                }
+            };
+
+            excludedFilterPresetExpander.Content = excludedFilterPresetContentPanel;
+            stack.Children.Add(excludedFilterPresetExpander);
+
+            outerScroll.Content = stack;
+            return outerScroll;
         }
 
         private StackPanel BuildManageGamesTab()
@@ -368,7 +426,7 @@ namespace ApolloSync
 
         #region Filter Preset Methods
 
-        private void UpdateFilterPresetCheckboxes(StackPanel filterPresetPanel)
+        private void UpdateFilterPresetCheckboxes(Panel filterPresetPanel)
         {
             filterPresetPanel.Children.Clear();
 
@@ -381,6 +439,11 @@ namespace ApolloSync
 
                 if (vm.AvailableFilterPresets != null)
                 {
+                    if (vm.Settings.IncludedFilterPresetIds == null)
+                    {
+                        vm.Settings.IncludedFilterPresetIds = new List<Guid>();
+                    }
+
                     foreach (var filterPreset in vm.AvailableFilterPresets)
                     {
                         var checkbox = new CheckBox
@@ -427,6 +490,11 @@ namespace ApolloSync
         {
             if (DataContext is ApolloSyncSettingsViewModel vm)
             {
+                if (vm.Settings.IncludedFilterPresetIds == null)
+                {
+                    vm.Settings.IncludedFilterPresetIds = new List<Guid>();
+                }
+
                 if (isChecked && !vm.Settings.IncludedFilterPresetIds.Contains(presetId))
                 {
                     vm.Settings.IncludedFilterPresetIds.Add(presetId);
@@ -434,6 +502,96 @@ namespace ApolloSync
                 else if (!isChecked && vm.Settings.IncludedFilterPresetIds.Contains(presetId))
                 {
                     vm.Settings.IncludedFilterPresetIds.Remove(presetId);
+                }
+            }
+        }
+
+        private void UpdateExcludedFilterPresetCheckboxes(Panel excludedFilterPresetPanel)
+        {
+            excludedFilterPresetPanel.Children.Clear();
+
+            if (DataContext is ApolloSyncSettingsViewModel vm)
+            {
+                if (vm.AvailableFilterPresets == null || vm.AvailableFilterPresets.Count == 0)
+                {
+                    vm.RefreshFilterPresets();
+                }
+
+                if (vm.Settings.ExcludedFilterPresetIds == null)
+                {
+                    vm.Settings.ExcludedFilterPresetIds = new List<Guid>();
+                }
+
+                if (vm.AvailableFilterPresets != null)
+                {
+                    foreach (var filterPreset in vm.AvailableFilterPresets)
+                    {
+                        var checkbox = new CheckBox
+                        {
+                            Content = filterPreset.Name,
+                            Tag = filterPreset.Id,
+                            Margin = new Thickness(0, 2, 0, 2)
+                        };
+
+                        checkbox.IsChecked = vm.Settings.ExcludedFilterPresetIds.Contains(filterPreset.Id);
+
+                        checkbox.Checked += (s, e) => OnExcludedFilterPresetCheckboxChanged(filterPreset.Id, true);
+                        checkbox.Unchecked += (s, e) => OnExcludedFilterPresetCheckboxChanged(filterPreset.Id, false);
+
+                        excludedFilterPresetPanel.Children.Add(checkbox);
+                    }
+                }
+            }
+        }
+
+        private void SelectAllExcludedFilterPresets_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ApolloSyncSettingsViewModel vm && vm.AvailableFilterPresets != null)
+            {
+                if (vm.Settings.ExcludedFilterPresetIds == null)
+                {
+                    vm.Settings.ExcludedFilterPresetIds = new List<Guid>();
+                }
+
+                vm.Settings.ExcludedFilterPresetIds.Clear();
+                foreach (var filterPreset in vm.AvailableFilterPresets)
+                {
+                    vm.Settings.ExcludedFilterPresetIds.Add(filterPreset.Id);
+                }
+                UpdateExcludedFilterPresetCheckboxes(FindChild<StackPanel>(this, "ExcludedFilterPresetsPanel"));
+            }
+        }
+
+        private void ClearAllExcludedFilterPresets_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ApolloSyncSettingsViewModel vm)
+            {
+                if (vm.Settings.ExcludedFilterPresetIds == null)
+                {
+                    vm.Settings.ExcludedFilterPresetIds = new List<Guid>();
+                }
+
+                vm.Settings.ExcludedFilterPresetIds.Clear();
+                UpdateExcludedFilterPresetCheckboxes(FindChild<StackPanel>(this, "ExcludedFilterPresetsPanel"));
+            }
+        }
+
+        private void OnExcludedFilterPresetCheckboxChanged(Guid presetId, bool isChecked)
+        {
+            if (DataContext is ApolloSyncSettingsViewModel vm)
+            {
+                if (vm.Settings.ExcludedFilterPresetIds == null)
+                {
+                    vm.Settings.ExcludedFilterPresetIds = new List<Guid>();
+                }
+
+                if (isChecked && !vm.Settings.ExcludedFilterPresetIds.Contains(presetId))
+                {
+                    vm.Settings.ExcludedFilterPresetIds.Add(presetId);
+                }
+                else if (!isChecked && vm.Settings.ExcludedFilterPresetIds.Contains(presetId))
+                {
+                    vm.Settings.ExcludedFilterPresetIds.Remove(presetId);
                 }
             }
         }

@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filter Preset</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Use Playnite Filter Preset</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">When enabled, the selected filter preset will be used instead of the individual filters below. Create filter presets in Playnite's main library view.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">Excluded Filter Presets</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">Games matching any excluded preset are not exported, even if they match an included preset. Pinned games are not auto-removed when they match an excluded preset.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Manage Exported Games</sys:String>

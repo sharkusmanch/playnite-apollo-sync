@@ -61,6 +61,13 @@ namespace ApolloSync
             set => SetValue(ref _includedFilterPresetIds, value);
         }
 
+        private List<Guid> _excludedFilterPresetIds = new List<Guid>();
+        public List<Guid> ExcludedFilterPresetIds
+        {
+            get => _excludedFilterPresetIds;
+            set => SetValue(ref _excludedFilterPresetIds, value);
+        }
+
         private bool _manageCoverImages = true;
         /// <summary>
         /// When false the plugin never writes or clears the "image-path" field, leaving whatever
