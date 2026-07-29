@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Набір фільтрів</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Використовувати набір фільтрів Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Якщо увімкнено, замість окремих фільтрів нижче буде використовуватися вибраний набір фільтрів. Створюйте набори фільтрів у головному вигляді бібліотеки Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">Виключені набори фільтрів</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">Ігри, що відповідають будь-якому виключеному набору, не експортуються, навіть якщо вони відповідають включеному набору. Закріплені ігри не видаляються автоматично при відповідності виключеному набору.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Керування експортованими іграми</sys:String>

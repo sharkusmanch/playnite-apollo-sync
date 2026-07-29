@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Filtervoorinstelling</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Playnite-filtervoorinstelling gebruiken</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Wanneer ingeschakeld, wordt de geselecteerde filtervoorinstelling gebruikt in plaats van de afzonderlijke filters hieronder. Maak filtervoorinstellingen aan in de hoofdbibliotheekweergave van Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">Uitgesloten filtervoorinstellingen</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">Games die overeenkomen met een uitgesloten voorinstelling worden niet geëxporteerd, ook niet als ze overeenkomen met een inbegrepen voorinstelling. Vastgepinde games worden niet automatisch verwijderd wanneer ze overeenkomen met een uitgesloten voorinstelling.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Geëxporteerde games beheren</sys:String>

@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">Předvolba filtru</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">Použít předvolbu filtru Playnite</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">Pokud je povoleno, bude místo jednotlivých filtrů níže použita vybraná předvolba filtru. Předvolby filtrů vytvořte v hlavním zobrazení knihovny Playnite.</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">Vyloučené předvolby filtrů</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">Hry odpovídající jakékoli vyloučené předvolbě se neexportují, i když odpovídají zahrnuté předvolbě. Připnuté hry se při shodě s vyloučenou předvolbou automaticky neodeberou.</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">Spravovat exportované hry</sys:String>

@@ -50,6 +50,8 @@
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset">篩選預設</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_UseFilterPreset">使用Playnite篩選預設</sys:String>
     <sys:String x:Key="LOC_ApolloSync_Settings_FilterPreset_Help">啟用後，將使用所選的篩選預設取代下方的各項篩選條件。可在Playnite的主媒體庫檢視中建立篩選預設。</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets">排除的篩選預設</sys:String>
+    <sys:String x:Key="LOC_ApolloSync_Settings_ExcludedFilterPresets_Help">符合任何排除預設的遊戲不會被匯出，即使它們也符合包含的預設。釘選的遊戲在符合排除預設時不會被自動移除。</sys:String>
 
     <!-- Manage Games Tab -->
     <sys:String x:Key="LOC_ApolloSync_Settings_ManageGames">管理已匯出的遊戲</sys:String>
